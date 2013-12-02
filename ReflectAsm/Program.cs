@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Linq;
 using System.Threading;
 
@@ -11,15 +12,28 @@ namespace ReflectAsm
     {
         static void Main(string[] args)
         {
-            var proc = Process.Start("TestProcess.exe");
-            Thread.Sleep(1000);
-            //var proc = Process.GetProcessesByName("TestProcess")[0];
+            var waitName = Guid.NewGuid().ToString();
+            var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, waitName);
+
+            var psi = new ProcessStartInfo("TestProcess.exe");
+            psi.UseShellExecute = false;
+            psi.Arguments = waitName;
+            var proc = Process.Start(psi);
+
+            Console.WriteLine("Waiting for JIT");
+
+            waitHandle.WaitOne();
+            waitHandle.Reset();
+
+            Console.WriteLine("Attaching Debugger");
+
             using (var target = DataTarget.AttachToProcess(proc.Id, 5000))
             {
                 var dacLocation = target.ClrVersions[0].TryGetDacLocation();
                 var runtime = target.CreateRuntime(dacLocation);
 
-                var module = runtime.AppDomains.SelectMany(ad => ad.Modules).Single(m => m.Name.EndsWith("TestProcess.exe"));
+                var module =
+                    runtime.AppDomains.SelectMany(ad => ad.Modules).Single(m => m.Name.EndsWith("TestProcess.exe"));
                 var program = module.GetTypeByName("TestProcess.Program");
                 var method = program.Methods.Single(m => m.Name == "TestMethod");
                 var nativeCodeAddress = method.NativeCode;
@@ -30,15 +44,19 @@ namespace ReflectAsm
                 var bytes = new byte[size];
                 int bytesRead;
                 target.ReadProcessMemory(nativeCodeAddress, bytes, size, out bytesRead);
-                
+
                 for (var i = 0; i < bytesRead; i++)
                 {
                     Console.WriteLine(ToHex(bytes[i]));
                 }
             }
 
-            proc.Kill();
+            Console.WriteLine("Signalling helper process to finish");
 
+            waitHandle.Set();
+
+            proc.Kill();
+            
             Console.ReadLine();
         }
 

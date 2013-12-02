@@ -9,13 +9,23 @@ namespace TestProcess
     {
         static void Main(string[] args)
         {
-            var waitName = args[0];
+            Console.WriteLine(string.Join(";", args));
+
+            var fileName = args[0];
+            var typeName = args[1];
+            var methodName = args[2];
+            var waitName = args[3];
+
+            if (args.Length != 4)
+                return;
 
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, waitName);
 
             Console.WriteLine("Jitting method");
 
-            var method = typeof(Program).GetMethod("TestMethod", BindingFlags.Static | BindingFlags.NonPublic);
+            var assembly = Assembly.LoadFile(fileName);
+            var type = assembly.GetType(typeName);
+            var method = type.GetMethod(methodName);
             RuntimeHelpers.PrepareMethod(method.MethodHandle);
 
             Console.WriteLine("Signalling debugger process");
@@ -25,7 +35,7 @@ namespace TestProcess
 
             Console.WriteLine("Waiting for debugger");
 
-            waitHandle.WaitOne();
+            waitHandle.WaitOne(5000);
         }
 
         private static void TestMethod()

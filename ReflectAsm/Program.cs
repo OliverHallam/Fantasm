@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO.Pipes;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -15,9 +15,13 @@ namespace ReflectAsm
             var waitName = Guid.NewGuid().ToString();
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, waitName);
 
+            var moduleName = "TestLibrary.dll";
+            var className = "TestLibrary.TestClass";
+            var methodName = "Factorial";
+
             var psi = new ProcessStartInfo("TestProcess.exe");
             psi.UseShellExecute = false;
-            psi.Arguments = waitName;
+            psi.Arguments = EscapeArguments(Path.GetFullPath(moduleName), className, methodName, waitName);
             var proc = Process.Start(psi);
 
             Console.WriteLine("Waiting for JIT");
@@ -33,9 +37,9 @@ namespace ReflectAsm
                 var runtime = target.CreateRuntime(dacLocation);
 
                 var module =
-                    runtime.AppDomains.SelectMany(ad => ad.Modules).Single(m => m.Name.EndsWith("TestProcess.exe"));
-                var program = module.GetTypeByName("TestProcess.Program");
-                var method = program.Methods.Single(m => m.Name == "TestMethod");
+                    runtime.AppDomains.SelectMany(ad => ad.Modules).Single(m => m.Name.EndsWith(moduleName));
+                var program = module.GetTypeByName(className);
+                var method = program.Methods.Single(m => m.Name == methodName);
                 var nativeCodeAddress = method.NativeCode;
                 var offsetMap = method.ILOffsetMap;
                 var finalAddress = offsetMap.Last().startAddress;
@@ -58,6 +62,11 @@ namespace ReflectAsm
             proc.Kill();
             
             Console.ReadLine();
+        }
+
+        private static string EscapeArguments(params string[] args)
+        {
+            return string.Join(" ", args.Select(a => a.Replace("\"", "\"\"")).Select(a => "\"" + a + "\""));
         }
 
         private static string ToHex(byte b)

@@ -9,6 +9,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProcess", "TestProcess\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestLibrary", "TestLibrary\TestLibrary.csproj", "{9C383EEC-C953-4513-8C98-ABB5BEBF2A95}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disassembler", "Dissasembler\Disassembler.csproj", "{D81727FD-ACA0-41DF-A38A-9FA50C331086}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Disassembler.Tests", "Disassembler.Tests\Disassembler.Tests.csproj", "{9CCD9FE9-15EF-4F24-8346-128E403BDE60}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F996D8E0-B135-424F-9F43-ED40D50E2C07}"
+	ProjectSection(SolutionItems) = preProject
+		key.snk = key.snk
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +36,14 @@ Global
 		{9C383EEC-C953-4513-8C98-ABB5BEBF2A95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C383EEC-C953-4513-8C98-ABB5BEBF2A95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C383EEC-C953-4513-8C98-ABB5BEBF2A95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D81727FD-ACA0-41DF-A38A-9FA50C331086}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D81727FD-ACA0-41DF-A38A-9FA50C331086}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D81727FD-ACA0-41DF-A38A-9FA50C331086}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D81727FD-ACA0-41DF-A38A-9FA50C331086}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CCD9FE9-15EF-4F24-8346-128E403BDE60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CCD9FE9-15EF-4F24-8346-128E403BDE60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CCD9FE9-15EF-4F24-8346-128E403BDE60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CCD9FE9-15EF-4F24-8346-128E403BDE60}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

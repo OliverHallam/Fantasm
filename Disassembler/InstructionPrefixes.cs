@@ -3,7 +3,7 @@
 namespace Fantasm.Disassembler
 {
     [Flags]
-    public enum InstructionPrefixes
+    internal enum InstructionPrefixes
     {
         /// <summary>
         /// No instruction prefixes are set.

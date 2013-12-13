@@ -25,6 +25,7 @@ namespace Fantasm.Disassembler
         private InstructionPrefix group2 = InstructionPrefix.None;
         private InstructionPrefix group3 = InstructionPrefix.None;
         private InstructionPrefix group4 = InstructionPrefix.None;
+        private RexPrefix rex = RexPrefix.Magic;
         private Instruction instruction = Instruction.Unknown;
         private Operand operand1;
         private Operand operand2;
@@ -226,6 +227,7 @@ namespace Fantasm.Disassembler
         public bool Read()
         {
             this.group1 = this.group2 = this.group3 = this.group4 = InstructionPrefix.None;
+            this.rex = 0;
 
             bool readAny = false;
 
@@ -256,7 +258,12 @@ namespace Fantasm.Disassembler
                         this.ReadInstruction(Instruction.Add, ExecutionModes.All);
                         this.operandCount = 2;
                         this.operand1.Type = OperandType.Register;
-                        if (this.Is32BitOperandSize())
+                        if ((this.rex & RexPrefix.W) != 0)
+                        {
+                            this.operand1.Value = (int)Register.Rax;
+                            this.ReadImmediateDword(ref operand2);
+                        }
+                        else if (this.Is32BitOperandSize())
                         {
                             this.operand1.Value = (int)Register.Eax;
                             this.ReadImmediateDword(ref operand2);
@@ -297,6 +304,31 @@ namespace Fantasm.Disassembler
                     case 0x3F:
                         return this.ReadInstructionNoOperands(Instruction.Aas, ExecutionModes.CompatibilityMode);
                         
+                    case 0x40:
+                    case 0x41:
+                    case 0x42:
+                    case 0x43:
+                    case 0x44:
+                    case 0x45:
+                    case 0x46:
+                    case 0x47:
+                    case 0x48:
+                    case 0x49:
+                    case 0x4A:
+                    case 0x4B:
+                    case 0x4C:
+                    case 0x4D:
+                    case 0x4E:
+                    case 0x4F:
+                        if (this.executionMode == ExecutionModes.Allow64Bit)
+                        {
+                            // TODO: ignored if followed by prefix
+                            // TODO: reset on next instruction
+                            this.ReadRexPrefix(nextByte);
+                            continue;
+                        }
+                        goto default;
+
                     case 0x90:
                         return this.ReadInstructionNoOperands(Instruction.Nop, ExecutionModes.All);
 
@@ -314,6 +346,11 @@ namespace Fantasm.Disassembler
             }
         }
 
+        private void ReadRexPrefix(int nextByte)
+        {
+            this.rex = (RexPrefix)nextByte;
+        }
+
         private bool Is32BitOperandSize()
         {
             return this.default32BitOperands ^ (this.group3 == InstructionPrefix.OperandSizeOverride);
@@ -321,6 +358,12 @@ namespace Fantasm.Disassembler
 
         private void SetPrefix(ref InstructionPrefix currentPrefixForGroup, InstructionPrefix prefix)
         {
+            if (this.rex != 0)
+            {
+                // REX prefix must appear after all other prefixes.
+                throw InvalidInstructionBytes();
+            }
+
             if (currentPrefixForGroup != InstructionPrefix.None)
             {
                 throw InvalidInstructionBytes();

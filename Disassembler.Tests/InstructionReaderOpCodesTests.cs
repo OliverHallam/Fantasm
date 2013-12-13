@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Emit;
-using System.Windows.Markup;
 
 using NUnit.Framework;
 
@@ -37,7 +35,12 @@ namespace Fantasm.Disassembler.Tests
             /// <summary>
             /// The first operand is the <c>EAX</c> register and the second operand is an immediate dword.
             /// </summary>
-            EAX_Id
+            EAX_Id,
+
+            /// <summary>
+            /// The first operand is the <c>RAX</c> register and the second operand is an immediate dword.
+            /// </summary>
+            RAX_Id
         }
 
         public enum OperandSize
@@ -49,13 +52,15 @@ namespace Fantasm.Disassembler.Tests
         public class OpCodeProperties
         {
             public OperandSize OperandSize;
+            internal RexPrefix RexPrefix;
             public byte OpCode;
             public Instruction Mnemonic;
             public OperandFormat Operands;
-            public InstructionPrefixes SupportedPrefixes;
-            public ExecutionModes SupportedModes;
+            internal InstructionPrefixes SupportedPrefixes;
+            internal ExecutionModes SupportedModes;
 
             internal OpCodeProperties(
+                RexPrefix rex,
                 OperandSize operandSize,
                 byte opCode,
                 Instruction mnemonic,
@@ -63,6 +68,7 @@ namespace Fantasm.Disassembler.Tests
                 InstructionPrefixes supportedPrefixes,
                 ExecutionModes supportedModes)
             {
+                this.RexPrefix = rex;
                 this.OperandSize = operandSize;
                 this.OpCode = opCode;
                 this.Mnemonic = mnemonic;
@@ -76,7 +82,7 @@ namespace Fantasm.Disassembler.Tests
                 Instruction mnemonic,
                 OperandFormat operands,
                 ExecutionModes supportedModes)
-                : this(OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, supportedModes)
+                : this(0, OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, supportedModes)
             {
             }
 
@@ -84,7 +90,7 @@ namespace Fantasm.Disassembler.Tests
                 byte opCode,
                 Instruction mnemonic,
                 OperandFormat operands)
-                : this(OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+                : this(0, OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
             {
             }
 
@@ -93,7 +99,19 @@ namespace Fantasm.Disassembler.Tests
                 Instruction mnemonic,
                 OperandSize operandSize,
                 OperandFormat operands)
-                : this(operandSize, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+                : this(0, operandSize, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+            {
+            }
+
+            internal OpCodeProperties(RexPrefix rex, byte opCode, Instruction mnemonic, OperandFormat operands)
+                : this(
+                    RexPrefix.Magic | rex,
+                    OperandSize.Size32,
+                    opCode,
+                    mnemonic,
+                    operands,
+                    InstructionPrefixes.None,
+                    ExecutionModes.Allow64Bit)
             {
             }
 
@@ -108,6 +126,7 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0x04, Instruction.Add, OperandFormat.AL_Ib),
             new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size16, OperandFormat.AX_Iw),
             new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size32, OperandFormat.EAX_Id),
+            new OpCodeProperties(RexPrefix.W, 0x05, Instruction.Add, OperandFormat.RAX_Id), 
             new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, ExecutionModes.CompatibilityMode),
             new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, ExecutionModes.CompatibilityMode),
             new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
@@ -119,9 +138,10 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(OpCodeProperties opCode)
         {
             var bytes = GetBytes(opCode);
+            var mode = GetExecutionMode(opCode);
             var reader = new InstructionReader(
                 new MemoryStream(bytes),
-                ExecutionMode.CompatibilityMode,
+                mode,
                 opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
@@ -153,6 +173,12 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
                     Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
                     break;
+
+                case OperandFormat.RAX_Id:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
+                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    break;
             }
 
             Assert.IsFalse(reader.Read());
@@ -171,10 +197,18 @@ namespace Fantasm.Disassembler.Tests
             var byteList = new List<byte> { 0xF0 };
             byteList.AddRange(this.GetBytes(opCode));
             var bytes = byteList.ToArray();
-
-            var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.CompatibilityMode);
+            
+            var mode = GetExecutionMode(opCode);
+            var reader = new InstructionReader(new MemoryStream(bytes), mode);
 
             reader.Read();
+        }
+
+        private static ExecutionMode GetExecutionMode(OpCodeProperties opCode)
+        {
+            return opCode.SupportedModes == ExecutionModes.CompatibilityMode
+                ? ExecutionMode.CompatibilityMode
+                : ExecutionMode.Allow64Bit;
         }
 
         public IEnumerable<OpCodeProperties> CompatibilityModeInstructions()
@@ -220,7 +254,14 @@ namespace Fantasm.Disassembler.Tests
 
         private byte[] GetBytes(OpCodeProperties opCode)
         {
-            var bytes = new List<byte> { opCode.OpCode };
+            var bytes = new List<byte>();
+
+            if (opCode.RexPrefix != 0)
+            {
+                bytes.Add((byte)opCode.RexPrefix);
+            }
+
+            bytes.Add(opCode.OpCode);
 
             switch (opCode.Operands)
             {
@@ -237,6 +278,7 @@ namespace Fantasm.Disassembler.Tests
                     bytes.Add(0x22);
                     break;
 
+                case OperandFormat.RAX_Id:
                 case OperandFormat.EAX_Id:
                     bytes.Add(0x22);
                     bytes.Add(0x22);

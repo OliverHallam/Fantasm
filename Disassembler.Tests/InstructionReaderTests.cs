@@ -39,6 +39,12 @@ namespace Fantasm.Disassembler.Tests
             return new InstructionReader(stream, ExecutionMode.CompatibilityMode, false);
         }
 
+        private static InstructionReader ReadBytes64(params byte[] bytes)
+        {
+            var stream = new MemoryStream(bytes);
+            return new InstructionReader(stream, ExecutionMode.Allow64Bit, true);
+        }
+
         [Test]
         [Ignore] // No implemented instructions support the lock prefix
         public void Read_ReadsGroup1PrefixBeforeInstruction()
@@ -177,6 +183,55 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes(0x66);
             reader.Read();
         }
+
+        [Test]
+        [ExpectedException(typeof(FormatException))]
+        public void Read_WithPrefixAfterRexPrefix_ThrowsFormatException()
+        {
+            var reader = ReadBytes64(0x40, 0x66, 0x90);
+            reader.Read();
+        }
+
+        [Test]
+        public void Read_WhenPreviousInstructionUsesRexPrefix_IgnoresPreviousRex()
+        {
+            // ADD RAX 01234567H
+            // ADD AX 01234567H
+            var reader = ReadBytes64(0x48, 0x05, 0x67, 0x45, 0x23, 0x01, 0x05, 0x67, 0x45, 0x23, 0x01);
+            
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
+
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
+            
+            Assert.IsFalse(reader.Read());
+        }
+
+        [Test]
+        public void Read_WithRexWAndOperandSizeOverride_IgnoresOperandSizeOverride()
+        {
+            // ADD RAX 01234567H
+            var reader = ReadBytes64(0x66, 0x48, 0x05, 0x67, 0x45, 0x23, 0x01);
+
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
+
+            Assert.IsFalse(reader.Read());   
+        }
+
+        [Test]
+        public void Read_WithRexNoWAndOperandSizeOverride_UsesOperandSizeOverride()
+        {
+            // ADD AX 0123H
+            var reader = ReadBytes64(0x66, 0x40, 0x05, 0x23, 0x01);
+
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
+
+            Assert.IsFalse(reader.Read());
+        }
+
 
         [Test]
         [Ignore] // No implemented instructions support the lock prefix

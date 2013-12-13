@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 
 using NUnit.Framework;
@@ -46,91 +47,74 @@ namespace Fantasm.Disassembler.Tests
         }
 
         [Test]
-        [Ignore] // No implemented instructions support the lock prefix
         public void Read_ReadsGroup1PrefixBeforeInstruction()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.Lock, Nop);
+            var reader = ReadBytes(0xF3, Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.Lock, reader.Group1Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
         public void Read_ReadsGroup2PrefixBeforeInstruction()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.SegmentCS, Nop);
+            var reader = ReadBytes(0x2E, Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.SegmentCS, reader.Group2Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
         public void Read_ReadsGroup3PrefixBeforeInstruction()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.OperandSizeOverride, Nop);
+            var reader = ReadBytes(0x66, Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.OperandSizeOverride, reader.Group3Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
         public void Read_ReadsGroup4PrefixBeforeInstruction()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.AddressSizeOverride, Nop);
+            var reader = ReadBytes(0x67, Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.AddressSizeOverride, reader.Group4Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
-        [Ignore] // No implemented instructions support the lock prefix
         public void Read_CanReadTwoPrefixes()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.Lock, (byte)InstructionPrefix.SegmentCS, Nop);
+            var reader = ReadBytes(0xF3, 0x2E, Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.Lock, reader.Group1Prefix);
-            Assert.AreEqual(InstructionPrefix.SegmentCS, reader.Group2Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
-        [Ignore] // No implemented instructions support the lock prefix
         public void Read_CanReadThreePrefixes()
         {
             var reader = ReadBytes(
-                (byte)InstructionPrefix.Lock,
-                (byte)InstructionPrefix.SegmentCS,
-                (byte)InstructionPrefix.OperandSizeOverride,
+                0xF3,
+                0x2E,
+                0x66,
                 Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.Lock, reader.Group1Prefix);
-            Assert.AreEqual(InstructionPrefix.SegmentCS, reader.Group2Prefix);
-            Assert.AreEqual(InstructionPrefix.OperandSizeOverride, reader.Group3Prefix);
             Assert.IsFalse(reader.Read());
         }
 
         [Test]
-        [Ignore] // No implemented instructions support the lock prefix
         public void Read_CanReadFourPrefixes()
         {
             var reader = ReadBytes(
-                (byte)InstructionPrefix.Lock,
-                (byte)InstructionPrefix.SegmentCS,
-                (byte)InstructionPrefix.OperandSizeOverride,
-                (byte)InstructionPrefix.AddressSizeOverride,
+                0xF3,
+                0x2E,
+                0x66,
+                0x67,
                 Nop);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(InstructionPrefix.Lock, reader.Group1Prefix);
-            Assert.AreEqual(InstructionPrefix.SegmentCS, reader.Group2Prefix);
-            Assert.AreEqual(InstructionPrefix.OperandSizeOverride, reader.Group3Prefix);
-            Assert.AreEqual(InstructionPrefix.AddressSizeOverride, reader.Group4Prefix);
             Assert.IsFalse(reader.Read());
         }
 
@@ -138,7 +122,7 @@ namespace Fantasm.Disassembler.Tests
         [ExpectedException(typeof(FormatException))]
         public void Read_WithTwoGroup1Prefixes_ThrowsFormatException()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.Lock, (byte)InstructionPrefix.Rep, Nop);
+            var reader = ReadBytes(0xF0, 0xF3, Nop);
 
             Assert.IsTrue(reader.Read());
         }
@@ -147,7 +131,7 @@ namespace Fantasm.Disassembler.Tests
         [ExpectedException(typeof(FormatException))]
         public void Read_WithTwoGroup2Prefixes_ThrowsFormatException()
         {
-            var reader = ReadBytes((byte)InstructionPrefix.SegmentCS, (byte)InstructionPrefix.SegmentDS, Nop);
+            var reader = ReadBytes(0x2E, 0x3E, Nop);
 
             Assert.IsTrue(reader.Read());
         }
@@ -157,8 +141,8 @@ namespace Fantasm.Disassembler.Tests
         public void Read_WithTwoGroup3Prefixes_ThrowsFormatException()
         {
             var reader = ReadBytes(
-                (byte)InstructionPrefix.OperandSizeOverride,
-                (byte)InstructionPrefix.OperandSizeOverride,
+                0x66,
+                0x66,
                 Nop);
 
             Assert.IsTrue(reader.Read());
@@ -169,8 +153,8 @@ namespace Fantasm.Disassembler.Tests
         public void Read_WithTwoGroup4Prefixes_ThrowsFormatException()
         {
             var reader = ReadBytes(
-                (byte)InstructionPrefix.AddressSizeOverride,
-                (byte)InstructionPrefix.AddressSizeOverride,
+                0x67,
+                0x67,
                 Nop);
 
             Assert.IsTrue(reader.Read());
@@ -232,26 +216,20 @@ namespace Fantasm.Disassembler.Tests
             Assert.IsFalse(reader.Read());
         }
 
-
         [Test]
-        [Ignore] // No implemented instructions support the lock prefix
         public void Read_ClearsPrefixes()
         {
-            var reader = ReadBytes(
-                (byte)InstructionPrefix.Lock,
-                (byte)InstructionPrefix.SegmentCS,
-                (byte)InstructionPrefix.OperandSizeOverride,
-                (byte)InstructionPrefix.AddressSizeOverride,
-                Nop,
-                Nop);
+            // ADD AX 1234h
+            // ADD EAX 12345678h
+            var reader = ReadBytes(0x66, 0x05, 0x34, 0x12, 0x05, 0x78, 0x56, 0x34, 0x12);
 
-            reader.Read();
-            reader.Read();
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
 
-            Assert.AreEqual(InstructionPrefix.None, reader.Group1Prefix);
-            Assert.AreEqual(InstructionPrefix.None, reader.Group2Prefix);
-            Assert.AreEqual(InstructionPrefix.None, reader.Group3Prefix);
-            Assert.AreEqual(InstructionPrefix.None, reader.Group4Prefix);
+            Assert.IsTrue(reader.Read());
+            Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
+
+            Assert.IsFalse(reader.Read());
         }
 
         [Test]

@@ -8,8 +8,6 @@ namespace Fantasm.Disassembler
     /// </summary>
     public class InstructionReader
     {
-        private bool default32BitOperands = true;
-
         private struct Operand
         {
             public OperandType Type;
@@ -18,13 +16,11 @@ namespace Fantasm.Disassembler
 
         private readonly Stream stream;
         private readonly ExecutionModes executionMode;
+        private readonly bool default32BitOperands;
 
         private readonly byte[] buffer = new byte[4];
 
-        private InstructionPrefix group1 = InstructionPrefix.None;
-        private InstructionPrefix group2 = InstructionPrefix.None;
-        private InstructionPrefix group3 = InstructionPrefix.None;
-        private InstructionPrefix group4 = InstructionPrefix.None;
+        private InstructionPrefixes prefixes;
         private RexPrefix rex = RexPrefix.Magic;
         private Instruction instruction = Instruction.Unknown;
         private Operand operand1;
@@ -56,54 +52,6 @@ namespace Fantasm.Disassembler
         public InstructionReader(Stream stream, ExecutionMode executionMode)
             : this(stream, executionMode, true)
         {
-        }
-
-        /// <summary>
-        /// Gets the Group 1 instruction prefix (if any) associated with the current instruction.  Group 1 contains the
-        /// lock and repeat prefixes.
-        /// </summary>
-        public InstructionPrefix Group1Prefix
-        {
-            get
-            {
-                return this.group1;
-            }
-        }
-
-        /// <summary>
-        /// Gets the Group 2 prefix (if any) associated with the current instruction.  Group 2 contains the segement
-        /// override prefixes.
-        /// </summary>
-        public InstructionPrefix Group2Prefix
-        {
-            get
-            {
-                return this.group2;
-            }
-        }
-
-        /// <summary>
-        /// Gets the Group 3 prefix (if any) associated with the current instruction.  Group 3 contains the operand-
-        /// size override prefix.
-        /// </summary>
-        public InstructionPrefix Group3Prefix
-        {
-            get
-            {
-                return this.group3;
-            }
-        }
-
-        /// <summary>
-        /// Gets the Group 4 prefix (if any) associated with the current instruction.  Group 4 contains the address-
-        /// size override prefix.
-        /// </summary>
-        public InstructionPrefix Group4Prefix
-        {
-            get
-            {
-                return this.group4;
-            }
         }
 
         /// <summary>
@@ -226,7 +174,7 @@ namespace Fantasm.Disassembler
         /// </returns>
         public bool Read()
         {
-            this.group1 = this.group2 = this.group3 = this.group4 = InstructionPrefix.None;
+            this.prefixes = InstructionPrefixes.None;
             this.rex = 0;
 
             bool readAny = false;
@@ -276,26 +224,40 @@ namespace Fantasm.Disassembler
                         return true;
                         
                     case 0xF0:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
+                        continue;
                     case 0xF2:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
+                        continue;
                     case 0xF3:
-                        SetPrefix(ref this.group1, (InstructionPrefix)nextByte);
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
                         continue;
 
                     case 0x26:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        continue;
                     case 0x2E:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
+                        continue;
                     case 0x36:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentSS);
+                        continue;
                     case 0x3E:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
+                        continue;
                     case 0x64:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        continue;
                     case 0x65:
-                        SetPrefix(ref this.group2, (InstructionPrefix)nextByte);
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);
                         continue;
 
                     case 0x66:
-                        SetPrefix(ref this.group3, (InstructionPrefix)nextByte);
+                        this.ReadPrefix(InstructionPrefixes.Group3Mask, InstructionPrefixes.OperandSizeOverride);
                         continue;
 
                     case 0x67:
-                        SetPrefix(ref this.group4, (InstructionPrefix)nextByte);
+                        this.ReadPrefix(InstructionPrefixes.Group4Mask, InstructionPrefixes.AddressSizeOverride);
                         continue;
 
                     case 0x37:
@@ -353,10 +315,10 @@ namespace Fantasm.Disassembler
 
         private bool Is32BitOperandSize()
         {
-            return this.default32BitOperands ^ (this.group3 == InstructionPrefix.OperandSizeOverride);
+            return this.default32BitOperands ^ ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
         }
 
-        private void SetPrefix(ref InstructionPrefix currentPrefixForGroup, InstructionPrefix prefix)
+        private void ReadPrefix(InstructionPrefixes group, InstructionPrefixes prefix)
         {
             if (this.rex != 0)
             {
@@ -364,12 +326,12 @@ namespace Fantasm.Disassembler
                 throw InvalidInstructionBytes();
             }
 
-            if (currentPrefixForGroup != InstructionPrefix.None)
+            if ((this.prefixes & group) != 0)
             {
                 throw InvalidInstructionBytes();
             }
 
-            currentPrefixForGroup = prefix;
+            this.prefixes |= prefix;
         }
 
         /// <summary>
@@ -403,7 +365,7 @@ namespace Fantasm.Disassembler
 
         private void ReadInstruction(Instruction instruction, ExecutionModes executionModes)
         {
-            if (this.group1 == InstructionPrefix.Lock)
+            if ((this.prefixes & InstructionPrefixes.Lock) != 0)
             {
                 throw InvalidInstructionBytes();
             }

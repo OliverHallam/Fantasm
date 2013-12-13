@@ -6,7 +6,7 @@ namespace Fantasm.Disassembler
     /// A bitfield version of the <see cref="ExecutionMode"/> enumeration.
     /// </summary>
     [Flags]
-    internal enum ExecutionModes
+    public enum ExecutionModes
     {
         /// <summary>
         /// Compatibility mode.

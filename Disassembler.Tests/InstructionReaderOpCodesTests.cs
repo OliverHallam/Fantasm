@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Windows.Markup;
 
 using NUnit.Framework;
 
@@ -10,24 +12,89 @@ namespace Fantasm.Disassembler.Tests
     [TestFixture(Description = "Tests of the InstructionReader class for specific OpCodes")]
     public class InstructionReaderOpCodesTests
     {
+        public enum OperandFormat
+        {
+            /// <summary>
+            /// The instruction takes no operands.
+            /// </summary>
+            None,
+
+            /// <summary>
+            /// The operand is a single byte.
+            /// </summary>
+            Ib,
+
+            /// <summary>
+            /// The first operand is the <c>AL</c> register and the second operand is an immediate byte.
+            /// </summary>
+            AL_Ib,
+
+            /// <summary>
+            /// The first operand is the <c>AX</c> register and the second operand is an immediate word.
+            /// </summary>
+            AX_Iw,
+
+            /// <summary>
+            /// The first operand is the <c>EAX</c> register and the second operand is an immediate dword.
+            /// </summary>
+            EAX_Id
+        }
+
+        public enum OperandSize
+        {
+            Size16,
+            Size32
+        }
+
         public class OpCodeProperties
         {
+            public OperandSize OperandSize;
             public byte OpCode;
             public Instruction Mnemonic;
+            public OperandFormat Operands;
             public InstructionPrefixes SupportedPrefixes;
-            public OperandType[] Operands;
+            public ExecutionModes SupportedModes;
+
+            internal OpCodeProperties(
+                OperandSize operandSize,
+                byte opCode,
+                Instruction mnemonic,
+                OperandFormat operands,
+                InstructionPrefixes supportedPrefixes,
+                ExecutionModes supportedModes)
+            {
+                this.OperandSize = operandSize;
+                this.OpCode = opCode;
+                this.Mnemonic = mnemonic;
+                this.Operands = operands;
+                this.SupportedPrefixes = supportedPrefixes;
+                this.SupportedModes = supportedModes;
+            }
 
             internal OpCodeProperties(
                 byte opCode,
                 Instruction mnemonic,
-                InstructionPrefixes supportedPrefixes,
-                params OperandType[] operandTypes)
-
+                OperandFormat operands,
+                ExecutionModes supportedModes)
+                : this(OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, supportedModes)
             {
-                this.OpCode = opCode;
-                this.Mnemonic = mnemonic;
-                this.SupportedPrefixes = supportedPrefixes;
-                this.Operands = operandTypes;
+            }
+
+            internal OpCodeProperties(
+                byte opCode,
+                Instruction mnemonic,
+                OperandFormat operands)
+                : this(OperandSize.Size32, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+            {
+            }
+
+            internal OpCodeProperties(
+                byte opCode,
+                Instruction mnemonic,
+                OperandSize operandSize,
+                OperandFormat operands)
+                : this(operandSize, opCode, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+            {
             }
 
             public override string ToString()
@@ -38,32 +105,57 @@ namespace Fantasm.Disassembler.Tests
 
         public static OpCodeProperties[] OpCodes =
         {
-            new OpCodeProperties(0x37, Instruction.Aaa, InstructionPrefixes.None),
-            new OpCodeProperties(0xD4, Instruction.Aam, InstructionPrefixes.None, OperandType.ImmediateByte),
-            new OpCodeProperties(0xD5, Instruction.Aad, InstructionPrefixes.None, OperandType.ImmediateByte),
+            new OpCodeProperties(0x04, Instruction.Add, OperandFormat.AL_Ib),
+            new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size16, OperandFormat.AX_Iw),
+            new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size32, OperandFormat.EAX_Id),
+            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
         };
-        
+
         [Test]
         [TestCaseSource("OpCodes")]
         public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(OpCodeProperties opCode)
         {
             var bytes = GetBytes(opCode);
-            var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.CompatibilityMode);
+            var reader = new InstructionReader(
+                new MemoryStream(bytes),
+                ExecutionMode.CompatibilityMode,
+                opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
 
             Assert.AreEqual(opCode.Mnemonic, reader.Instruction);
 
             // check operands
-            for (var index = 0; index < opCode.Operands.Length; index++)
+            switch (opCode.Operands)
             {
-                switch (opCode.Operands[index])
-                {
-                    case OperandType.ImmediateByte:
-                        Assert.AreEqual(this.GetImmediateByte(index), reader.GetOperandByte(index));
-                        break;
-                }
+                case OperandFormat.Ib:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(0x11, reader.GetOperandByte(0));
+                    break;
+
+                case OperandFormat.AL_Ib:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(Register.Al, reader.GetOperandRegister(0));
+                    Assert.AreEqual(0x22, reader.GetOperandByte(1));
+                    break;
+
+                case OperandFormat.AX_Iw:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
+                    Assert.AreEqual(0x2222, reader.GetOperandWord(1));
+                    break;
+
+                case OperandFormat.EAX_Id:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
+                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    break;
             }
+
+            Assert.IsFalse(reader.Read());
         }
 
         public static IEnumerable<OpCodeProperties> OpCodesWithLockUnsupported()
@@ -85,8 +177,13 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
         }
 
+        public IEnumerable<OpCodeProperties> CompatibilityModeInstructions()
+        {
+            return OpCodes.Where(o => o.SupportedModes == ExecutionModes.CompatibilityMode);
+        }
+            
         [Test]
-        [TestCaseSource("OpCodes")]
+        [TestCaseSource("CompatibilityModeInstructions")]
         [ExpectedException(typeof(FormatException))]
         public void InstructionReader_For64BitMode_ThrowsFormatException(OpCodeProperties opCode)
         {
@@ -125,22 +222,30 @@ namespace Fantasm.Disassembler.Tests
         {
             var bytes = new List<byte> { opCode.OpCode };
 
-            for (var index = 0; index < opCode.Operands.Length; index++)
+            switch (opCode.Operands)
             {
-                switch (opCode.Operands[index])
-                {
-                    case OperandType.ImmediateByte:
-                        bytes.Add(this.GetImmediateByte(index));
-                        break;
-                }
+                case OperandFormat.Ib:
+                    bytes.Add(0x11);
+                    break;
+
+                case OperandFormat.AL_Ib:
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.AX_Iw:
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.EAX_Id:
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    break;
             }
 
             return bytes.ToArray();
-        }
-
-        private byte GetImmediateByte(int index)
-        {
-            return (byte)((index + 1) * 0x11);
         }
     }
 }

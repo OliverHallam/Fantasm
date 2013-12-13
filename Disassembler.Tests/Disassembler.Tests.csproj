@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InstructionPrefixExtensionsTests.cs" />
+    <Compile Include="InstructionReaderOpCodesTests.cs" />
     <Compile Include="InstructionReaderTests.cs" />
     <Compile Include="PeekStreamTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

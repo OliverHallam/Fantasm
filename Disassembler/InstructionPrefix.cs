@@ -9,8 +9,13 @@
     /// <seealso href="http://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2a-manual.pdf">
     /// Intel® 64 and IA-32 Architectures Software Developer's Manual Volume 2A: Instruction Set Reference, A-M
     /// </seealso>
-    internal enum InstructionPrefix : byte
+    public enum InstructionPrefix : byte
     {
+        /// <summary>
+        /// The instruction prefix is not set.
+        /// </summary>
+        None = 0,
+
         /// <summary>
         /// The <c>LOCK</c> prefix.
         /// </summary>

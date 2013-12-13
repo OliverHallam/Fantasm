@@ -45,9 +45,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyTokenizer.cs" />
+    <Compile Include="ExecutionMode.cs" />
+    <Compile Include="ExecutionModeExtensions.cs" />
+    <Compile Include="ExecutionModes.cs" />
     <Compile Include="InstructionPrefix.cs" />
+    <Compile Include="InstructionPrefixes.cs" />
     <Compile Include="InstructionPrefixExtensions.cs" />
     <Compile Include="InstructionReader.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="OperandType.cs" />
     <Compile Include="PeekStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

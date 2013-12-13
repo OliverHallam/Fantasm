@@ -21,7 +21,7 @@
 
         /// <summary>
         /// Returns a boolean value indicating whether the specified instruction prefix is a Group 2 prefix.  Group 2
-        /// contains the segement override prefixes.
+        /// contains the segment override prefixes.
         /// </summary>
         /// <param name="prefix">The prefix.</param>
         /// <returns>

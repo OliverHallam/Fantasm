@@ -26,8 +26,15 @@
         ImmediateDword,
 
         /// <summary>
-        /// The operand is a register.
+        /// The operand is the value of a register.
         /// </summary>
-        Register
+        Register,
+
+        /// <summary>
+        /// The operand is a memory access.  In this case the memory address accessed is
+        /// <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
+        /// from the
+        /// </summary>
+        Memory,
     }
 }

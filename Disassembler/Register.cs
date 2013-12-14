@@ -5,6 +5,8 @@
     /// </summary>
     public enum Register
     {
+        None,
+
         Al,
         Bl,
         Cl,

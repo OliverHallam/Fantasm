@@ -50,7 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InstructionReaderGetOperandTests.cs" />
     <Compile Include="InstructionReaderOpCodesTests.cs" />
+    <Compile Include="InstructionReaderTestBase.cs" />
     <Compile Include="InstructionReaderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

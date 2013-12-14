@@ -1,13 +1,12 @@
 ﻿using System;
-using System.ComponentModel;
-using System.IO;
+using System.Runtime.InteropServices;
 
 using NUnit.Framework;
 
 namespace Fantasm.Disassembler.Tests
 {
     [TestFixture]
-    class InstructionReaderTests
+    class InstructionReaderTests : InstructionReaderTestBase
     {
         private const byte Nop = 0x90;
 
@@ -26,24 +25,6 @@ namespace Fantasm.Disassembler.Tests
 
             Assert.IsTrue(reader.Read());
             Assert.IsFalse(reader.Read());
-        }
-
-        private static InstructionReader ReadBytes(params byte[] bytes)
-        {
-            var stream = new MemoryStream(bytes);
-            return new InstructionReader(stream, ExecutionMode.CompatibilityMode);
-        }
-
-        private static InstructionReader ReadBytes16(params byte[] bytes)
-        {
-            var stream = new MemoryStream(bytes);
-            return new InstructionReader(stream, ExecutionMode.CompatibilityMode, false);
-        }
-
-        private static InstructionReader ReadBytes64(params byte[] bytes)
-        {
-            var stream = new MemoryStream(bytes);
-            return new InstructionReader(stream, ExecutionMode.Allow64Bit, true);
         }
 
         [Test]
@@ -271,148 +252,6 @@ namespace Fantasm.Disassembler.Tests
             Assert.IsTrue(reader.Read());
             Assert.IsFalse(reader.Read());
         }
-        
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void GetOperandByte_WithNoOperands_ThrowsArgumentException()
-        {
-            var reader = ReadBytes();
-            reader.GetOperandByte(0);
-        }
-
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void GetOperandWord_WithNoOperands_ThrowsArgumentException()
-        {
-            var reader = ReadBytes();
-            reader.GetOperandWord(0);
-        }
-
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void GetOperandDword_WithNoOperands_ThrowsArgumentException()
-        {
-            var reader = ReadBytes();
-            reader.GetOperandDword(0);
-        }
-
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void GetOperandRegister_WithNoOperands_ThrowsArgumentException()
-        {
-            var reader = ReadBytes();
-            reader.GetOperandRegister(0);
-        }
-
-        [Test]
-        public void GetOperandByte_CanRetrieveFirstOperand()
-        {
-            // AAD 23H
-            var reader = ReadBytes(0xD5, 0x23);
-            reader.Read();
-
-            Assert.AreEqual(0x23, reader.GetOperandByte(0));
-        }
-
-        [Test]
-        public void GetOperandByte_CanRetrieveSecondOperand()
-        {
-            // ADD AL 23H
-            var reader = ReadBytes(0x04, 0x23);
-            reader.Read();
-
-            Assert.AreEqual(0x23, reader.GetOperandByte(1));
-        }
-
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void GetOperandByte_ForNonByteArgument_ThrowsInvalidOperationException()
-        {
-            // ADD AL 23H
-            var reader = ReadBytes(0x04, 0x23);
-            reader.Read();
-
-            reader.GetOperandByte(0);
-        }
-
-
-
-        [Test]
-        [Ignore] // we don't support any instructions yet with a word first operand
-        public void GetOperandWord_CanRetrieveFirstOperand()
-        {
-        }
-
-        [Test]
-        public void GetOperandWord_CanRetrieveSecondOperand()
-        {
-            // ADD AX 2345H
-            var reader = ReadBytes16(0x05, 0x45, 0x23);
-            reader.Read();
-
-            Assert.AreEqual(0x2345, reader.GetOperandWord(1));
-        }
-
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void GetOperandWord_ForNonWordArgument_ThrowsInvalidOperationException()
-        {
-            // ADD AL 23H
-            var reader = ReadBytes(0x04, 0x23);
-            reader.Read();
-
-            reader.GetOperandWord(0);
-        }
-
-
-        [Test]
-        [Ignore] // we don't support any instructions yet with a word first operand
-        public void GetOperandDword_CanRetrieveFirstOperand()
-        {
-        }
-
-        [Test]
-        public void GetOperandDword_CanRetrieveSecondOperand()
-        {
-            // ADD EAX 23456789H
-            var reader = ReadBytes(0x05, 0x89, 0x67, 0x45, 0x23);
-            reader.Read();
-
-            Assert.AreEqual(0x23456789, reader.GetOperandDword(1));
-        }
-
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void GetOperandDword_ForNonDwordArgument_ThrowsInvalidOperationException()
-        {
-            // ADD AL 23H
-            var reader = ReadBytes(0x04, 0x23);
-            reader.Read();
-
-            reader.GetOperandDword(0);
-        }
-
-
-        [Test]
-        public void GetOperandRegister_CanRetrieveFirstOperand()
-        {
-            // ADD AL 23H
-            var reader = ReadBytes(0x04, 0x23);
-            reader.Read();
-
-            Assert.AreEqual(Register.Al, reader.GetOperandRegister(0));
-        }
-
-        [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
-        public void GetOperandRegister_ForNonRegisterArgument_ThrowsInvalidOperationException()
-        {
-            // AAD 23H
-            var reader = ReadBytes(0xD5, 0x23);
-            reader.Read();
-
-            reader.GetOperandRegister(0);
-        }
 
         [Test]
         public void Read_ForInstructionWithNoOperands_ResetsOperandCount()
@@ -424,6 +263,203 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
 
             Assert.AreEqual(0, reader.OperandCount);
+        }
+
+        [Test]
+        [TestCase(0, Register.Al)]
+        [TestCase(1, Register.Cl)]
+        [TestCase(2, Register.Dl)]
+        [TestCase(3, Register.Bl)]
+        [TestCase(4, Register.Ah)]
+        [TestCase(5, Register.Ch)]
+        [TestCase(6, Register.Dh)]
+        [TestCase(7, Register.Bh)]
+        public void Read_ForInstructionWith8bitModRM_CanReadRegisterOperand(byte modrmReg, Register register)
+        {
+            // ADD (AX) 0
+            var reader = ReadBytes(0x80, (byte)(0xc0 | modrmReg), 0x00);
+            reader.Read();
+            
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void Read_ForInstructionWithModRM_ReadsCorrectBaseAddress(byte modrmReg, Register register)
+        {
+            // ADD ([EAX]) 0
+            var reader = ReadBytes(0x80, modrmReg, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.None, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        public void Read_ForInstructionWithModRM_WithJustDisplacement_ReadsOperandCorrectly()
+        {
+            // ADD ([0x01234567]) 0
+            var reader = ReadBytes(0x80, 0x05, 0x67, 0x45, 0x23, 0x01, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.None, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.None, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0x01234567, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(5, Register.Ebp)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void Read_ForInstructionWithModRMWith8BitDisplacement_ReadsOperandCorrectly(byte modrmReg, Register register)
+        {
+            // ADD ([EAX + 0x23]) 0
+            var reader = ReadBytes(0x80, (byte)(0x40 | modrmReg), 0x23, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.None, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0x23, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(5, Register.Ebp)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void Read_ForInstructionWithModRMWith32BitDisplacement_ReadsOperandCorrectly(byte modrmReg, Register register)
+        {
+            // ADD ([EAX + 0x01234567]) 0
+            var reader = ReadBytes(0x80, (byte)(0x80 | modrmReg), 0x67, 0x45, 0x23, 0x01, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.None, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0x01234567, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(5, Register.Ebp)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void Read_ForInstructionWithSib_ReadsIndexRegisterCorrectly(byte sibIndex, Register register)
+        {
+            // ADD ([EAX + REG]) 0
+            var reader = ReadBytes(0x80, 0x04, (byte)(sibIndex << 3), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(register, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        [TestCase(0, 1)]
+        [TestCase(1, 2)]
+        [TestCase(2, 4)]
+        [TestCase(3, 8)]
+        public void Read_ForInstructionWithSib_ReadsScaleCorrectly(byte sibScale, int scale)
+        {
+            // ADD ([EAX + EAX * Scale]) 0
+            var reader = ReadBytes(0x80, 0x04, (byte)(sibScale << 6), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(scale, reader.GetOperandScale(0));
+            Assert.AreEqual(0, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(4, Register.Esp)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void Read_ForInstructionWithSib_ReadsBaseCorrectly(byte sibBase, Register register)
+        {
+            // ADD ([BASE + EAX]) 0
+            var reader = ReadBytes(0x80, 0x04, sibBase, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(1, reader.GetOperandScale(0));
+            Assert.AreEqual(0, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        public void Read_ForInstructionWithModRMSib_CanAddDwordDisplacementWithNoBase()
+        {
+            // ADD ([EAX*2 + 0x01234567]) 0
+            var reader = ReadBytes(0x80, 0x04, 0x45, 0x67, 0x45, 0x23, 0x01, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.None, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(2, reader.GetOperandScale(0));
+            Assert.AreEqual(0x01234567, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        public void Read_ForInstructionWithModRMSib_CanAddByteDisplacementToEbp()
+        {
+            // ADD ([EAX*2] + 0x23 + [EBP]) 0
+            var reader = ReadBytes(0x80, 0x44, 0x45, 0x23, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.Ebp, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(2, reader.GetOperandScale(0));
+            Assert.AreEqual(0x23, reader.GetOperandDisplacement(0));
+        }
+
+        [Test]
+        public void Read_ForInstructionWithModRMSib_CanAddDwordDisplacementToEbp()
+        {
+            // ADD ([EAX*2] + 0x01234567 + [EBP]) 0
+            var reader = ReadBytes(0x80, 0x84, 0x45, 0x67, 0x45, 0x23, 0x01, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(Register.Ebp, reader.GetOperandBaseRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetOperandIndexRegister(0));
+            Assert.AreEqual(2, reader.GetOperandScale(0));
+            Assert.AreEqual(0x01234567, reader.GetOperandDisplacement(0));
         }
     }
 }

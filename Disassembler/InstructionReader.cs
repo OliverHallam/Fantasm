@@ -6,12 +6,31 @@ namespace Fantasm.Disassembler
     /// <summary>
     /// A class used to read a stream of X86 assembly instructions.
     /// </summary>
-    public class InstructionReader
+    public partial class InstructionReader
     {
         private struct Operand
         {
             public OperandType Type;
-            public int Value;
+            
+            /// <summary>
+            /// The base register if this is a memory operand, or the register if this is a register operand.
+            /// </summary>
+            public Register BaseRegister;
+
+            /// <summary>
+            /// The index register if this is a memory operand.
+            /// </summary>
+            public Register IndexRegister;
+
+            /// <summary>
+            /// The displacement if this is a memory operand, or the value if this is is an immediate operand.
+            /// </summary>
+            public int Displacement;
+
+            /// <summary>
+            /// The scaling factor if this is a memory operand.
+            /// </summary>
+            public int Scale;
         }
 
         private readonly Stream stream;
@@ -73,6 +92,30 @@ namespace Fantasm.Disassembler
             get
             {
                 return this.operandCount;
+            }
+        }
+
+        /// <summary>
+        /// Gets the type of the specified operand.
+        /// </summary>
+        /// <param name="index">
+        /// The index of the operand.
+        /// </param>
+        /// <returns>
+        /// A member of the <see cref="OperandType"/> enumeration.
+        /// </returns>
+        public OperandType GetOperandType(int index)
+        {
+            if (index < 0 || index >= this.operandCount)
+                throw new ArgumentException("The index is not valid for this instruction", "index");
+
+            switch (index)
+            {
+                default:
+                    return operand1.Type;
+
+                case 1:
+                    return operand2.Type;
             }
         }
 
@@ -161,9 +204,108 @@ namespace Fantasm.Disassembler
                 throw new InvalidOperationException("The specified operand is not a register");
             }
 
-            return (Register)this.operand1.Value;
+            return this.operand1.BaseRegister;
         }
 
+        /// <summary>
+        /// Gets the base register of a memory access operand.
+        /// </summary>
+        /// <param name="index">The index of the operand.</param>
+        /// <returns>
+        /// A member of the <see cref="Register"/> enumeration.
+        /// </returns>
+        /// <remarks>
+        /// This is <c>BaseRegister</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// </remarks>
+        public Register GetOperandBaseRegister(int index)
+        {
+            if (index < 0 || index >= this.operandCount)
+            {
+                throw new ArgumentException("The index is not valid for this instruction", "index");
+            }
+
+            if (index != 0 || this.operand1.Type != OperandType.Memory)
+            {
+                throw new InvalidOperationException("The specified operand is not a memory access");
+            }
+
+            return this.operand1.BaseRegister;
+        }
+
+        /// <summary>
+        /// Gets the index register of a memory access operand.
+        /// </summary>
+        /// <param name="index">The index of the operand.</param>
+        /// <returns>
+        /// A member of the <see cref="Register"/> enumeration.
+        /// </returns>
+        /// <remarks>
+        /// This is <c>IndexRegister</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// </remarks>
+        public Register GetOperandIndexRegister(int index)
+        {
+            if (index < 0 || index >= this.operandCount)
+            {
+                throw new ArgumentException("The index is not valid for this instruction", "index");
+            }
+
+            if (index != 0 || this.operand1.Type != OperandType.Memory)
+            {
+                throw new InvalidOperationException("The specified operand is not a memory access");
+            }
+
+            return operand1.IndexRegister;
+        }
+
+        /// <summary>
+        /// Gets the scale parameter of a memory access operand.
+        /// </summary>
+        /// <param name="index">The index of the operand.</param>
+        /// <returns>
+        /// Either 1, 2, 4 or 8.
+        /// </returns>
+        /// <remarks>
+        /// This is <c>Scale</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// </remarks>
+        public int GetOperandScale(int index)
+        {
+            if (index < 0 || index >= this.operandCount)
+            {
+                throw new ArgumentException("The index is not valid for this instruction", "index");
+            }
+
+            if (index != 0 || this.operand1.Type != OperandType.Memory)
+            {
+                throw new InvalidOperationException("The specified operand is not a memory access");
+            }
+
+            return operand1.Scale;
+        }
+
+        /// <summary>
+        /// Gets the displacement parameter of a memory access operand.
+        /// </summary>
+        /// <param name="index">The index of the operand.</param>
+        /// <returns>
+        /// The displacement, in bytes.
+        /// </returns>
+        /// <remarks>
+        /// This is <c>Displacement</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// </remarks>
+        public int GetOperandDisplacement(int index)
+        {
+            if (index < 0 || index >= this.operandCount)
+            {
+                throw new ArgumentException("The index is not valid for this instruction", "index");
+            }
+
+            if (index != 0 || this.operand1.Type != OperandType.Memory)
+            {
+                throw new InvalidOperationException("The specified operand is not a memory access");
+            }
+
+            return this.operand1.Displacement;
+        }
 
         /// <summary>
         /// Attempts to read the next instruction from the stream.
@@ -198,7 +340,7 @@ namespace Fantasm.Disassembler
                         this.ReadInstruction(Instruction.Add, ExecutionModes.All);
                         this.operandCount = 2;
                         this.operand1.Type = OperandType.Register;
-                        this.operand1.Value = (int)Register.Al;
+                        this.operand1.BaseRegister = Register.Al;
                         this.ReadImmediateByte(ref operand2);
                         return true;
 
@@ -208,64 +350,41 @@ namespace Fantasm.Disassembler
                         this.operand1.Type = OperandType.Register;
                         if ((this.rex & RexPrefix.W) != 0)
                         {
-                            this.operand1.Value = (int)Register.Rax;
+                            this.operand1.BaseRegister = Register.Rax;
                             this.ReadImmediateDword(ref operand2);
                         }
                         else if (this.Is32BitOperandSize())
                         {
-                            this.operand1.Value = (int)Register.Eax;
+                            this.operand1.BaseRegister = Register.Eax;
                             this.ReadImmediateDword(ref operand2);
                         }
                         else
                         {
-                            this.operand1.Value = (int)Register.Ax;
+                            this.operand1.BaseRegister = Register.Ax;
                             this.ReadImmediateWord(ref operand2);
                         }
                         return true;
                         
-                    case 0xF0:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
-                        continue;
-                    case 0xF2:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
-                        continue;
-                    case 0xF3:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
-                        continue;
-
                     case 0x26:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
                         continue;
                     case 0x2E:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
                         continue;
+                    
                     case 0x36:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentSS);
                         continue;
-                    case 0x3E:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
-                        continue;
-                    case 0x64:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
-                        continue;
-                    case 0x65:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);
-                        continue;
-
-                    case 0x66:
-                        this.ReadPrefix(InstructionPrefixes.Group3Mask, InstructionPrefixes.OperandSizeOverride);
-                        continue;
-
-                    case 0x67:
-                        this.ReadPrefix(InstructionPrefixes.Group4Mask, InstructionPrefixes.AddressSizeOverride);
-                        continue;
-
                     case 0x37:
                         return this.ReadInstructionNoOperands(Instruction.Aaa, ExecutionModes.CompatibilityMode);
 
+                    case 0x3E:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
+                        continue;
                     case 0x3F:
                         return this.ReadInstructionNoOperands(Instruction.Aas, ExecutionModes.CompatibilityMode);
-                        
+
+                       
                     case 0x40:
                     case 0x41:
                     case 0x42:
@@ -284,21 +403,46 @@ namespace Fantasm.Disassembler
                     case 0x4F:
                         if (this.executionMode == ExecutionModes.Allow64Bit)
                         {
-                            // TODO: ignored if followed by prefix
-                            // TODO: reset on next instruction
                             this.ReadRexPrefix(nextByte);
                             continue;
                         }
                         goto default;
+
+                    case 0x64:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        continue;
+                    case 0x65:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);
+                        continue;
+                    case 0x66:
+                        this.ReadPrefix(InstructionPrefixes.Group3Mask, InstructionPrefixes.OperandSizeOverride);
+                        continue;
+                    case 0x67:
+                        this.ReadPrefix(InstructionPrefixes.Group4Mask, InstructionPrefixes.AddressSizeOverride);
+                        continue;
+
+                    case 0x80:
+                        return this.ReadGroup1();
 
                     case 0x90:
                         return this.ReadInstructionNoOperands(Instruction.Nop, ExecutionModes.All);
 
                     case 0xD4:
                         return this.ReadAsciiAdjustWithBase(Instruction.Aam);
-
                     case 0xD5:
                         return this.ReadAsciiAdjustWithBase(Instruction.Aad);
+
+                    case 0xF0:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
+                        continue;
+                    case 0xF1:
+                        throw InvalidInstructionBytes();
+                    case 0xF2:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
+                        continue;
+                    case 0xF3:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
+                        continue;
 
                     default:
                         this.instruction = Instruction.Unknown;
@@ -306,6 +450,37 @@ namespace Fantasm.Disassembler
                         throw new NotImplementedException();
                 }
             }
+        }
+
+        private bool ReadGroup1()
+        {
+            var modrm = this.stream.ReadByte();
+            if (modrm < 0)
+            {
+                throw InvalidInstructionBytes();
+            }
+
+            var opCode = (modrm & 0x38) >> 3;
+            switch (opCode)
+            {
+                case 0:
+                    this.instruction = Instruction.Add;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            this.operandCount = 2;
+            this.ReadModRMOperand(modrm);
+            this.ReadImmediateByte(ref operand2);
+
+            if (this.operand1.Type != OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            {
+                throw InvalidInstructionBytes();
+            }
+
+            return true;
         }
 
         private void ReadRexPrefix(int nextByte)
@@ -356,7 +531,7 @@ namespace Fantasm.Disassembler
             this.operandCount = 1;
             this.ReadImmediateByte(ref this.operand1);
             // special case: AAD is a synonym for AAD 0AH
-            if (this.operand1.Value == 0x0A)
+            if (this.operand1.Displacement == 0x0A)
             {
                 this.operandCount = 0;
             }
@@ -387,7 +562,7 @@ namespace Fantasm.Disassembler
             }
 
             operand.Type = OperandType.ImmediateByte;
-            operand.Value = value;
+            operand.Displacement = value;
         }
 
         private void ReadImmediateWord(ref Operand operand)
@@ -399,7 +574,7 @@ namespace Fantasm.Disassembler
             }
 
             operand.Type = OperandType.ImmediateWord;
-            operand.Value = BitConverter.ToInt16(this.buffer, 0);
+            operand.Displacement = BitConverter.ToInt16(this.buffer, 0);
         }
 
         private void ReadImmediateDword(ref Operand operand)
@@ -411,7 +586,7 @@ namespace Fantasm.Disassembler
             }
 
             operand.Type = OperandType.ImmediateDword;
-            operand.Value = BitConverter.ToInt32(this.buffer, 0);
+            operand.Displacement = BitConverter.ToInt32(this.buffer, 0);
         }
 
         private byte GetOperandByte(ref Operand operand)
@@ -421,7 +596,7 @@ namespace Fantasm.Disassembler
                 throw new InvalidOperationException("The specified operand is not a byte");
             }
 
-            return (byte)operand.Value;
+            return (byte)operand.Displacement;
         }
 
         private short GetOperandWord(ref Operand operand)
@@ -431,7 +606,7 @@ namespace Fantasm.Disassembler
                 throw new InvalidOperationException("The specified operand is not a word");
             }
 
-            return (short)operand.Value;
+            return (short)operand.Displacement;
         }
 
         private int GetOperandDword(ref Operand operand)
@@ -441,7 +616,7 @@ namespace Fantasm.Disassembler
                 throw new InvalidOperationException("The specified operand is not a dword");
             }
 
-            return operand.Value;
+            return operand.Displacement;
         }
 
         private static Exception InvalidInstructionBytes()

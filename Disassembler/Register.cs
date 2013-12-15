@@ -11,10 +11,6 @@
         Bl,
         Cl,
         Dl,
-        Ah,
-        Bh,
-        Ch,
-        Dh,
         Dil,
         Sil,
         Bpl,
@@ -27,6 +23,11 @@
         R13L,
         R14L,
         R15L,
+
+        Ah,
+        Bh,
+        Ch,
+        Dh,
 
         Ax,
         Bx,
@@ -61,6 +62,7 @@
         R13D,
         R14D,
         R15D,
+        Eip,
 
         Rax,
         Rbx,
@@ -77,7 +79,9 @@
         R12,
         R13,
         R14,
-        R15
+        R15,
+        Rip
+
 /*
         Cs,
         Ds,
@@ -87,7 +91,6 @@
         Gs,
 
         Eflags,
-        Eip,
 */
     }
 }

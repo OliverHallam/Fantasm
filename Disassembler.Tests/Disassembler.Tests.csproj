@@ -50,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InstructionReader16BitModrmTests.cs" />
+    <Compile Include="InstructionReader32BitModrmTests.cs" />
+    <Compile Include="InstructionReader64BitModrmTests.cs" />
     <Compile Include="InstructionReaderGetOperandTests.cs" />
     <Compile Include="InstructionReaderOpCodesTests.cs" />
     <Compile Include="InstructionReaderTestBase.cs" />

@@ -8,6 +8,13 @@ namespace Fantasm.Disassembler
     /// </summary>
     public partial class InstructionReader
     {
+        private enum Size
+        {
+            Word,
+            Dword,
+            Qword,
+        }
+
         private struct Operand
         {
             public OperandType Type;
@@ -60,7 +67,7 @@ namespace Fantasm.Disassembler
         {
             this.stream = stream;
             this.executionMode = executionMode.ToExecutionModes();
-            this.default32BitOperands = default32BitOperands;
+            this.default32BitOperands = default32BitOperands || executionMode == ExecutionMode.Long64Bit;
         }
 
         /// <summary>
@@ -348,20 +355,22 @@ namespace Fantasm.Disassembler
                         this.ReadInstruction(Instruction.Add, ExecutionModes.All);
                         this.operandCount = 2;
                         this.operand1.Type = OperandType.Register;
-                        if ((this.rex & RexPrefix.W) != 0)
+                        switch (this.GetOperandSize())
                         {
-                            this.operand1.BaseRegister = Register.Rax;
-                            this.ReadImmediateDword(ref operand2);
-                        }
-                        else if (this.Is32BitOperandSize())
-                        {
-                            this.operand1.BaseRegister = Register.Eax;
-                            this.ReadImmediateDword(ref operand2);
-                        }
-                        else
-                        {
-                            this.operand1.BaseRegister = Register.Ax;
-                            this.ReadImmediateWord(ref operand2);
+                            case Size.Qword:
+                                this.operand1.BaseRegister = Register.Rax;
+                                this.ReadImmediateDword(ref operand2);
+                                break;
+
+                            case Size.Dword:
+                                this.operand1.BaseRegister = Register.Eax;
+                                this.ReadImmediateDword(ref operand2);
+                                break;
+
+                            case Size.Word:
+                                this.operand1.BaseRegister = Register.Ax;
+                                this.ReadImmediateWord(ref operand2);
+                                break;
                         }
                         return true;
                         
@@ -401,7 +410,7 @@ namespace Fantasm.Disassembler
                     case 0x4D:
                     case 0x4E:
                     case 0x4F:
-                        if (this.executionMode == ExecutionModes.Allow64Bit)
+                        if (this.executionMode == ExecutionModes.Long64Bit)
                         {
                             this.ReadRexPrefix(nextByte);
                             continue;
@@ -488,9 +497,28 @@ namespace Fantasm.Disassembler
             this.rex = (RexPrefix)nextByte;
         }
 
-        private bool Is32BitOperandSize()
+        private Size GetOperandSize()
         {
-            return this.default32BitOperands ^ ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
+            var operandSizeOverride = ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
+
+            if ((this.rex & (RexPrefix.W)) != 0)
+            {
+                return Size.Qword;
+            }
+            
+            return (this.default32BitOperands ^ operandSizeOverride) ? Size.Dword : Size.Word;
+        }
+
+        private Size GetAddressSize()
+        {
+            var addressSizeOverride = ((this.prefixes & InstructionPrefixes.AddressSizeOverride) != 0);
+
+            if ((this.executionMode & ExecutionModes.Long64Bit) != 0)
+            {
+                return addressSizeOverride ? Size.Dword : Size.Qword;
+            }
+            
+            return (this.default32BitOperands ^ addressSizeOverride) ? Size.Dword : Size.Word;
         }
 
         private void ReadPrefix(InstructionPrefixes group, InstructionPrefixes prefix)

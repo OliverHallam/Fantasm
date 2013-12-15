@@ -16,11 +16,11 @@ namespace Fantasm.Disassembler
         /// <summary>
         /// 64-bit mode.
         /// </summary>
-        Allow64Bit = 2,
+        Long64Bit = 2,
         
         /// <summary>
         /// All execution modes.
         /// </summary>
-        All = CompatibilityMode | Allow64Bit
+        All = CompatibilityMode | Long64Bit
     }
 }

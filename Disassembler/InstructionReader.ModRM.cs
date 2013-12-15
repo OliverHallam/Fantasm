@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Configuration;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
 
 namespace Fantasm.Disassembler
 {
@@ -21,13 +18,16 @@ namespace Fantasm.Disassembler
             }
 
             this.operand1.Type = OperandType.Memory;
-            if (this.Is32BitOperandSize())
+            var addressSize = this.GetAddressSize();
+            switch (addressSize)
             {
-                this.ReadMemoryParameters32(rm, mod);
-            }
-            else
-            {
-                this.ReadMemoryParameters16(rm, mod);
+                case Size.Word:
+                    this.ReadMemoryParameters16(rm, mod);
+                    break;
+
+                default:
+                    this.ReadMemoryParameters32(rm, mod, addressSize);
+                    break;
             }
         }
 
@@ -61,28 +61,40 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private void ReadMemoryParameters32(int rm, int mod)
+        private void ReadMemoryParameters32(int rm, int mod, Size addressSize)
         {
-            this.operand1.BaseRegister = this.GetRegister32(rm);
+            var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
 
-            // instead of encoding ESP we use a SIB byte
-            if (this.operand1.BaseRegister == Register.Esp)
+            // if the r/m bits in the modr/m byte are 5 then we use a sib byte
+            int resolvedRM = rm;
+            if (rm == 4)
             {
-                this.ReadSib();
+                resolvedRM = this.ReadSibBase(addressSizeBaseRegister);
             }
             else
             {
                 this.operand1.IndexRegister = Register.None;
                 this.operand1.Scale = 1;
             }
+            this.operand1.BaseRegister = this.GetRegister32(resolvedRM, addressSizeBaseRegister);
 
             switch (mod)
             {
                 case 0:
-                    if (this.operand1.BaseRegister == Register.Ebp)
+                    if (resolvedRM == 5)
                     {
-                        // instead of EBP we use a 32-bit displacement (whether from modrm or sib)
-                        this.operand1.BaseRegister = Register.None;
+                        // in this case we always read a displacement (the base r/m, ignoring Rex.B from either modr/m
+                        // or sib was 5).
+                        if (this.executionMode == ExecutionModes.Long64Bit && rm == 5)
+                        {
+                            // in 64-bit mode without a sib byte we use RIP based addressing
+                            this.operand1.BaseRegister = addressSizeBaseRegister + (Register.Eip - Register.Eax);
+                        }
+                        else
+                        {
+                            // in all other cases, we ignore the register
+                            this.operand1.BaseRegister = Register.None;
+                        }
                         this.ReadDwordDisplacement();
                     }
                     else
@@ -101,7 +113,7 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private void ReadSib()
+        private byte ReadSibBase(Register addressSizeBaseRegister)
         {
             var sib = this.stream.ReadByte();
             if (sib < 0)
@@ -110,19 +122,18 @@ namespace Fantasm.Disassembler
             }
 
             var index = (sib & 0x38) >> 3;
-            if (index == 4)
+            if (index == 4 && (this.rex & RexPrefix.B) == 0)
             {
                 this.operand1.IndexRegister = Register.None;
                 this.operand1.Scale = 1;
             }
             else
             {
-                this.operand1.IndexRegister = this.GetRegister32(index);
+                this.operand1.IndexRegister = this.GetRegister32(index, addressSizeBaseRegister);
                 this.operand1.Scale = 1 << (sib >> 6);
             }
 
-            var baseValue = sib & 0x07;
-            this.operand1.BaseRegister = this.GetRegister32(baseValue);
+            return (byte)(sib & 0x07);
         }
 
         private void ReadRMBaseIndex16(int rm)
@@ -166,50 +177,62 @@ namespace Fantasm.Disassembler
 
         private Register GetRegister8(int reg)
         {
+            if ((this.rex & RexPrefix.B) != 0)
+            {
+                return Register.R8L + reg;
+            }
+            if (reg < 4)
+            {
+                return Register.Al + GetABCDRegisterOffset(reg);
+            }
+            if (this.rex != 0)
+            {
+                return Register.Al + GetDiSiBpSpRegisterOffset(reg);
+            }
+            return Register.Ah + GetABCDRegisterOffset(reg - 4);
+        }
+
+        private static Register GetAddressSizeBaseRegister(Size addressSize)
+        {
+            return addressSize == Size.Qword ? Register.Rax : Register.Eax;
+        }
+
+        private Register GetRegister32(int rm, Register baseRegister)
+        {
+            if ((this.rex & RexPrefix.B) != 0)
+            {
+                return baseRegister + 8 + rm;    
+            }
+            if (rm < 4)
+            {
+                return baseRegister + GetABCDRegisterOffset(rm);
+            }
+            return baseRegister + GetDiSiBpSpRegisterOffset(rm);
+        }
+
+        private static int GetABCDRegisterOffset(int reg)
+        {
             switch (reg)
             {
                 default:
-                    return Register.Al;
+                    // AX
+                    return 0;
                 case 1:
-                    return Register.Cl;
+                    // CX
+                    return 2;
                 case 2:
-                    return Register.Dl;
+                    // DX
+                    return 3;
                 case 3:
-                    return Register.Bl;
-                case 4:
-                    return Register.Ah;
-                case 5:
-                    return Register.Ch;
-                case 6:
-                    return Register.Dh;
-                case 7:
-                    return Register.Bh;
+                    // BX
+                    return 1;
             }
         }
 
-        private Register GetRegister32(int rm)
+        private static int GetDiSiBpSpRegisterOffset(int reg)
         {
-            switch (rm)
-            {
-                case 0:
-                    return Register.Eax;
-                case 1:
-                    return Register.Ecx;
-                case 2:
-                    return Register.Edx;
-                case 3:
-                    return Register.Ebx;
-                case 4:
-                    return Register.Esp;
-                case 5:
-                    return Register.Ebp;
-                case 6:
-                    return Register.Esi;
-                case 7:
-                    return Register.Edi;
-                default:
-                    return Register.None;
-            }
+            // [4,5,6,7] => [7,6,5,4] (SP, BP, SI, DI)
+            return 11 - reg;
         }
 
         private void ReadByteDisplacement()

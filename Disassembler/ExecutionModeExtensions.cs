@@ -14,7 +14,7 @@
         /// </returns>
         public static bool IsValid(this ExecutionMode mode)
         {
-            return mode == ExecutionMode.CompatibilityMode || mode == ExecutionMode.Allow64Bit;
+            return mode == ExecutionMode.CompatibilityMode || mode == ExecutionMode.Long64Bit;
         }
 
         /// <summary>

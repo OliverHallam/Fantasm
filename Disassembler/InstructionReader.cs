@@ -431,7 +431,18 @@ namespace Fantasm.Disassembler
                         continue;
 
                     case 0x80:
-                        return this.ReadGroup1();
+                    {
+                        var modrm = this.ReadByte();
+                        this.instruction = this.GetGroup1Opcode(modrm);
+                        return this.ReadEbIb(modrm);
+                    }
+                    case 0x81:
+                    {
+                        var modrm = this.ReadByte();
+                        this.instruction = this.GetGroup1Opcode(modrm);
+                        return this.ReadEvIz(modrm);
+                    }
+
 
                     case 0x90:
                         return this.ReadInstructionNoOperands(Instruction.Nop, ExecutionModes.All);
@@ -461,27 +472,10 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private bool ReadGroup1()
+        private bool ReadEbIb(byte modrm)
         {
-            var modrm = this.stream.ReadByte();
-            if (modrm < 0)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            var opCode = (modrm & 0x38) >> 3;
-            switch (opCode)
-            {
-                case 0:
-                    this.instruction = Instruction.Add;
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-
             this.operandCount = 2;
-            this.ReadModRMOperand(modrm);
+            this.ReadRegisterOrMemoryOperand(modrm, Register.Al);
             this.ReadImmediateByte(ref operand2);
 
             if (this.operand1.Type != OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
@@ -490,6 +484,59 @@ namespace Fantasm.Disassembler
             }
 
             return true;
+        }
+
+        private bool ReadEvIz(byte modrm)
+        {
+            this.operandCount = 2;
+
+            switch (this.GetOperandSize())
+            {
+                case Size.Qword:
+                    this.ReadRegisterOrMemoryOperand(modrm, Register.Rax);
+                    this.ReadImmediateDword(ref operand2);
+                    break;
+
+                case Size.Dword:
+                    this.ReadRegisterOrMemoryOperand(modrm, Register.Eax);
+                    this.ReadImmediateDword(ref operand2);
+                    break;
+
+                case Size.Word:
+                    this.ReadRegisterOrMemoryOperand(modrm, Register.Ax);
+                    this.ReadImmediateWord(ref operand2);
+                    break;
+            }
+
+            if (this.operand1.Type != OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            {
+                throw InvalidInstructionBytes();
+            }
+
+            return true;
+        }
+
+        private Instruction GetGroup1Opcode(int modrm)
+        {
+            var opCode = (modrm & 0x38) >> 3;
+            switch (opCode)
+            {
+                case 0:
+                    return Instruction.Add;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private byte ReadByte()
+        {
+            var modrm = this.stream.ReadByte();
+            if (modrm < 0)
+            {
+                throw InvalidInstructionBytes();
+            }
+            return (byte)modrm;
         }
 
         private void ReadRexPrefix(int nextByte)
@@ -583,14 +630,8 @@ namespace Fantasm.Disassembler
 
         private void ReadImmediateByte(ref Operand operand)
         {
-            var value = this.stream.ReadByte();
-            if (value < 0)
-            {
-                throw InvalidInstructionBytes();
-            }
-
             operand.Type = OperandType.ImmediateByte;
-            operand.Displacement = value;
+            operand.Displacement = this.ReadByte();
         }
 
         private void ReadImmediateWord(ref Operand operand)

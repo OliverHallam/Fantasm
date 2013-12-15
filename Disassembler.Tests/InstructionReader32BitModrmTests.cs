@@ -103,8 +103,46 @@ namespace Fantasm.Disassembler.Tests
         [TestCase(7, Register.Bh)]
         public void ModRM_ForDirect8BitRegister_EncodesCorrectRegister(byte modrmReg, Register register)
         {
-            // ADD (AX) 0
+            // ADD AL 0
             var reader = ReadBytes32(0x80, (byte)(0xc0 | modrmReg), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Ax)]
+        [TestCase(1, Register.Cx)]
+        [TestCase(2, Register.Dx)]
+        [TestCase(3, Register.Bx)]
+        [TestCase(4, Register.Sp)]
+        [TestCase(5, Register.Bp)]
+        [TestCase(6, Register.Si)]
+        [TestCase(7, Register.Di)]
+        public void ModRM_ForDirect16BitRegister_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD AX 0
+            var reader = ReadBytes32(0x66, 0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Eax)]
+        [TestCase(1, Register.Ecx)]
+        [TestCase(2, Register.Edx)]
+        [TestCase(3, Register.Ebx)]
+        [TestCase(4, Register.Esp)]
+        [TestCase(5, Register.Ebp)]
+        [TestCase(6, Register.Esi)]
+        [TestCase(7, Register.Edi)]
+        public void ModRM_ForDirect32BitRegister_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD AX 0
+            var reader = ReadBytes32(0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00, 0x00, 0x00);
             reader.Read();
 
             Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));

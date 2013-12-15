@@ -284,6 +284,82 @@ namespace Fantasm.Disassembler.Tests
         }
 
         [Test]
+        [TestCase(0, Register.R8W)]
+        [TestCase(1, Register.R9W)]
+        [TestCase(2, Register.R10W)]
+        [TestCase(3, Register.R11W)]
+        [TestCase(4, Register.R12W)]
+        [TestCase(5, Register.R13W)]
+        [TestCase(6, Register.R14W)]
+        [TestCase(7, Register.R15W)]
+        public void ModRM_ForDirect16BitRegisterWithRexB_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD R8w 0
+            var reader = ReadBytes64(0x66, 0x41, 0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.R8D)]
+        [TestCase(1, Register.R9D)]
+        [TestCase(2, Register.R10D)]
+        [TestCase(3, Register.R11D)]
+        [TestCase(4, Register.R12D)]
+        [TestCase(5, Register.R13D)]
+        [TestCase(6, Register.R14D)]
+        [TestCase(7, Register.R15D)]
+        public void ModRM_ForDirect32BitRegisterWithRexB_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD R8w 0
+            var reader = ReadBytes64(0x41, 0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00, 0x00, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.R8)]
+        [TestCase(1, Register.R9)]
+        [TestCase(2, Register.R10)]
+        [TestCase(3, Register.R11)]
+        [TestCase(4, Register.R12)]
+        [TestCase(5, Register.R13)]
+        [TestCase(6, Register.R14)]
+        [TestCase(7, Register.R15)]
+        public void ModRM_ForDirect64BitRegisterWithRexB_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD R8w 0
+            var reader = ReadBytes64(0x49, 0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00, 0x00, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
+        [TestCase(0, Register.Rax)]
+        [TestCase(1, Register.Rcx)]
+        [TestCase(2, Register.Rdx)]
+        [TestCase(3, Register.Rbx)]
+        [TestCase(4, Register.Rsp)]
+        [TestCase(5, Register.Rbp)]
+        [TestCase(6, Register.Rsi)]
+        [TestCase(7, Register.Rdi)]
+        public void ModRM_ForDirect64BitRegister_EncodesCorrectRegister(byte modrmReg, Register register)
+        {
+            // ADD R8w 0
+            var reader = ReadBytes64(0x48, 0x81, (byte)(0xc0 | modrmReg), 0x00, 0x00, 0x00, 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+            Assert.AreEqual(register, reader.GetOperandRegister(0));
+        }
+
+        [Test]
         public void ModRM_InsteadOfRbpWithNoDisplacement_UsesRipAddressingWithDwordDisplacement()
         {
             // ADD [RIP + 0x01234567] 0

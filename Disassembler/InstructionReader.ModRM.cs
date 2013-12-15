@@ -4,7 +4,7 @@ namespace Fantasm.Disassembler
 {
     public partial class InstructionReader
     {
-        private void ReadModRMOperand(int modrm)
+        private void ReadRegisterOrMemoryOperand(int modrm, Register baseRegister)
         {
             var mod = (modrm & 0xc0) >> 6;
             var rm = modrm & 0x07;
@@ -13,7 +13,7 @@ namespace Fantasm.Disassembler
             {
                 // encodes a register directly.
                 this.operand1.Type = OperandType.Register;
-                this.operand1.BaseRegister = this.GetRegister8(rm);
+                this.operand1.BaseRegister = this.GetRegister(rm, baseRegister);
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace Fantasm.Disassembler
                 this.operand1.IndexRegister = Register.None;
                 this.operand1.Scale = 1;
             }
-            this.operand1.BaseRegister = this.GetRegister32(resolvedRM, addressSizeBaseRegister);
+            this.operand1.BaseRegister = this.GetRegister(resolvedRM, addressSizeBaseRegister);
 
             switch (mod)
             {
@@ -129,7 +129,7 @@ namespace Fantasm.Disassembler
             }
             else
             {
-                this.operand1.IndexRegister = this.GetRegister32(index, addressSizeBaseRegister);
+                this.operand1.IndexRegister = this.GetRegister(index, addressSizeBaseRegister);
                 this.operand1.Scale = 1 << (sib >> 6);
             }
 
@@ -175,39 +175,26 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private Register GetRegister8(int reg)
+        private Register GetRegister(int reg, Register baseRegister)
         {
             if ((this.rex & RexPrefix.B) != 0)
             {
-                return Register.R8L + reg;
+                return baseRegister + 8 + reg;    
             }
             if (reg < 4)
             {
-                return Register.Al + GetABCDRegisterOffset(reg);
+                return baseRegister + GetABCDRegisterOffset(reg);
             }
-            if (this.rex != 0)
+            if (baseRegister == Register.Al && this.rex == 0)
             {
-                return Register.Al + GetDiSiBpSpRegisterOffset(reg);
+                return Register.Ah + GetABCDRegisterOffset(reg - 4);
             }
-            return Register.Ah + GetABCDRegisterOffset(reg - 4);
+            return baseRegister + GetDiSiBpSpRegisterOffset(reg);
         }
 
         private static Register GetAddressSizeBaseRegister(Size addressSize)
         {
             return addressSize == Size.Qword ? Register.Rax : Register.Eax;
-        }
-
-        private Register GetRegister32(int rm, Register baseRegister)
-        {
-            if ((this.rex & RexPrefix.B) != 0)
-            {
-                return baseRegister + 8 + rm;    
-            }
-            if (rm < 4)
-            {
-                return baseRegister + GetABCDRegisterOffset(rm);
-            }
-            return baseRegister + GetDiSiBpSpRegisterOffset(rm);
         }
 
         private static int GetABCDRegisterOffset(int reg)

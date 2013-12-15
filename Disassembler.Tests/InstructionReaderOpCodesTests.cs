@@ -44,10 +44,28 @@ namespace Fantasm.Disassembler.Tests
             RAX_Id,
             
             /// <summary>
-            /// The first operand is a memory address or register specified by a ModRM byte, and the second operand
-            /// is an immediate byte
+            /// The first operand is a memory address or 8-bit register specified by a ModRM byte, and the second
+            /// operand is an immediate byte
             /// </summary>
-            Eb_Ib
+            Eb_Ib,
+
+            /// <summary>
+            /// The first operand is a memory address or 16-bit register specified by a ModRM byte, and the second
+            /// operand is an immediate word.
+            /// </summary>
+            Ew_Iw,
+
+            /// <summary>
+            /// The first operand is a memory address or 32-bit register specified by a ModRM byte, and the second
+            /// operand is an immediate dword.
+            /// </summary>
+            Ed_Id,
+
+            /// <summary>
+            /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
+            /// operand is an immediate dword.
+            /// </summary>
+            Eq_Id
         }
 
         public enum OperandSize
@@ -127,6 +145,25 @@ namespace Fantasm.Disassembler.Tests
             {
             }
 
+
+            internal OpCodeProperties(
+                byte opCode,
+                byte opCodeMod,
+                Instruction mnemonic,
+                OperandSize operandSize,
+                OperandFormat operands,
+                InstructionPrefixes supportedPrefixes)
+                : this(
+                    0,
+                    operandSize,
+                    opCode,
+                    opCodeMod,
+                    mnemonic,
+                    operands,
+                    supportedPrefixes,
+                    ExecutionModes.All)
+            {
+            }
             internal OpCodeProperties(
                 RexPrefix rex,
                 byte opCode,
@@ -171,9 +208,9 @@ namespace Fantasm.Disassembler.Tests
             public override string ToString()
             {
                 if (this.OpCodeReg != 255)
-                    return string.Format("{0} ({1:X2}/{2})", this.Mnemonic, this.OpCode, this.OpCodeReg);
+                    return string.Format("{0} ({1:X2}/{2}) {3}", this.Mnemonic, this.OpCode, this.OpCodeReg, this.Operands);
                 else
-                    return string.Format("{0} ({1:X2})", this.Mnemonic, this.OpCode);
+                    return string.Format("{0} ({1:X2}) {2}", this.Mnemonic, this.OpCode, this.Operands);
             }
         }
 
@@ -185,6 +222,9 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(RexPrefix.W, 0x05, Instruction.Add, OperandFormat.RAX_Id), 
             new OpCodeProperties(0x80, 0, Instruction.Add, OperandFormat.Eb_Ib, InstructionPrefixes.Lock),
             new OpCodeProperties(RexPrefix.W, 0x80, 0, Instruction.Add, OperandFormat.Eb_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x81, 0, Instruction.Add, OperandSize.Size16, OperandFormat.Ew_Iw, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x81, 0, Instruction.Add, OperandSize.Size32, OperandFormat.Ed_Id, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, 0x81, 0, Instruction.Add, OperandFormat.Eq_Id, InstructionPrefixes.Lock),
             new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, ExecutionModes.CompatibilityMode),
             new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, ExecutionModes.CompatibilityMode),
             new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
@@ -245,6 +285,30 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
                     Assert.AreEqual(0x22, reader.GetOperandByte(1));
                     break;
+
+                case OperandFormat.Ew_Iw:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Sp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(1));
+                    Assert.AreEqual(0x2222, reader.GetOperandWord(1));
+                    break;
+
+                case OperandFormat.Ed_Id:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Esp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    break;
+
+                case OperandFormat.Eq_Id:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rsp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    break;
             }
 
             Assert.IsFalse(reader.Read());
@@ -285,7 +349,7 @@ namespace Fantasm.Disassembler.Tests
             var bytes = byteList.ToArray();
 
             var mode = GetExecutionMode(opCode);
-            var reader = new InstructionReader(new MemoryStream(bytes), mode);
+            var reader = new InstructionReader(new MemoryStream(bytes), mode, opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
         }
@@ -299,7 +363,7 @@ namespace Fantasm.Disassembler.Tests
             var bytes = byteList.ToArray();
 
             var mode = GetExecutionMode(opCode);
-            var reader = new InstructionReader(new MemoryStream(bytes), mode);
+            var reader = new InstructionReader(new MemoryStream(bytes), mode, opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
         }
@@ -393,6 +457,21 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Eb_Ib:
                     bytes.Add((byte)(modrm | opCode.OpCodeReg));
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.Ew_Iw:
+                    bytes.Add((byte)(modrm | opCode.OpCodeReg));
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.Eq_Id:
+                case OperandFormat.Ed_Id:
+                    bytes.Add((byte)(modrm | opCode.OpCodeReg));
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
                     bytes.Add(0x22);
                     break;
             }

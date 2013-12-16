@@ -26,13 +26,19 @@
         ImmediateDword,
 
         /// <summary>
-        /// The operand is the value of a register.
+        /// The operand is the value of a register in place of a memory access, retrievable from the
+        /// <see cref="InstructionReader.GetBaseRegister" /> property.
+        /// </summary>
+        DirectRegister,
+
+        /// <summary>
+        /// The operand is the value of a register, retrievable from the <see cref="InstructionReader.GetRegister" /> property.
         /// </summary>
         Register,
 
         /// <summary>
         /// The operand is a memory access.  In this case the memory address accessed is
-        /// <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
+        /// <c>[DirectRegister + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
         /// from the
         /// </summary>
         Memory,

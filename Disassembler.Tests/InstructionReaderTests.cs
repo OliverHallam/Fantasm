@@ -164,10 +164,10 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x48, 0x05, 0x67, 0x45, 0x23, 0x01, 0x05, 0x67, 0x45, 0x23, 0x01);
             
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Rax, reader.GetRegister());
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetRegister());
             
             Assert.IsFalse(reader.Read());
         }
@@ -179,7 +179,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x66, 0x48, 0x05, 0x67, 0x45, 0x23, 0x01);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Rax, reader.GetRegister());
 
             Assert.IsFalse(reader.Read());   
         }
@@ -191,7 +191,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x66, 0x40, 0x05, 0x23, 0x01);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Ax, reader.GetRegister());
 
             Assert.IsFalse(reader.Read());
         }
@@ -204,10 +204,10 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes32(0x66, 0x05, 0x34, 0x12, 0x05, 0x78, 0x56, 0x34, 0x12);
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Ax, reader.GetRegister());
 
             Assert.IsTrue(reader.Read());
-            Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
+            Assert.AreEqual(Register.Eax, reader.GetRegister());
 
             Assert.IsFalse(reader.Read());
         }

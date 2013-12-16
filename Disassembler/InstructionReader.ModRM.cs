@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace Fantasm.Disassembler
+﻿namespace Fantasm.Disassembler
 {
     public partial class InstructionReader
     {
-        private void ReadRegisterOrMemoryOperand(int modrm, Register baseRegister)
+        private OperandType RegisterOrMemory(int modrm, Register baseRegister)
         {
             var mod = (modrm & 0xc0) >> 6;
             var rm = modrm & 0x07;
@@ -12,56 +10,57 @@ namespace Fantasm.Disassembler
             if (mod == 3)
             {
                 // encodes a register directly.
-                this.operand1.Type = OperandType.Register;
-                this.operand1.BaseRegister = this.GetRegister(rm, baseRegister);
-                return;
+                this.baseRegister = this.GetRegister(rm, baseRegister);
+                return OperandType.DirectRegister;
             }
 
-            this.operand1.Type = OperandType.Memory;
             var addressSize = this.GetAddressSize();
             switch (addressSize)
             {
                 case Size.Word:
-                    this.ReadMemoryParameters16(rm, mod);
+                    this.ReadMemory16(mod, rm);
                     break;
 
                 default:
-                    this.ReadMemoryParameters32(rm, mod, addressSize);
+                    this.ReadMemory32(mod, rm, addressSize);
                     break;
             }
+            return OperandType.Memory;
         }
 
-        private void ReadMemoryParameters16(int rm, int mod)
+        private OperandType Register(int modrm, Register baseRegister)
         {
-            this.operand1.Scale = 1;
+            var reg = (modrm & 0x38) >> 3;
+            this.register = this.GetRegister(reg, baseRegister);
+            return OperandType.Register;
+        }
+
+        private void ReadMemory16(int mod, int rm)
+        {
             this.ReadRMBaseIndex16(rm);
 
             switch (mod)
             {
                 case 0:
-                    if (this.operand1.BaseRegister == Register.Bp && this.operand1.IndexRegister == Register.None)
+                    if (this.baseRegister == Disassembler.Register.Bp && this.indexRegister == Disassembler.Register.None)
                     {
                         // instead of BP we use a 16-bit displacement
-                        this.operand1.BaseRegister = Register.None;
-                        this.ReadWordDisplacement();
-                    }
-                    else
-                    {
-                        this.operand1.Displacement = 0;
+                        this.baseRegister = Disassembler.Register.None;
+                        this.displacement = this.ReadWord();
                     }
                     break;
 
                 case 1:
-                    this.ReadByteDisplacement();
+                    this.displacement = this.ReadByte();
                     break;
 
                 case 2:
-                    this.ReadWordDisplacement();
+                    this.displacement = this.ReadWord();
                     break;
             }
         }
 
-        private void ReadMemoryParameters32(int rm, int mod, Size addressSize)
+        private void ReadMemory32(int mod, int rm, Size addressSize)
         {
             var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
 
@@ -71,12 +70,7 @@ namespace Fantasm.Disassembler
             {
                 resolvedRM = this.ReadSibBase(addressSizeBaseRegister);
             }
-            else
-            {
-                this.operand1.IndexRegister = Register.None;
-                this.operand1.Scale = 1;
-            }
-            this.operand1.BaseRegister = this.GetRegister(resolvedRM, addressSizeBaseRegister);
+            this.baseRegister = this.GetRegister(resolvedRM, addressSizeBaseRegister);
 
             switch (mod)
             {
@@ -88,49 +82,40 @@ namespace Fantasm.Disassembler
                         if (this.executionMode == ExecutionModes.Long64Bit && rm == 5)
                         {
                             // in 64-bit mode without a sib byte we use RIP based addressing
-                            this.operand1.BaseRegister = addressSizeBaseRegister + (Register.Eip - Register.Eax);
+                            this.baseRegister = addressSizeBaseRegister + (Disassembler.Register.Eip - Disassembler.Register.Eax);
                         }
                         else
                         {
                             // in all other cases, we ignore the register
-                            this.operand1.BaseRegister = Register.None;
+                            this.baseRegister = Disassembler.Register.None;
                         }
-                        this.ReadDwordDisplacement();
+                        this.displacement = this.ReadDword();
                     }
                     else
                     {
-                        this.operand1.Displacement = 0;
+                        this.displacement = 0;
                     }
                     break;
 
                 case 1:
-                    this.ReadByteDisplacement();
+                    this.displacement = this.ReadByte();
                     break;
 
                 case 2:
-                    this.ReadDwordDisplacement();
+                    this.displacement = this.ReadDword();
                     break;
             }
         }
 
         private byte ReadSibBase(Register addressSizeBaseRegister)
         {
-            var sib = this.stream.ReadByte();
-            if (sib < 0)
-            {
-                throw InvalidInstructionBytes();
-            }
+            var sib = this.ReadByte();
 
             var index = (sib & 0x38) >> 3;
-            if (index == 4 && (this.rex & RexPrefix.B) == 0)
+            if (index != 4 || (this.rex & RexPrefix.B) != 0)
             {
-                this.operand1.IndexRegister = Register.None;
-                this.operand1.Scale = 1;
-            }
-            else
-            {
-                this.operand1.IndexRegister = this.GetRegister(index, addressSizeBaseRegister);
-                this.operand1.Scale = 1 << (sib >> 6);
+                this.indexRegister = this.GetRegister(index, addressSizeBaseRegister);
+                this.scale = 1 << (sib >> 6);
             }
 
             return (byte)(sib & 0x07);
@@ -141,36 +126,32 @@ namespace Fantasm.Disassembler
             switch (rm)
             {
                 case 0:
-                    this.operand1.BaseRegister = Register.Bx;
-                    this.operand1.IndexRegister = Register.Si;
+                    this.baseRegister = Disassembler.Register.Bx;
+                    this.indexRegister = Disassembler.Register.Si;
                     break;
                 case 1:
-                    this.operand1.BaseRegister = Register.Bx;
-                    this.operand1.IndexRegister = Register.Di;
+                    this.baseRegister = Disassembler.Register.Bx;
+                    this.indexRegister = Disassembler.Register.Di;
                     break;
                 case 2:
-                    this.operand1.BaseRegister = Register.Bp;
-                    this.operand1.IndexRegister = Register.Si;
+                    this.baseRegister = Disassembler.Register.Bp;
+                    this.indexRegister = Disassembler.Register.Si;
                     break;
                 case 3:
-                    this.operand1.BaseRegister = Register.Bp;
-                    this.operand1.IndexRegister = Register.Di;
+                    this.baseRegister = Disassembler.Register.Bp;
+                    this.indexRegister = Disassembler.Register.Di;
                     break;
                 case 4:
-                    this.operand1.BaseRegister = Register.Si;
-                    this.operand1.IndexRegister = Register.None;
+                    this.baseRegister = Disassembler.Register.Si;
                     break;
                 case 5:
-                    this.operand1.BaseRegister = Register.Di;
-                    this.operand1.IndexRegister = Register.None;
+                    this.baseRegister = Disassembler.Register.Di;
                     break;
                 case 6:
-                    this.operand1.BaseRegister = Register.Bp;
-                    this.operand1.IndexRegister = Register.None;
+                    this.baseRegister = Disassembler.Register.Bp;
                     break;
                 case 7:
-                    this.operand1.BaseRegister = Register.Bx;
-                    this.operand1.IndexRegister = Register.None;
+                    this.baseRegister = Disassembler.Register.Bx;
                     break;
             }
         }
@@ -185,16 +166,16 @@ namespace Fantasm.Disassembler
             {
                 return baseRegister + GetABCDRegisterOffset(reg);
             }
-            if (baseRegister == Register.Al && this.rex == 0)
+            if (baseRegister == Disassembler.Register.Al && this.rex == 0)
             {
-                return Register.Ah + GetABCDRegisterOffset(reg - 4);
+                return Disassembler.Register.Ah + GetABCDRegisterOffset(reg - 4);
             }
             return baseRegister + GetDiSiBpSpRegisterOffset(reg);
         }
 
         private static Register GetAddressSizeBaseRegister(Size addressSize)
         {
-            return addressSize == Size.Qword ? Register.Rax : Register.Eax;
+            return addressSize == Size.Qword ? Disassembler.Register.Rax : Disassembler.Register.Eax;
         }
 
         private static int GetABCDRegisterOffset(int reg)
@@ -220,39 +201,6 @@ namespace Fantasm.Disassembler
         {
             // [4,5,6,7] => [7,6,5,4] (SP, BP, SI, DI)
             return 11 - reg;
-        }
-
-        private void ReadByteDisplacement()
-        {
-            var value = this.stream.ReadByte();
-            if (value < 0)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            this.operand1.Displacement = value;
-        }
-
-        private void ReadWordDisplacement()
-        {
-            var bytesRead = this.stream.Read(this.buffer, 0, 2);
-            if (bytesRead < 2)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            this.operand1.Displacement = BitConverter.ToInt16(this.buffer, 0);
-        }
-
-        private void ReadDwordDisplacement()
-        {
-            var bytesRead = this.stream.Read(this.buffer, 0, 4);
-            if (bytesRead < 4)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            this.operand1.Displacement = BitConverter.ToInt32(this.buffer, 0);
         }
     }
 }

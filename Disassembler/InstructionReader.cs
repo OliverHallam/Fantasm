@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Remoting.Messaging;
 
 namespace Fantasm.Disassembler
 {
@@ -10,34 +11,10 @@ namespace Fantasm.Disassembler
     {
         private enum Size
         {
+            Byte,
             Word,
             Dword,
             Qword,
-        }
-
-        private struct Operand
-        {
-            public OperandType Type;
-            
-            /// <summary>
-            /// The base register if this is a memory operand, or the register if this is a register operand.
-            /// </summary>
-            public Register BaseRegister;
-
-            /// <summary>
-            /// The index register if this is a memory operand.
-            /// </summary>
-            public Register IndexRegister;
-
-            /// <summary>
-            /// The displacement if this is a memory operand, or the value if this is is an immediate operand.
-            /// </summary>
-            public int Displacement;
-
-            /// <summary>
-            /// The scaling factor if this is a memory operand.
-            /// </summary>
-            public int Scale;
         }
 
         private readonly Stream stream;
@@ -49,10 +26,16 @@ namespace Fantasm.Disassembler
         private InstructionPrefixes prefixes;
         private RexPrefix rex = RexPrefix.Magic;
         private Instruction instruction = Instruction.Unknown;
-        private Operand operand1;
-        private Operand operand2;
+        private OperandType operand1;
+        private OperandType operand2;
         private int operandCount;
 
+        private Register register;
+        private Register baseRegister;
+        private Register indexRegister;
+        private int scale;
+        private int displacement;
+        private int immediate;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InstructionReader"/> class.
@@ -119,199 +102,96 @@ namespace Fantasm.Disassembler
             switch (index)
             {
                 default:
-                    return operand1.Type;
+                    return operand1;
 
                 case 1:
-                    return operand2.Type;
+                    return operand2;
             }
         }
 
         /// <summary>
-        /// Gets the value of an 8-bit immediate operand.
+        /// Gets the value of the immediate operand.
         /// </summary>
-        /// <param name="index">The index of the operand.</param>
         /// <returns>
-        /// The value of the operand as a <see cref="byte"/>.
-        /// </returns>
-        public byte GetOperandByte(int index)
-        {
-            if (index < 0 || index >= this.operandCount)
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-
-            switch (index)
-            {
-                default:
-                    return this.GetOperandByte(ref operand1);
-
-                case 1:
-                    return this.GetOperandByte(ref operand2);
-            }
-        }
-
-        /// <summary>
-        /// Gets the value of a 16-bit immediate operand.
-        /// </summary>
-        /// <param name="index">The index of the operand.</param>
-        /// <returns>
-        /// The value of the operand as a <see cref="short"/>.
-        /// </returns>
-        public short GetOperandWord(int index)
-        {
-            if (index < 0 || index >= this.operandCount)
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-
-            switch (index)
-            {
-                default:
-                    return this.GetOperandWord(ref operand1);
-
-                case 1:
-                    return this.GetOperandWord(ref operand2);
-            }
-        }
-
-        /// <summary>
-        /// Gets the value of a 32-bit immediate operand.
-        /// </summary>
-        /// <param name="index">The index of the operand.</param>
-        /// <returns>
-        /// The value of the operand as an <see cref="int"/>.
-        /// </returns>
-        public int GetOperandDword(int index)
-        {
-            if (index < 0 || index >= this.operandCount)
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-
-            switch (index)
-            {
-                default:
-                    return this.GetOperandDword(ref operand1);
-
-                case 1:
-                    return this.GetOperandDword(ref operand2);
-            }
-        }
-
-        /// <summary>
-        /// Gets the value of a register operand.
-        /// </summary>
-        /// <param name="index">The index of the operand.</param>
-        /// <returns>
-        /// The value of the operand as a <see cref="Register"/>.
-        /// </returns>
-        public Register GetOperandRegister(int index)
-        {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
-
-            if (this.operand1.Type != OperandType.Register)
-            {
-                throw new InvalidOperationException("The specified operand is not a register");
-            }
-
-            return this.operand1.BaseRegister;
-        }
-
-        /// <summary>
-        /// Gets the base register of a memory access operand.
-        /// </summary>
-        /// <param name="index">The index of the operand.</param>
-        /// <returns>
-        /// A member of the <see cref="Register"/> enumeration.
+        /// The value of the immediate operand, or <c>0</c> if there was none.
         /// </returns>
         /// <remarks>
-        /// This is <c>BaseRegister</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// This is the value of any operand with type <see cref="OperandType.ImmediateByte"/>,
+        /// <see cref="OperandType.ImmediateWord"/> or <see cref="OperandType.ImmediateDword"/>
         /// </remarks>
-        public Register GetOperandBaseRegister(int index)
+        public int GetImmediateValue()
         {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
+            return this.immediate;
+        }
 
-            if (index != 0 || this.operand1.Type != OperandType.Memory)
-            {
-                throw new InvalidOperationException("The specified operand is not a memory access");
-            }
+        /// <summary>
+        /// Gets The value of the register operand.
+        /// </summary>
+        /// <returns>
+        /// The value of the register operand, or <see cref="Disassembler.Register.None"/> if there was none.
+        /// </returns>
+        /// <remarks>
+        /// This is the value of any operand with type <see cref="OperandType.Register"/>.
+        /// </remarks>
+        public Register GetRegister()
+        {
+            return this.register;
+        }
 
-            return this.operand1.BaseRegister;
+        /// <summary>
+        /// Gets the base register of a memory access operand, or the register in place of a memory access.
+        /// </summary>
+        /// <returns>
+        /// A member of the <see cref="register"/> enumeration.
+        /// </returns>
+        /// <remarks>
+        /// This is <c>baseRegister</c> in the formula <c>[baseRegister + indexRegister*Scale + Displacement]</c>.
+        /// </remarks>
+        public Register GetBaseRegister()
+        {
+            return this.baseRegister;
         }
 
         /// <summary>
         /// Gets the index register of a memory access operand.
         /// </summary>
-        /// <param name="index">The index of the operand.</param>
         /// <returns>
-        /// A member of the <see cref="Register"/> enumeration.
+        /// A member of the <see cref="register"/> enumeration.
         /// </returns>
         /// <remarks>
-        /// This is <c>IndexRegister</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// This is <c>indexRegister</c> in the formula <c>[baseRegister + indexRegister*Scale + Displacement]</c>.
         /// </remarks>
-        public Register GetOperandIndexRegister(int index)
+        public Register GetIndexRegister()
         {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
-
-            if (index != 0 || this.operand1.Type != OperandType.Memory)
-            {
-                throw new InvalidOperationException("The specified operand is not a memory access");
-            }
-
-            return operand1.IndexRegister;
+            return this.indexRegister;
         }
 
         /// <summary>
         /// Gets the scale parameter of a memory access operand.
         /// </summary>
-        /// <param name="index">The index of the operand.</param>
         /// <returns>
         /// Either 1, 2, 4 or 8.
         /// </returns>
         /// <remarks>
-        /// This is <c>Scale</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// This is <c>Scale</c> in the formula <c>[baseRegister + indexRegister*Scale + Displacement]</c>.
         /// </remarks>
-        public int GetOperandScale(int index)
+        public int GetScale()
         {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
-
-            if (index != 0 || this.operand1.Type != OperandType.Memory)
-            {
-                throw new InvalidOperationException("The specified operand is not a memory access");
-            }
-
-            return operand1.Scale;
+            return this.scale;
         }
 
         /// <summary>
         /// Gets the displacement parameter of a memory access operand.
         /// </summary>
-        /// <param name="index">The index of the operand.</param>
         /// <returns>
         /// The displacement, in bytes.
         /// </returns>
         /// <remarks>
-        /// This is <c>Displacement</c> in the formula <c>[BaseRegister + IndexRegister*Scale + Displacement]</c>.
+        /// This is <c>Displacement</c> in the formula <c>[baseRegister + indexRegister*Scale + Displacement]</c>.
         /// </remarks>
-        public int GetOperandDisplacement(int index)
+        public int GetDisplacement()
         {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
-
-            if (index != 0 || this.operand1.Type != OperandType.Memory)
-            {
-                throw new InvalidOperationException("The specified operand is not a memory access");
-            }
-
-            return this.operand1.Displacement;
+            return this.displacement;
         }
 
         /// <summary>
@@ -325,6 +205,11 @@ namespace Fantasm.Disassembler
         {
             this.prefixes = InstructionPrefixes.None;
             this.rex = 0;
+            this.instruction = Instruction.Unknown;
+            this.operandCount = 0;
+            this.immediate = this.displacement = 0;
+            this.register = this.baseRegister = this.indexRegister = Disassembler.Register.None;
+            this.scale = 1;
 
             bool readAny = false;
 
@@ -343,37 +228,14 @@ namespace Fantasm.Disassembler
 
                 switch (nextByte)
                 {
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
                     case 0x04:
-                        this.ReadInstruction(Instruction.Add, ExecutionModes.All);
-                        this.operandCount = 2;
-                        this.operand1.Type = OperandType.Register;
-                        this.operand1.BaseRegister = Register.Al;
-                        this.ReadImmediateByte(ref operand2);
-                        return true;
-
                     case 0x05:
-                        this.ReadInstruction(Instruction.Add, ExecutionModes.All);
-                        this.operandCount = 2;
-                        this.operand1.Type = OperandType.Register;
-                        switch (this.GetOperandSize())
-                        {
-                            case Size.Qword:
-                                this.operand1.BaseRegister = Register.Rax;
-                                this.ReadImmediateDword(ref operand2);
-                                break;
+                        return this.ReadAdd(nextByte);
 
-                            case Size.Dword:
-                                this.operand1.BaseRegister = Register.Eax;
-                                this.ReadImmediateDword(ref operand2);
-                                break;
-
-                            case Size.Word:
-                                this.operand1.BaseRegister = Register.Ax;
-                                this.ReadImmediateWord(ref operand2);
-                                break;
-                        }
-                        return true;
-                        
                     case 0x26:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
                         continue;
@@ -431,18 +293,22 @@ namespace Fantasm.Disassembler
                         continue;
 
                     case 0x80:
-                    {
-                        var modrm = this.ReadByte();
-                        this.instruction = this.GetGroup1Opcode(modrm);
-                        return this.ReadEbIb(modrm);
-                    }
                     case 0x81:
+                    case 0x82:
+                    case 0x83:
                     {
+                        var operandSize = this.GetOperandSize();
+                        var registerSize = ((nextByte & 1) != 0) ? operandSize : Size.Byte;
+                        var immediateSize = nextByte == 0x81 ? operandSize : Size.Byte;
+                        
                         var modrm = this.ReadByte();
                         this.instruction = this.GetGroup1Opcode(modrm);
-                        return this.ReadEvIz(modrm);
+                        this.operandCount = 2;
+                        this.operand1 = this.RegisterOrMemory(modrm, registerSize);
+                        this.operand2 = this.Immediate(immediateSize);
+                        this.CheckLockValid();
+                        return true;
                     }
-
 
                     case 0x90:
                         return this.ReadInstructionNoOperands(Instruction.Nop, ExecutionModes.All);
@@ -465,57 +331,68 @@ namespace Fantasm.Disassembler
                         continue;
 
                     default:
-                        this.instruction = Instruction.Unknown;
-                        this.operandCount = 0;
                         throw new NotImplementedException();
                 }
             }
         }
 
-        private bool ReadEbIb(byte modrm)
+        private bool ReadAdd(int opCode)
         {
-            this.operandCount = 2;
-            this.ReadRegisterOrMemoryOperand(modrm, Register.Al);
-            this.ReadImmediateByte(ref operand2);
+            var size = (opCode & 1) == 0 ? Size.Byte : this.GetOperandSize();
+            var operandBaseRegister = this.GetBaseRegister(size);
 
-            if (this.operand1.Type != OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            this.instruction = Instruction.Add;
+            this.operandCount = 2;
+
+            switch (opCode & 7)
             {
-                throw InvalidInstructionBytes();
+                case 0x00:
+                case 0x01:
+                {
+                    var modrm = this.ReadByte();
+                    this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister);
+                    this.operand2 = this.Register(modrm, operandBaseRegister);
+                    this.CheckLockValid();
+                    break;
+                }
+
+                case 0x02:
+                case 0x03:
+                {
+                    var modrm = this.ReadByte();
+                    this.operand1 = this.Register(modrm, operandBaseRegister);
+                    this.operand2 = this.RegisterOrMemory(modrm, operandBaseRegister);
+                    this.CheckLockValid();
+                    break;
+                }
+
+                case 0x04:
+                case 0x05:
+                    this.operand1 = this.ImplicitRegister(operandBaseRegister);
+                    this.operand2 = this.Immediate(size);
+                    this.DisallowLock();
+                    break;
             }
 
             return true;
         }
 
-        private bool ReadEvIz(byte modrm)
+        private void CheckLockValid()
         {
-            this.operandCount = 2;
-
-            switch (this.GetOperandSize())
+            if (this.operand1 != OperandType.Memory)
             {
-                case Size.Qword:
-                    this.ReadRegisterOrMemoryOperand(modrm, Register.Rax);
-                    this.ReadImmediateDword(ref operand2);
-                    break;
-
-                case Size.Dword:
-                    this.ReadRegisterOrMemoryOperand(modrm, Register.Eax);
-                    this.ReadImmediateDword(ref operand2);
-                    break;
-
-                case Size.Word:
-                    this.ReadRegisterOrMemoryOperand(modrm, Register.Ax);
-                    this.ReadImmediateWord(ref operand2);
-                    break;
+                this.DisallowLock();
             }
-
-            if (this.operand1.Type != OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
+        }
+        
+        private void DisallowLock()
+        {
+            if ((this.prefixes & InstructionPrefixes.Lock) != 0)
             {
                 throw InvalidInstructionBytes();
             }
-
-            return true;
         }
-
+        
         private Instruction GetGroup1Opcode(int modrm)
         {
             var opCode = (modrm & 0x38) >> 3;
@@ -604,11 +481,12 @@ namespace Fantasm.Disassembler
         {
             this.ReadInstruction(instruction, ExecutionModes.CompatibilityMode);
             this.operandCount = 1;
-            this.ReadImmediateByte(ref this.operand1);
+            this.operand1 = this.ImmediateByte();
             // special case: AAD is a synonym for AAD 0AH
-            if (this.operand1.Displacement == 0x0A)
+            if (this.immediate == 0x0A)
             {
                 this.operandCount = 0;
+                this.immediate = 0;
             }
             return true;
         }
@@ -628,13 +506,7 @@ namespace Fantasm.Disassembler
             this.instruction = instruction;
         }
 
-        private void ReadImmediateByte(ref Operand operand)
-        {
-            operand.Type = OperandType.ImmediateByte;
-            operand.Displacement = this.ReadByte();
-        }
-
-        private void ReadImmediateWord(ref Operand operand)
+        private short ReadWord()
         {
             var bytesRead = this.stream.Read(this.buffer, 0, 2);
             if (bytesRead < 2)
@@ -642,11 +514,10 @@ namespace Fantasm.Disassembler
                 throw InvalidInstructionBytes();
             }
 
-            operand.Type = OperandType.ImmediateWord;
-            operand.Displacement = BitConverter.ToInt16(this.buffer, 0);
+            return BitConverter.ToInt16(this.buffer, 0);
         }
 
-        private void ReadImmediateDword(ref Operand operand)
+        private int ReadDword()
         {
             var bytesRead = this.stream.Read(this.buffer, 0, 4);
             if (bytesRead < 4)
@@ -654,38 +525,64 @@ namespace Fantasm.Disassembler
                 throw InvalidInstructionBytes();
             }
 
-            operand.Type = OperandType.ImmediateDword;
-            operand.Displacement = BitConverter.ToInt32(this.buffer, 0);
+            return BitConverter.ToInt32(this.buffer, 0);
         }
 
-        private byte GetOperandByte(ref Operand operand)
+        private OperandType Immediate(Size size)
         {
-            if (operand.Type != OperandType.ImmediateByte)
+            switch (size)
             {
-                throw new InvalidOperationException("The specified operand is not a byte");
+                case Size.Byte:
+                    return this.ImmediateByte();
+                case Size.Word:
+                    return this.ImmediateWord();
+                default:
+                    return this.ImmediateDword();
             }
-
-            return (byte)operand.Displacement;
         }
 
-        private short GetOperandWord(ref Operand operand)
+        private OperandType ImmediateDword()
         {
-            if (operand.Type != OperandType.ImmediateWord)
-            {
-                throw new InvalidOperationException("The specified operand is not a word");
-            }
-
-            return (short)operand.Displacement;
+            this.immediate = this.ReadDword();
+            return OperandType.ImmediateDword;
         }
 
-        private int GetOperandDword(ref Operand operand)
+        private OperandType ImmediateWord()
         {
-            if (operand.Type != OperandType.ImmediateDword)
-            {
-                throw new InvalidOperationException("The specified operand is not a dword");
-            }
+            this.immediate = this.ReadWord();
+            return OperandType.ImmediateWord;
+        }
 
-            return operand.Displacement;
+        private OperandType ImmediateByte()
+        {
+            this.immediate = this.ReadByte();
+            return OperandType.ImmediateByte;
+        }
+
+        private OperandType ImplicitRegister(Register register)
+        {
+            this.register = register;
+            return OperandType.Register;
+        }
+
+        private Register GetBaseRegister(Size operandSize)
+        {
+            switch (operandSize)
+            {
+                case Size.Qword:
+                    return Disassembler.Register.Rax;
+                case Size.Dword:
+                    return Disassembler.Register.Eax;
+                case Size.Word:
+                    return Disassembler.Register.Ax;
+                default:
+                    return Disassembler.Register.Al;
+            }
+        }
+
+        private OperandType RegisterOrMemory(byte modrm, Size operandSize)
+        {
+            return this.RegisterOrMemory(modrm, this.GetBaseRegister(operandSize));
         }
 
         private static Exception InvalidInstructionBytes()

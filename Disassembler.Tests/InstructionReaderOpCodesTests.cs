@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Emit;
 
 using NUnit.Framework;
 
@@ -11,211 +10,13 @@ namespace Fantasm.Disassembler.Tests
     [TestFixture(Description = "Tests of the InstructionReader class for specific OpCodes")]
     public class InstructionReaderOpCodesTests
     {
-        public enum OperandFormat
-        {
-            /// <summary>
-            /// The instruction takes no operands.
-            /// </summary>
-            None,
-
-            /// <summary>
-            /// The operand is a single byte.
-            /// </summary>
-            Ib,
-
-            /// <summary>
-            /// The first operand is the <c>AL</c> register and the second operand is an immediate byte.
-            /// </summary>
-            AL_Ib,
-
-            /// <summary>
-            /// The first operand is the <c>AX</c> register and the second operand is an immediate word.
-            /// </summary>
-            AX_Iw,
-
-            /// <summary>
-            /// The first operand is the <c>EAX</c> register and the second operand is an immediate dword.
-            /// </summary>
-            EAX_Id,
-
-            /// <summary>
-            /// The first operand is the <c>RAX</c> register and the second operand is an immediate dword.
-            /// </summary>
-            RAX_Id,
-            
-            /// <summary>
-            /// The first operand is a memory address or 8-bit register specified by a ModRM byte, and the second
-            /// operand is an immediate byte
-            /// </summary>
-            Eb_Ib,
-
-            /// <summary>
-            /// The first operand is a memory address or 16-bit register specified by a ModRM byte, and the second
-            /// operand is an immediate word.
-            /// </summary>
-            Ew_Iw,
-
-            /// <summary>
-            /// The first operand is a memory address or 32-bit register specified by a ModRM byte, and the second
-            /// operand is an immediate dword.
-            /// </summary>
-            Ed_Id,
-
-            /// <summary>
-            /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
-            /// operand is an immediate dword.
-            /// </summary>
-            Eq_Id
-        }
-
-        public enum OperandSize
-        {
-            Size16,
-            Size32,
-        }
-
-        public class OpCodeProperties
-        {
-            public OperandSize OperandSize;
-            internal RexPrefix RexPrefix;
-            public byte OpCode;
-            public byte OpCodeReg;
-            public Instruction Mnemonic;
-            public OperandFormat Operands;
-            internal InstructionPrefixes SupportedPrefixes;
-            internal ExecutionModes SupportedModes;
-
-            internal OpCodeProperties(
-                RexPrefix rex,
-                OperandSize operandSize,
-                byte opCode,
-                byte opCodeReg,
-                Instruction mnemonic,
-                OperandFormat operands,
-                InstructionPrefixes supportedPrefixes,
-                ExecutionModes supportedModes)
-            {
-                this.RexPrefix = rex;
-                this.OperandSize = operandSize;
-                this.OpCode = opCode;
-                this.OpCodeReg = opCodeReg;
-                this.Mnemonic = mnemonic;
-                this.Operands = operands;
-                this.SupportedPrefixes = supportedPrefixes;
-                this.SupportedModes = supportedModes;
-            }
-
-            internal OpCodeProperties(
-                byte opCode,
-                Instruction mnemonic,
-                OperandFormat operands,
-                ExecutionModes supportedModes)
-                : this(0, OperandSize.Size32, opCode, 255, mnemonic, operands, InstructionPrefixes.None, supportedModes)
-            {
-            }
-
-            internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandFormat operands)
-                : this(
-                    0,
-                    OperandSize.Size32,
-                    opCode,
-                    255,
-                    mnemonic,
-                    operands,
-                    InstructionPrefixes.None,
-                    ExecutionModes.All)
-            {
-            }
-
-            internal OpCodeProperties(
-                byte opCode,
-                byte opCodeMod,
-                Instruction mnemonic,
-                OperandFormat operands,
-                InstructionPrefixes supportedPrefixes)
-                : this(
-                    0,
-                    OperandSize.Size32,
-                    opCode,
-                    opCodeMod,
-                    mnemonic,
-                    operands,
-                    supportedPrefixes,
-                    ExecutionModes.All)
-            {
-            }
-
-
-            internal OpCodeProperties(
-                byte opCode,
-                byte opCodeMod,
-                Instruction mnemonic,
-                OperandSize operandSize,
-                OperandFormat operands,
-                InstructionPrefixes supportedPrefixes)
-                : this(
-                    0,
-                    operandSize,
-                    opCode,
-                    opCodeMod,
-                    mnemonic,
-                    operands,
-                    supportedPrefixes,
-                    ExecutionModes.All)
-            {
-            }
-            internal OpCodeProperties(
-                RexPrefix rex,
-                byte opCode,
-                byte opCodeMod,
-                Instruction mnemonic,
-                OperandFormat operands,
-                InstructionPrefixes supportedPrefixes)
-                : this(
-                    rex,
-                    OperandSize.Size32,
-                    opCode,
-                    opCodeMod,
-                    mnemonic,
-                    operands,
-                    supportedPrefixes,
-                    ExecutionModes.All)
-            {
-            }
-
-            internal OpCodeProperties(
-                byte opCode,
-                Instruction mnemonic,
-                OperandSize operandSize,
-                OperandFormat operands)
-                : this(0, operandSize, opCode, 255, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
-            {
-            }
-
-            internal OpCodeProperties(RexPrefix rex, byte opCode, Instruction mnemonic, OperandFormat operands)
-                : this(
-                    RexPrefix.Magic | rex,
-                    OperandSize.Size32,
-                    opCode,
-                    255,
-                    mnemonic,
-                    operands,
-                    InstructionPrefixes.None,
-                    ExecutionModes.Long64Bit)
-            {
-            }
-
-            public override string ToString()
-            {
-                if (this.OpCodeReg != 255)
-                    return string.Format("{0} ({1:X2}/{2}) {3}", this.Mnemonic, this.OpCode, this.OpCodeReg, this.Operands);
-                else
-                    return string.Format("{0} ({1:X2}) {2}", this.Mnemonic, this.OpCode, this.Operands);
-            }
-        }
-
         public static OpCodeProperties[] OpCodes =
         {
+            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, ExecutionModes.CompatibilityMode),
+
             new OpCodeProperties(0x04, Instruction.Add, OperandFormat.AL_Ib),
             new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size16, OperandFormat.AX_Iw),
             new OpCodeProperties(0x05, Instruction.Add, OperandSize.Size32, OperandFormat.EAX_Id),
@@ -225,10 +26,19 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0x81, 0, Instruction.Add, OperandSize.Size16, OperandFormat.Ew_Iw, InstructionPrefixes.Lock),
             new OpCodeProperties(0x81, 0, Instruction.Add, OperandSize.Size32, OperandFormat.Ed_Id, InstructionPrefixes.Lock),
             new OpCodeProperties(RexPrefix.W, 0x81, 0, Instruction.Add, OperandFormat.Eq_Id, InstructionPrefixes.Lock),
-            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, ExecutionModes.CompatibilityMode),
-            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, ExecutionModes.CompatibilityMode),
-            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
-            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, ExecutionModes.CompatibilityMode),
+            new OpCodeProperties(0x83, 0, Instruction.Add, OperandSize.Size16, OperandFormat.Ew_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x83, 0, Instruction.Add, OperandSize.Size32, OperandFormat.Ed_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, 0x83, 0, Instruction.Add, OperandFormat.Eq_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x00, Instruction.Add, OperandFormat.Eb_Gb, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, 0x0, Instruction.Add, OperandFormat.Eb_Gb, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x01, Instruction.Add, OperandSize.Size16, OperandFormat.Ew_Gw, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x01, Instruction.Add, OperandSize.Size32, OperandFormat.Ed_Gd, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, 0x01, Instruction.Add, OperandFormat.Eq_Gq, InstructionPrefixes.Lock),
+            new OpCodeProperties(0x02, Instruction.Add, OperandFormat.Gb_Eb),
+            new OpCodeProperties(RexPrefix.W, 0x02, Instruction.Add, OperandFormat.Gb_Eb),
+            new OpCodeProperties(0x03, Instruction.Add, OperandSize.Size16, OperandFormat.Gw_Ew),
+            new OpCodeProperties(0x03, Instruction.Add, OperandSize.Size32, OperandFormat.Gd_Ed),
+            new OpCodeProperties(RexPrefix.W, 0x03, Instruction.Add, OperandFormat.Gq_Eq),
         };
 
         [Test]
@@ -249,66 +59,170 @@ namespace Fantasm.Disassembler.Tests
             // check operands
             switch (opCode.Operands)
             {
+                case OperandFormat.None:
+                    Assert.AreEqual(0, reader.OperandCount);
+                    break;
+
                 case OperandFormat.Ib:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(0x11, reader.GetOperandByte(0));
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(0));
+                    Assert.AreEqual(0x11, reader.GetImmediateValue());
                     break;
 
                 case OperandFormat.AL_Ib:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(Register.Al, reader.GetOperandRegister(0));
-                    Assert.AreEqual(0x22, reader.GetOperandByte(1));
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Al, reader.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue());
                     break;
 
                 case OperandFormat.AX_Iw:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(Register.Ax, reader.GetOperandRegister(0));
-                    Assert.AreEqual(0x2222, reader.GetOperandWord(1));
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ax, reader.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(1));
+                    Assert.AreEqual(0x2222, reader.GetImmediateValue());
                     break;
 
                 case OperandFormat.EAX_Id:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(Register.Eax, reader.GetOperandRegister(0));
-                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Eax, reader.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
                     break;
 
                 case OperandFormat.RAX_Id:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(Register.Rax, reader.GetOperandRegister(0));
-                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rax, reader.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
                     break;
 
                 case OperandFormat.Eb_Ib:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
                     Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetOperandByte(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Eb_Gb:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Gb_Eb:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Ew_Iw:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Sp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
                     Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(1));
-                    Assert.AreEqual(0x2222, reader.GetOperandWord(1));
+                    Assert.AreEqual(0x2222, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Ew_Ib:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Ew_Gw:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Bp, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Gw_Ew:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Bp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Ed_Id:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Esp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
                     Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Ed_Ib:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Ed_Gd:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Gd_Ed:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Eq_Id:
                     Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rsp, reader.GetOperandRegister(0));
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
                     Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetOperandDword(1));
+                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
                     break;
+
+                case OperandFormat.Eq_Ib:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Eq_Gq:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Rbp, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Gq_Eq:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rbp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    break;
+
+                default:
+                    throw new NotImplementedException();
             }
 
             Assert.IsFalse(reader.Read());
@@ -427,7 +341,7 @@ namespace Fantasm.Disassembler.Tests
 
             if (opCode.RexPrefix != 0)
             {
-                bytes.Add((byte)(RexPrefix.Magic | opCode.RexPrefix));
+                bytes.Add((byte)(opCode.RexPrefix));
             }
 
             bytes.Add(opCode.OpCode);
@@ -455,7 +369,22 @@ namespace Fantasm.Disassembler.Tests
                     bytes.Add(0x22);
                     break;
 
+                case OperandFormat.Gb_Eb:
+                case OperandFormat.Gw_Ew:
+                case OperandFormat.Gd_Ed:
+                case OperandFormat.Gq_Eq:
+                case OperandFormat.Eb_Gb:
+                case OperandFormat.Ew_Gw:
+                case OperandFormat.Ed_Gd:
+                case OperandFormat.Eq_Gq:
+                    // CH/BPL
+                    bytes.Add((byte)(modrm | 0x28));
+                    break;                    
+
                 case OperandFormat.Eb_Ib:
+                case OperandFormat.Ew_Ib:
+                case OperandFormat.Ed_Ib:
+                case OperandFormat.Eq_Ib:
                     bytes.Add((byte)(modrm | opCode.OpCodeReg));
                     bytes.Add(0x22);
                     break;

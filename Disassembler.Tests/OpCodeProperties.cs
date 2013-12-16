@@ -11,7 +11,7 @@ namespace Fantasm.Disassembler.Tests
         public Instruction Mnemonic;
         public OperandFormat Operands;
         internal InstructionPrefixes SupportedPrefixes;
-        internal ExecutionModes SupportedModes;
+        public Compatibility64 Compatibility64;
 
         internal OpCodeProperties(
             RexPrefix rex,
@@ -21,7 +21,7 @@ namespace Fantasm.Disassembler.Tests
             Instruction mnemonic,
             OperandFormat operands,
             InstructionPrefixes supportedPrefixes,
-            ExecutionModes supportedModes)
+            Compatibility64 compatibility64)
         {
             this.RexPrefix = rex;
             this.OperandSize = operandSize;
@@ -30,28 +30,23 @@ namespace Fantasm.Disassembler.Tests
             this.Mnemonic = mnemonic;
             this.Operands = operands;
             this.SupportedPrefixes = supportedPrefixes;
-            this.SupportedModes = supportedModes;
+            this.Compatibility64 = compatibility64;
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(0, OperandSize.Size32, opCode, 255, mnemonic, operands, InstructionPrefixes.None, Compatibility64.Valid)
+        {
         }
 
         internal OpCodeProperties(
             byte opCode,
             Instruction mnemonic,
             OperandFormat operands,
-            ExecutionModes supportedModes)
-            : this(0, OperandSize.Size32, opCode, 255, mnemonic, operands, InstructionPrefixes.None, supportedModes)
-        {
-        }
-
-        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandFormat operands)
-            : this(
-                0,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                ExecutionModes.All)
+            Compatibility64 compatibility64)
+            : this(0, OperandSize.Size32, opCode, 255, mnemonic, operands, InstructionPrefixes.None, compatibility64)
         {
         }
 
@@ -64,7 +59,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                ExecutionModes.All)
+                Compatibility64.Valid)
         {
         }
 
@@ -77,7 +72,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                ExecutionModes.All)
+                Compatibility64.Valid)
         {
         }
 
@@ -96,7 +91,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                ExecutionModes.All)
+                Compatibility64.Valid)
         {
         }
 
@@ -116,7 +111,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                ExecutionModes.All)
+                Compatibility64.Valid)
         {
         }
 
@@ -135,7 +130,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                ExecutionModes.All)
+                Compatibility64.Valid)
         {
         }
 
@@ -144,7 +139,7 @@ namespace Fantasm.Disassembler.Tests
             Instruction mnemonic,
             OperandSize operandSize,
             OperandFormat operands)
-            : this(0, operandSize, opCode, 255, mnemonic, operands, InstructionPrefixes.None, ExecutionModes.All)
+            : this(0, operandSize, opCode, 255, mnemonic, operands, InstructionPrefixes.None, Compatibility64.Valid)
         {
         }
 
@@ -157,7 +152,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                ExecutionModes.Long64Bit)
+                Compatibility64.Valid)
         {
         }
 
@@ -170,7 +165,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                ExecutionModes.Long64Bit)
+                Compatibility64.Valid)
         {
         }
 

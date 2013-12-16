@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.Remoting.Messaging;
 
 namespace Fantasm.Disassembler
 {
@@ -234,7 +233,23 @@ namespace Fantasm.Disassembler
                     case 0x03:
                     case 0x04:
                     case 0x05:
-                        return this.ReadAdd(nextByte);
+                        return this.ReadBinaryArithmetic(Instruction.Add, nextByte);
+
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                        return this.ReadBinaryArithmetic(Instruction.Adc, nextByte);
+
+                    case 0x20:
+                    case 0x21:
+                    case 0x22:
+                    case 0x23:
+                    case 0x24:
+                    case 0x25:
+                        return this.ReadBinaryArithmetic(Instruction.And, nextByte);
 
                     case 0x26:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
@@ -279,6 +294,19 @@ namespace Fantasm.Disassembler
                         }
                         goto default;
 
+                    case 0x63:
+                    {
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                            throw new NotImplementedException();
+
+                        this.instruction = Instruction.Arpl;
+                        var modrm = this.ReadByte();
+                        this.operandCount = 2;
+                        this.operand1 = this.RegisterOrMemory16(modrm);
+                        this.operand2 = this.Register16(modrm);
+                        this.DisallowLock();
+                        return true;
+                    }
                     case 0x64:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
                         continue;
@@ -336,12 +364,22 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private bool ReadAdd(int opCode)
+        private OperandType Register16(byte modrm)
+        {
+            return this.Reg(modrm, Register.Ax);
+        }
+
+        private OperandType RegisterOrMemory16(byte modrm)
+        {
+            return this.RegisterOrMemory(modrm, Register.Ax);
+        }
+
+        private bool ReadBinaryArithmetic(Instruction instruction, int opCode)
         {
             var size = (opCode & 1) == 0 ? Size.Byte : this.GetOperandSize();
             var operandBaseRegister = this.GetBaseRegister(size);
 
-            this.instruction = Instruction.Add;
+            this.instruction = instruction;
             this.operandCount = 2;
 
             switch (opCode & 7)
@@ -351,7 +389,7 @@ namespace Fantasm.Disassembler
                 {
                     var modrm = this.ReadByte();
                     this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister);
-                    this.operand2 = this.Register(modrm, operandBaseRegister);
+                    this.operand2 = this.Reg(modrm, operandBaseRegister);
                     this.CheckLockValid();
                     break;
                 }
@@ -360,7 +398,7 @@ namespace Fantasm.Disassembler
                 case 0x03:
                 {
                     var modrm = this.ReadByte();
-                    this.operand1 = this.Register(modrm, operandBaseRegister);
+                    this.operand1 = this.Reg(modrm, operandBaseRegister);
                     this.operand2 = this.RegisterOrMemory(modrm, operandBaseRegister);
                     this.CheckLockValid();
                     break;
@@ -400,6 +438,12 @@ namespace Fantasm.Disassembler
             {
                 case 0:
                     return Instruction.Add;
+
+                case 2:
+                    return Instruction.Adc;
+
+                case 4:
+                    return Instruction.And;
 
                 default:
                     throw new NotImplementedException();

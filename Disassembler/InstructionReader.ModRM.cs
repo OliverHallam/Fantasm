@@ -2,7 +2,7 @@
 {
     public partial class InstructionReader
     {
-        private OperandType RegisterOrMemory(int modrm, Register baseRegister)
+        private OperandType ModRMRegisterOrMemory(int modrm, Register baseRegister)
         {
             var mod = (modrm & 0xc0) >> 6;
             var rm = modrm & 0x07;
@@ -28,7 +28,7 @@
             return OperandType.Memory;
         }
 
-        private OperandType Register(int modrm, Register baseRegister)
+        private OperandType ModRMRegister(int modrm, Register baseRegister)
         {
             var reg = (modrm & 0x38) >> 3;
             this.register = this.GetRegister(reg, baseRegister);

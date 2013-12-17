@@ -13,6 +13,11 @@
         Ib,
 
         /// <summary>
+        /// The operand is a register encoded in the instruction.
+        /// </summary>
+        Register,
+
+        /// <summary>
         /// The first operand is the <c>AL</c> register and the second operand is an immediate byte.
         /// </summary>
         AL_Ib,

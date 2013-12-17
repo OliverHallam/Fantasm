@@ -396,6 +396,26 @@ namespace Fantasm.Disassembler.Tests
         }
 
         [Test]
+        public void ModRM_WithRegisterOperand_DecodesRegister()
+        {
+            // ADD EAX (REG)
+            var reader = ReadBytes64(0x01, 0xc8);
+            reader.Read();
+
+            Assert.AreEqual(Register.Ecx, reader.GetRegister());
+        }
+
+        [Test]
+        public void ModRM_WithRexR_DecodesExtendedRegister()
+        {
+            // ADD EAX (REG)
+            var reader = ReadBytes64(0x44, 0x01, 0xc8);
+            reader.Read();
+
+            Assert.AreEqual(Register.R9D, reader.GetRegister());
+        }
+
+        [Test]
         public void ModRM_ForSibAddressWithNoDisplacement_ReadsSibAndDisplacement()
         {
             // ADD ([RAX] + [RAX] * 2) 0

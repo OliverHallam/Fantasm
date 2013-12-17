@@ -177,6 +177,7 @@
         // Miscellaneous instructions
         Lea,
         Nop,
+        Ud1,
         Ud2,
         Xlat,
         Cpuid,

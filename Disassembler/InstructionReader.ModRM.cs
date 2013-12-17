@@ -2,7 +2,7 @@
 {
     public partial class InstructionReader
     {
-        private OperandType ModRMRegisterOrMemory(int modrm, Register baseRegister)
+        private OperandType RegisterOrMemory(int modrm, Register baseRegister)
         {
             var mod = (modrm & 0xc0) >> 6;
             var rm = modrm & 0x07;
@@ -10,7 +10,7 @@
             if (mod == 3)
             {
                 // encodes a register directly.
-                this.baseRegister = this.GetRegister(rm, baseRegister);
+                this.baseRegister = this.GetRegister(RexPrefix.B, rm, baseRegister);
                 return OperandType.DirectRegister;
             }
 
@@ -31,7 +31,7 @@
         private OperandType ModRMRegister(int modrm, Register baseRegister)
         {
             var reg = (modrm & 0x38) >> 3;
-            this.register = this.GetRegister(reg, baseRegister);
+            this.register = this.GetRegister(RexPrefix.R, reg, baseRegister);
             return OperandType.Register;
         }
 
@@ -42,10 +42,10 @@
             switch (mod)
             {
                 case 0:
-                    if (this.baseRegister == Disassembler.Register.Bp && this.indexRegister == Disassembler.Register.None)
+                    if (this.baseRegister == Register.Bp && this.indexRegister == Register.None)
                     {
                         // instead of BP we use a 16-bit displacement
-                        this.baseRegister = Disassembler.Register.None;
+                        this.baseRegister = Register.None;
                         this.displacement = this.ReadWord();
                     }
                     break;
@@ -70,7 +70,7 @@
             {
                 resolvedRM = this.ReadSibBase(addressSizeBaseRegister);
             }
-            this.baseRegister = this.GetRegister(resolvedRM, addressSizeBaseRegister);
+            this.baseRegister = this.GetRegister(RexPrefix.B, resolvedRM, addressSizeBaseRegister);
 
             switch (mod)
             {
@@ -82,12 +82,12 @@
                         if (this.executionMode == ExecutionModes.Long64Bit && rm == 5)
                         {
                             // in 64-bit mode without a sib byte we use RIP based addressing
-                            this.baseRegister = addressSizeBaseRegister + (Disassembler.Register.Eip - Disassembler.Register.Eax);
+                            this.baseRegister = addressSizeBaseRegister + (Register.Eip - Register.Eax);
                         }
                         else
                         {
                             // in all other cases, we ignore the register
-                            this.baseRegister = Disassembler.Register.None;
+                            this.baseRegister = Register.None;
                         }
                         this.displacement = this.ReadDword();
                     }
@@ -114,7 +114,7 @@
             var index = (sib & 0x38) >> 3;
             if (index != 4 || (this.rex & RexPrefix.B) != 0)
             {
-                this.indexRegister = this.GetRegister(index, addressSizeBaseRegister);
+                this.indexRegister = this.GetRegister(RexPrefix.B,  index, addressSizeBaseRegister);
                 this.scale = 1 << (sib >> 6);
             }
 
@@ -126,39 +126,39 @@
             switch (rm)
             {
                 case 0:
-                    this.baseRegister = Disassembler.Register.Bx;
-                    this.indexRegister = Disassembler.Register.Si;
+                    this.baseRegister = Register.Bx;
+                    this.indexRegister = Register.Si;
                     break;
                 case 1:
-                    this.baseRegister = Disassembler.Register.Bx;
-                    this.indexRegister = Disassembler.Register.Di;
+                    this.baseRegister = Register.Bx;
+                    this.indexRegister = Register.Di;
                     break;
                 case 2:
-                    this.baseRegister = Disassembler.Register.Bp;
-                    this.indexRegister = Disassembler.Register.Si;
+                    this.baseRegister = Register.Bp;
+                    this.indexRegister = Register.Si;
                     break;
                 case 3:
-                    this.baseRegister = Disassembler.Register.Bp;
-                    this.indexRegister = Disassembler.Register.Di;
+                    this.baseRegister = Register.Bp;
+                    this.indexRegister = Register.Di;
                     break;
                 case 4:
-                    this.baseRegister = Disassembler.Register.Si;
+                    this.baseRegister = Register.Si;
                     break;
                 case 5:
-                    this.baseRegister = Disassembler.Register.Di;
+                    this.baseRegister = Register.Di;
                     break;
                 case 6:
-                    this.baseRegister = Disassembler.Register.Bp;
+                    this.baseRegister = Register.Bp;
                     break;
                 case 7:
-                    this.baseRegister = Disassembler.Register.Bx;
+                    this.baseRegister = Register.Bx;
                     break;
             }
         }
 
-        private Register GetRegister(int reg, Register baseRegister)
+        private Register GetRegister(RexPrefix rexBit, int reg, Register baseRegister)
         {
-            if ((this.rex & RexPrefix.B) != 0)
+            if ((this.rex & rexBit) != 0)
             {
                 return baseRegister + 8 + reg;    
             }
@@ -166,16 +166,16 @@
             {
                 return baseRegister + GetABCDRegisterOffset(reg);
             }
-            if (baseRegister == Disassembler.Register.Al && this.rex == 0)
+            if (baseRegister == Register.Al && this.rex == 0)
             {
-                return Disassembler.Register.Ah + GetABCDRegisterOffset(reg - 4);
+                return Register.Ah + GetABCDRegisterOffset(reg - 4);
             }
             return baseRegister + GetDiSiBpSpRegisterOffset(reg);
         }
 
         private static Register GetAddressSizeBaseRegister(Size addressSize)
         {
-            return addressSize == Size.Qword ? Disassembler.Register.Rax : Disassembler.Register.Eax;
+            return addressSize == Size.Qword ? Register.Rax : Register.Eax;
         }
 
         private static int GetABCDRegisterOffset(int reg)

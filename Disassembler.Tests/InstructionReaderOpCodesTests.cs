@@ -86,7 +86,82 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0x23, Instruction.And, OperandSize.Size32, OperandFormat.Gd_Ed),
             new OpCodeProperties(RexPrefix.W, 0x23, Instruction.And, OperandFormat.Gq_Eq),
 
-            new OpCodeProperties(0x63, Instruction.Arpl, OperandFormat.Ew_Gw, Compatibility64.NotEncodable) 
+            new OpCodeProperties(0x63, Instruction.Arpl, OperandFormat.Ew_Gw, Compatibility64.NotEncodable),
+
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size16, OperandFormat.Gw_Ew, Compatibility64.Invalid),
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size32, OperandFormat.Gd_Ed, Compatibility64.Invalid),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size16, OperandFormat.Gw_Ew),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size32, OperandFormat.Gd_Ed),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandFormat.Gq_Eq),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xBD }, Instruction.Bsr, OperandSize.Size16, OperandFormat.Gw_Ew),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBD }, Instruction.Bsr, OperandSize.Size32, OperandFormat.Gd_Ed),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBD }, Instruction.Bsr, OperandFormat.Gq_Eq),
+
+            // expanded from intel table
+            // 486 or later
+            new OpCodeProperties(new byte[] { 0x0F, 0xC8 }, Instruction.Bswap, Register.Eax), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xC9 }, Instruction.Bswap, Register.Ecx), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCA }, Instruction.Bswap, Register.Edx), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCB }, Instruction.Bswap, Register.Ebx), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCC }, Instruction.Bswap, Register.Esp), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCD }, Instruction.Bswap, Register.Ebp), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCE }, Instruction.Bswap, Register.Esi), 
+            new OpCodeProperties(new byte[] { 0x0F, 0xCF }, Instruction.Bswap, Register.Edi), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xC8 }, Instruction.Bswap, Register.Rax), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xC9 }, Instruction.Bswap, Register.Rcx), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCA }, Instruction.Bswap, Register.Rdx), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCB }, Instruction.Bswap, Register.Rbx), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCC }, Instruction.Bswap, Register.Rsp), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCD }, Instruction.Bswap, Register.Rbp), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCE }, Instruction.Bswap, Register.Rsi), 
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xCF }, Instruction.Bswap, Register.Rdi), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xC8 }, Instruction.Bswap, Register.R8D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xC9 }, Instruction.Bswap, Register.R9D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCA }, Instruction.Bswap, Register.R10D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCB }, Instruction.Bswap, Register.R11D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCC }, Instruction.Bswap, Register.R12D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCD }, Instruction.Bswap, Register.R13D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCE }, Instruction.Bswap, Register.R14D), 
+            new OpCodeProperties(RexPrefix.B, new byte[] { 0x0F, 0xCF }, Instruction.Bswap, Register.R15D), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xC8 }, Instruction.Bswap, Register.R8), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xC9 }, Instruction.Bswap, Register.R9), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCA }, Instruction.Bswap, Register.R10), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCB }, Instruction.Bswap, Register.R11), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCC }, Instruction.Bswap, Register.R12), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCD }, Instruction.Bswap, Register.R13), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCE }, Instruction.Bswap, Register.R14), 
+            new OpCodeProperties(RexPrefix.W | RexPrefix.B, new byte[] { 0x0F, 0xCF }, Instruction.Bswap, Register.R15), 
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xA3 }, Instruction.Bt, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0xA3 }, Instruction.Bt, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xA3 }, Instruction.Bt, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 4, Instruction.Bt, OperandSize.Size16, OperandFormat.Ew_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 4, Instruction.Bt, OperandSize.Size32, OperandFormat.Ed_Ib),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 4, Instruction.Bt, OperandFormat.Eq_Ib),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Ib),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandFormat.Eq_Ib),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Ib),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandFormat.Eq_Ib),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Ib),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq_Ib),
+
         };
 
         [Test]
@@ -115,6 +190,12 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(1, reader.OperandCount);
                     Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(0));
                     Assert.AreEqual(0x11, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Register:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(opCode.Register, reader.GetRegister());
                     break;
 
                 case OperandFormat.AL_Ib:
@@ -287,7 +368,8 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_ForLockPrefix_ThrowsFormatException(OpCodeProperties opCode)
         {
             var byteList = new List<byte> { 0xF0 };
-            byteList.AddRange(this.GetBytes(opCode));
+            // use a memory address to smoke out false negatives
+            byteList.AddRange(this.GetBytes(opCode, 0x00));
             var bytes = byteList.ToArray();
             
             var mode = GetExecutionMode(opCode);
@@ -392,7 +474,7 @@ namespace Fantasm.Disassembler.Tests
                 bytes.Add((byte)(opCode.RexPrefix));
             }
 
-            bytes.Add(opCode.OpCode);
+            bytes.AddRange(opCode.OpCode);
 
             switch (opCode.Operands)
             {

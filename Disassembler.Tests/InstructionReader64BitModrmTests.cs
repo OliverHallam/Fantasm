@@ -17,7 +17,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x80, modrm, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0, reader.GetDisplacement());
         }
@@ -35,7 +35,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x41, 0x80, modrm, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0, reader.GetDisplacement());
         }
@@ -54,7 +54,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x80, (byte)(0x40 | modrm), 0x23, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x23, reader.GetDisplacement());
         }
@@ -73,7 +73,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x41, 0x80, (byte)(0x40 | modrm), 0x23, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x23, reader.GetDisplacement());
         }
@@ -92,7 +92,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x80, (byte)(0x80 | modrm), 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -111,7 +111,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x41, 0x80, (byte)(0x80 | modrm), 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -129,7 +129,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x80, modrm, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0, reader.GetDisplacement());
         }
@@ -147,7 +147,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x41, 0x80, modrm, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0, reader.GetDisplacement());
         }
@@ -166,7 +166,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x80, (byte)(0x40 | modrm), 0x23, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x23, reader.GetDisplacement());
         }
@@ -185,7 +185,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x41, 0x80, (byte)(0x40 | modrm), 0x23, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x23, reader.GetDisplacement());
         }
@@ -204,7 +204,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x80, (byte)(0x80 | modrm), 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -223,7 +223,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x41, 0x80, (byte)(0x80 | modrm), 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(register, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -366,7 +366,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x80, 0x05, 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(Register.Rip, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -378,7 +378,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x41, 0x80, 0x05, 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(Register.Rip, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }
@@ -390,7 +390,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes64(0x67, 0x80, 0x05, 0x67, 0x45, 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
             Assert.AreEqual(Register.Eip, reader.GetBaseRegister());
             Assert.AreEqual(0x01234567, reader.GetDisplacement());
         }

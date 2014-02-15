@@ -130,6 +130,10 @@
         Loopz,
         Loopnz,
         Call,
+        /// <summary>
+        /// The <c>far</c> variant of the <c>call</c> instruction.
+        /// </summary>
+        CallFar,
         Ret,
         Iret,
         Int,

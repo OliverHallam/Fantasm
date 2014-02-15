@@ -2,7 +2,7 @@
 {
     public partial class InstructionReader
     {
-        private OperandType RegisterOrMemory(int modrm, Register baseRegister)
+        private OperandType RegisterOrMemory(int modrm, Register baseRegister, Size operandSize)
         {
             var mod = (modrm & 0xc0) >> 6;
             var rm = modrm & 0x07;
@@ -14,6 +14,22 @@
                 return OperandType.DirectRegister;
             }
 
+            return this.ReadMemory(mod, rm, operandSize);
+        }
+
+        private OperandType Memory(int modrm, Size operandSize)
+        {
+            var mod = (modrm & 0xc0) >> 6;
+            var rm = modrm & 0x07;
+
+            if (mod == 3)
+                throw InvalidInstructionBytes();
+
+            return this.ReadMemory(mod, rm, operandSize);
+        }
+
+        private OperandType ReadMemory(int mod, int rm, Size operandSize)
+        {
             var addressSize = this.GetAddressSize();
             switch (addressSize)
             {
@@ -25,7 +41,18 @@
                     this.ReadMemory32(mod, rm, addressSize);
                     break;
             }
-            return OperandType.Memory;
+
+            switch (operandSize)
+            {
+                case Size.Byte:
+                    return OperandType.BytePointer;
+                case Size.Word:
+                    return OperandType.WordPointer;
+                case Size.Dword:
+                    return OperandType.DwordPointer;
+                default:
+                    return OperandType.QwordPointer;
+            }
         }
 
         private OperandType ModRMRegister(int modrm, Register baseRegister)

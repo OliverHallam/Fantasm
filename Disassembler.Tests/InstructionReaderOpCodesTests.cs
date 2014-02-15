@@ -169,12 +169,12 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size16, OperandFormat.Ew, Compatibility.NotEncodable64), 
             new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size32, OperandFormat.Ed, Compatibility.NotEncodable64), 
             new OpCodeProperties(0xFF, 2, Instruction.Call, OperandFormat.Eq, Compatibility.NotEncodable32), 
-            new OpCodeProperties(0x9A, Instruction.Call, OperandSize.Size16, OperandFormat.Aww, Compatibility.Invalid64), 
-            new OpCodeProperties(0x9A, Instruction.Call, OperandSize.Size32, OperandFormat.Awd, Compatibility.Invalid64),
-            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandSize.Size16, OperandFormat.Mw), 
-            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandSize.Size32, OperandFormat.Md, Compatibility.NotEncodable64), 
-            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandFormat.Mq, Compatibility.NotEncodable32), 
-            new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.Call, OperandFormat.Mq), 
+            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size16, OperandFormat.Aww, Compatibility.Invalid64), 
+            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size32, OperandFormat.Awd, Compatibility.Invalid64),
+            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size16, OperandFormat.Mw), 
+            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size32, OperandFormat.Md, Compatibility.NotEncodable64), 
+            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandFormat.Mq, Compatibility.NotEncodable32), 
+            new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.CallFar, OperandFormat.Mq), 
         };
 
         [Test]
@@ -231,19 +231,19 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Mw:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(OperandType.WordPointer, reader.GetOperandType(0));
                     Assert.AreEqual(Register.Bx, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Md:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(OperandType.DwordPointer, reader.GetOperandType(0));
                     Assert.AreEqual(Register.Edi, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Mq:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(OperandType.QwordPointer, reader.GetOperandType(0));
                     Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
                     break;
 
@@ -261,14 +261,14 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Aww:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.FarPointer, reader.GetOperandType(0));
+                    Assert.AreEqual(OperandType.FarPointerLiteral, reader.GetOperandType(0));
                     Assert.AreEqual(0x1111, reader.GetSegmentSelector());
                     Assert.AreEqual(0x2222, reader.GetDisplacement());
                     break;
 
                 case OperandFormat.Awd:
                     Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.FarPointer, reader.GetOperandType(0));
+                    Assert.AreEqual(OperandType.FarPointerLiteral, reader.GetOperandType(0));
                     Assert.AreEqual(0x1111, reader.GetSegmentSelector());
                     Assert.AreEqual(0x22222222, reader.GetDisplacement());
                     break;

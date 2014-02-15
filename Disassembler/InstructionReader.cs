@@ -382,7 +382,7 @@ namespace Fantasm.Disassembler
                         {
                             throw InvalidInstructionBytes();
                         }
-                        this.instruction = Instruction.Call;
+                        this.instruction = Instruction.CallFar;
                         this.operandCount = 1;
                         this.operand1 = this.FarPointer(this.GetOperandSize());
                         return true;
@@ -408,27 +408,38 @@ namespace Fantasm.Disassembler
                         continue;
 
                     case 0xFF:
-                    {
-                        var operandSize = this.executionMode == ExecutionModes.Long64Bit
-                            ? Size.Qword
-                            : this.GetOperandSize();
-
-                        var modrm = this.ReadByte();
-                        bool isMemory;
-                        this.instruction = this.GetGroup5Opcode(modrm, out isMemory);
-                        this.operandCount = 1;
-                        this.operand1 = this.RegisterOrMemory(modrm, operandSize);
-
-                        if (isMemory && operand1 != OperandType.Memory)
-                            throw InvalidInstructionBytes();
-
-                        return true;
-                    }
+                        return this.ReadGroup5Instruction();
 
                     default:
                         throw new NotImplementedException();
                 }
             }
+        }
+
+        private bool ReadGroup5Instruction()
+        {
+            var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
+            this.operandCount = 1;
+
+            var modrm = this.ReadByte();
+            var opCode = (modrm & 0x38) >> 3;
+            switch (opCode)
+            {
+                case 2:
+                    this.instruction = Instruction.Call;
+                    this.operand1 = this.RegisterOrMemory(modrm, operandSize);
+                    break;
+
+                case 3:
+                    this.instruction = Instruction.CallFar;
+                    this.operand1 = this.Memory(modrm, operandSize);
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            return true;
         }
 
         private bool ReadTwoByteInstruction()
@@ -459,7 +470,7 @@ namespace Fantasm.Disassembler
                     var modrm = this.ReadByte();
                     this.instruction = this.GetGroup8Opcode(modrm);
                     this.operandCount = 2;
-                    this.operand1 = this.RegisterOrMemory(modrm, this.GetBaseRegister(this.GetOperandSize()));
+                    this.operand1 = this.RegisterOrMemory(modrm, this.GetOperandSize());
                     this.operand2 = this.ImmediateByte();
                     return true;
                 }
@@ -520,7 +531,7 @@ namespace Fantasm.Disassembler
 
         private bool LockIfMemory()
         {
-            if (this.operand1 == OperandType.Memory && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            if (this.operand1.IsMemoryAccess() && (this.prefixes & InstructionPrefixes.Lock) != 0)
             {
                 this.locked = true;
             }
@@ -553,7 +564,7 @@ namespace Fantasm.Disassembler
             var operandBaseRegister = this.GetBaseRegister(size); 
             var modrm = this.ReadByte();
             this.operand1 = this.ModRMRegister(modrm, operandBaseRegister);
-            this.operand2 = this.RegisterOrMemory(modrm, operandBaseRegister);
+            this.operand2 = this.RegisterOrMemory(modrm, operandBaseRegister, size);
             return true;
         }
 
@@ -563,19 +574,8 @@ namespace Fantasm.Disassembler
             this.operandCount = 2;
             var operandBaseRegister = this.GetBaseRegister(size);
             var modrm = this.ReadByte();
-            this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister);
+            this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister, size);
             this.operand2 = this.ModRMRegister(modrm, operandBaseRegister);
-            return true;
-        }
-
-        private bool Read_RM_Imm(Instruction instruction, Size registerSize, Size immediateSize)
-        {
-            this.instruction = instruction;
-            this.operandCount = 2;
-            var operandBaseRegister = this.GetBaseRegister(registerSize);
-            var modrm = this.ReadByte();
-            this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister);
-            this.operand2 = this.Immediate(immediateSize);
             return true;
         }
 
@@ -598,23 +598,6 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private Instruction GetGroup5Opcode(int modrm, out bool isMemory)
-        {
-            var opCode = (modrm & 0x38) >> 3;
-            switch (opCode)
-            {
-                case 2:
-                    isMemory = false;
-                    return Instruction.Call;
-
-                case 3:
-                    isMemory = true;
-                    return Instruction.Call;
-
-                default:
-                    throw new NotImplementedException();
-            }
-        }
         private Instruction GetGroup8Opcode(int modrm)
         {
             var opCode = (modrm & 0x38) >> 3;
@@ -825,14 +808,14 @@ namespace Fantasm.Disassembler
 
         private OperandType RegisterOrMemory(byte modrm, Size operandSize)
         {
-            return this.RegisterOrMemory(modrm, this.GetBaseRegister(operandSize));
+            return this.RegisterOrMemory(modrm, this.GetBaseRegister(operandSize), operandSize);
         }
 
         private OperandType FarPointer(Size size)
         {
             this.codeSegment = this.ReadWord();
             this.ReadDisplacement(size);
-            return OperandType.FarPointer;
+            return OperandType.FarPointerLiteral;
         }
 
         private static Exception InvalidInstructionBytes()

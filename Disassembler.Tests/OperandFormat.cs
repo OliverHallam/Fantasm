@@ -13,6 +13,57 @@
         Ib,
 
         /// <summary>
+        /// The operand is a 16-bit relative address.
+        /// </summary>
+        Jw,
+
+        /// <summary>
+        /// The operand is a 32-bit relative address.
+        /// </summary>
+        Jd,
+
+        /// <summary>
+        /// The operand is a 32 bit pointer, with 16 bit code segment selector and a 16 bit offset.
+        /// </summary>
+        Aww,
+
+        /// <summary>
+        /// The operand is a 48 bit pointer, with 16 bit code segment selector and a 32 bit offset.
+        /// </summary>
+        Awd,
+
+        /// <summary>
+        /// The first (and only) operand is a memory address or 16-bit register specified by a ModRM byte,
+        /// </summary>
+        Ew,
+
+        /// <summary>
+        /// The first (and only) operand is a memory address or 32-bit register specified by a ModRM byte,
+        /// </summary>
+        Ed,
+
+        /// <summary>
+        /// The first (and only) operand is a memory address or 64-bit register specified by a ModRM byte,
+        /// </summary>
+        Eq,
+
+        /// <summary>
+        /// The first (and only) operand is a 16-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mw,
+
+        /// <summary>
+        /// The first (and only) operand is a 32-bit memory address specified by a ModRM byte
+        /// </summary>
+        Md,
+
+        /// <summary>
+        /// The first (and only) operand is a 64-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mq,
+
+
+        /// <summary>
         /// The operand is a register encoded in the instruction.
         /// </summary>
         Register,

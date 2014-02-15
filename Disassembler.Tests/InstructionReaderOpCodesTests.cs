@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Configuration;
 
 using NUnit.Framework;
 
@@ -10,12 +11,13 @@ namespace Fantasm.Disassembler.Tests
     [TestFixture(Description = "Tests of the InstructionReader class for specific OpCodes")]
     public class InstructionReaderOpCodesTests
     {
+        // Each row here corresponds to a line in the Intel manual
         public static OpCodeProperties[] OpCodes =
         {
-            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, Compatibility64.Invalid),
-            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, Compatibility64.Invalid),
-            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, Compatibility64.Invalid),
-            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, Compatibility64.Invalid),
+            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, Compatibility.Invalid64),
+            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, Compatibility.Invalid64),
+            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, Compatibility.Invalid64),
+            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, Compatibility.Invalid64),
 
             new OpCodeProperties(0x14, Instruction.Adc, OperandFormat.AL_Ib),
             new OpCodeProperties(0x15, Instruction.Adc, OperandSize.Size16, OperandFormat.AX_Iw),
@@ -86,10 +88,10 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0x23, Instruction.And, OperandSize.Size32, OperandFormat.Gd_Ed),
             new OpCodeProperties(RexPrefix.W, 0x23, Instruction.And, OperandFormat.Gq_Eq),
 
-            new OpCodeProperties(0x63, Instruction.Arpl, OperandFormat.Ew_Gw, Compatibility64.NotEncodable),
+            new OpCodeProperties(0x63, Instruction.Arpl, OperandFormat.Ew_Gw, Compatibility.NotEncodable64),
 
-            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size16, OperandFormat.Gw_Ew, Compatibility64.Invalid),
-            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size32, OperandFormat.Gd_Ed, Compatibility64.Invalid),
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size16, OperandFormat.Gw_Ew, Compatibility.Invalid64),
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size32, OperandFormat.Gd_Ed, Compatibility.Invalid64),
 
             new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size16, OperandFormat.Gw_Ew),
             new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size32, OperandFormat.Gd_Ed),
@@ -162,6 +164,17 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Ib),
             new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq_Ib),
 
+            new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size16, OperandFormat.Jw, Compatibility.NotEncodable64), 
+            new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size32, OperandFormat.Jd),
+            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size16, OperandFormat.Ew, Compatibility.NotEncodable64), 
+            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size32, OperandFormat.Ed, Compatibility.NotEncodable64), 
+            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandFormat.Eq, Compatibility.NotEncodable32), 
+            new OpCodeProperties(0x9A, Instruction.Call, OperandSize.Size16, OperandFormat.Aww, Compatibility.Invalid64), 
+            new OpCodeProperties(0x9A, Instruction.Call, OperandSize.Size32, OperandFormat.Awd, Compatibility.Invalid64),
+            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandSize.Size16, OperandFormat.Mw), 
+            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandSize.Size32, OperandFormat.Md, Compatibility.NotEncodable64), 
+            new OpCodeProperties(0xFF, 3, Instruction.Call, OperandFormat.Mq, Compatibility.NotEncodable32), 
+            new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.Call, OperandFormat.Mq), 
         };
 
         [Test]
@@ -196,6 +209,68 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(1, reader.OperandCount);
                     Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
                     Assert.AreEqual(opCode.Register, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Ew:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Ed:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Eq:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Mw:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Bx, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Md:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Edi, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Mq:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Memory, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Jw:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.RelativeAddress, reader.GetOperandType(0));
+                    Assert.AreEqual(0x1111, reader.GetDisplacement());
+                    break;
+
+                case OperandFormat.Jd:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.RelativeAddress, reader.GetOperandType(0));
+                    Assert.AreEqual(0x11111111, reader.GetDisplacement());
+                    break;
+
+                case OperandFormat.Aww:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.FarPointer, reader.GetOperandType(0));
+                    Assert.AreEqual(0x1111, reader.GetSegmentSelector());
+                    Assert.AreEqual(0x2222, reader.GetDisplacement());
+                    break;
+
+                case OperandFormat.Awd:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.FarPointer, reader.GetOperandType(0));
+                    Assert.AreEqual(0x1111, reader.GetSegmentSelector());
+                    Assert.AreEqual(0x22222222, reader.GetDisplacement());
                     break;
 
                 case OperandFormat.AL_Ib:
@@ -414,7 +489,7 @@ namespace Fantasm.Disassembler.Tests
 
         private static ExecutionMode GetExecutionMode(OpCodeProperties opCode)
         {
-            return opCode.Compatibility64 != Compatibility64.Valid
+            return (opCode.Compatibility & Compatibility.Compatibility64) != Compatibility.Valid
                 || opCode.OperandSize == OperandSize.Size16
                 ? ExecutionMode.CompatibilityMode
                 : ExecutionMode.Long64Bit;
@@ -422,7 +497,7 @@ namespace Fantasm.Disassembler.Tests
 
         public IEnumerable<OpCodeProperties> InstructionsInvalidIn64Bit()
         {
-            return OpCodes.Where(o => o.Compatibility64 == Compatibility64.Invalid);
+            return OpCodes.Where(o => o.Compatibility == Compatibility.Invalid64);
         }
             
         [Test]
@@ -431,6 +506,26 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_For64BitMode_ThrowsFormatException(OpCodeProperties opCode)
         {
             var bytes = this.GetBytes(opCode);
+            var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
+
+            reader.Read();
+        }
+
+        public IEnumerable<OpCodeProperties> InstructionsWithMemoryParameters()
+        {
+            return
+                OpCodes.Where(
+                    o =>
+                        o.Operands == OperandFormat.Mw || o.Operands == OperandFormat.Md
+                        || o.Operands == OperandFormat.Mq);
+        }
+
+        [Test]
+        [TestCaseSource("InstructionsWithMemoryParameters")]
+        [ExpectedException(typeof(FormatException))]
+        public void InstructionReader_ForRegister_ThrowsFormatException(OpCodeProperties opCode)
+        {
+            var bytes = GetBytes(opCode, 0xc0); // EAX
             var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
 
             reader.Read();
@@ -462,7 +557,22 @@ namespace Fantasm.Disassembler.Tests
 
         private byte[] GetBytes(OpCodeProperties opCode)
         {
-            return GetBytes(opCode, 0xc4);
+            byte modrm;
+            switch (opCode.Operands)
+            {
+                case OperandFormat.Mw:
+                case OperandFormat.Md:
+                case OperandFormat.Mq:
+                    modrm = 0x07;
+                    break;
+
+                default:
+                    modrm = 0xc4;
+                    break;
+            }
+
+
+            return GetBytes(opCode, modrm);
         }
 
         private byte[] GetBytes(OpCodeProperties opCode, byte modrm)
@@ -471,7 +581,7 @@ namespace Fantasm.Disassembler.Tests
 
             if (opCode.RexPrefix != 0)
             {
-                bytes.Add((byte)(opCode.RexPrefix));
+                bytes.Add((byte)(opCode.RexPrefix | RexPrefix.Magic));
             }
 
             bytes.AddRange(opCode.OpCode);
@@ -480,6 +590,43 @@ namespace Fantasm.Disassembler.Tests
             {
                 case OperandFormat.Ib:
                     bytes.Add(0x11);
+                    break;
+
+                case OperandFormat.Jw:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    break;
+
+                case OperandFormat.Jd:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    break;
+
+                case OperandFormat.Aww:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.Awd:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.Ew:
+                case OperandFormat.Ed:
+                case OperandFormat.Eq:
+                case OperandFormat.Mw:
+                case OperandFormat.Md:
+                case OperandFormat.Mq:
+                    bytes.Add((byte)(modrm | (opCode.OpCodeReg << 3)));
                     break;
 
                 case OperandFormat.AL_Ib:

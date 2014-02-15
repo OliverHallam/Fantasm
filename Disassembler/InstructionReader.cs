@@ -18,25 +18,28 @@ namespace Fantasm.Disassembler
 
         private readonly Stream stream;
         private readonly ExecutionModes executionMode;
-        private readonly bool default32BitOperands;
+        private readonly Size defaultOperandSize;
+        private readonly Size defaultAddressSize;
 
         private readonly byte[] buffer = new byte[4];
 
         private InstructionPrefixes prefixes;
         private RexPrefix rex = RexPrefix.Magic;
+
+        private bool locked;
         private Instruction instruction = Instruction.Unknown;
+
+        private int operandCount;
         private OperandType operand1;
         private OperandType operand2;
-        private int operandCount;
-
         private Register register;
         private Register baseRegister;
         private Register indexRegister;
         private int scale;
         private int displacement;
         private int immediate;
-
-        private bool locked;
+        
+        private short codeSegment;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InstructionReader"/> class.
@@ -51,7 +54,10 @@ namespace Fantasm.Disassembler
         {
             this.stream = stream;
             this.executionMode = executionMode.ToExecutionModes();
-            this.default32BitOperands = default32BitOperands || executionMode == ExecutionMode.Long64Bit;
+            this.defaultOperandSize = (default32BitOperands || executionMode == ExecutionMode.Long64Bit)
+                ? Size.Dword
+                : Size.Word;
+            this.defaultAddressSize = default32BitOperands ? Size.Dword : Size.Word;
         }
 
         /// <summary>
@@ -182,7 +188,8 @@ namespace Fantasm.Disassembler
         }
 
         /// <summary>
-        /// Gets the displacement parameter of a memory access operand.
+        /// Gets the displacement parameter of a memory access operand, the value of a relative address operand, or
+        /// the offset from a far pointer.
         /// </summary>
         /// <returns>
         /// The displacement, in bytes.
@@ -193,6 +200,17 @@ namespace Fantasm.Disassembler
         public int GetDisplacement()
         {
             return this.displacement;
+        }
+
+        /// <summary>
+        /// Gets the code segment selector from a far pointer operand.
+        /// </summary>
+        /// <returns>
+        /// The selector for the code segment that the pointer resides in.
+        /// </returns>
+        public short GetSegmentSelector()
+        {
+            return this.codeSegment;
         }
 
         /// <summary>
@@ -225,7 +243,7 @@ namespace Fantasm.Disassembler
             this.instruction = Instruction.Unknown;
             this.operandCount = 0;
             this.immediate = this.displacement = 0;
-            this.register = this.baseRegister = this.indexRegister = Disassembler.Register.None;
+            this.register = this.baseRegister = this.indexRegister = Register.None;
             this.scale = 1;
 
             bool readAny = false;
@@ -359,10 +377,23 @@ namespace Fantasm.Disassembler
                     case 0x90:
                         return this.ReadInstructionNoOperands(Instruction.Nop, ExecutionModes.All);
 
+                    case 0x9A:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw InvalidInstructionBytes();
+                        }
+                        this.instruction = Instruction.Call;
+                        this.operandCount = 1;
+                        this.operand1 = this.FarPointer(this.GetOperandSize());
+                        return true;
+
                     case 0xD4:
                         return this.ReadAsciiAdjustWithBase(Instruction.Aam);
                     case 0xD5:
                         return this.ReadAsciiAdjustWithBase(Instruction.Aad);
+
+                    case 0xE8:
+                        return this.Read_Jz(Instruction.Call);
 
                     case 0xF0:
                         this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
@@ -375,6 +406,24 @@ namespace Fantasm.Disassembler
                     case 0xF3:
                         this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
                         continue;
+
+                    case 0xFF:
+                    {
+                        var operandSize = this.executionMode == ExecutionModes.Long64Bit
+                            ? Size.Qword
+                            : this.GetOperandSize();
+
+                        var modrm = this.ReadByte();
+                        bool isMemory;
+                        this.instruction = this.GetGroup5Opcode(modrm, out isMemory);
+                        this.operandCount = 1;
+                        this.operand1 = this.RegisterOrMemory(modrm, operandSize);
+
+                        if (isMemory && operand1 != OperandType.Memory)
+                            throw InvalidInstructionBytes();
+
+                        return true;
+                    }
 
                     default:
                         throw new NotImplementedException();
@@ -478,6 +527,15 @@ namespace Fantasm.Disassembler
             return true;
         }
 
+        private bool Read_Jz(Instruction instruction)
+        {
+            this.instruction = instruction;
+            this.operandCount = 1;
+            this.operand1 = OperandType.RelativeAddress;
+            this.ReadDisplacement(this.GetOperandSize());
+            return true;
+        }
+
         private bool Read_rAx_Imm(Instruction instruction, Size size)
         {
             this.instruction = instruction;
@@ -540,6 +598,23 @@ namespace Fantasm.Disassembler
             }
         }
 
+        private Instruction GetGroup5Opcode(int modrm, out bool isMemory)
+        {
+            var opCode = (modrm & 0x38) >> 3;
+            switch (opCode)
+            {
+                case 2:
+                    isMemory = false;
+                    return Instruction.Call;
+
+                case 3:
+                    isMemory = true;
+                    return Instruction.Call;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
         private Instruction GetGroup8Opcode(int modrm)
         {
             var opCode = (modrm & 0x38) >> 3;
@@ -558,7 +633,7 @@ namespace Fantasm.Disassembler
                     return Instruction.Btc;
 
                 default:
-                    throw new FormatException();
+                    throw InvalidInstructionBytes();
             }
         }
 
@@ -579,14 +654,15 @@ namespace Fantasm.Disassembler
 
         private Size GetOperandSize()
         {
-            var operandSizeOverride = ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
-
             if ((this.rex & (RexPrefix.W)) != 0)
             {
                 return Size.Qword;
             }
-            
-            return (this.default32BitOperands ^ operandSizeOverride) ? Size.Dword : Size.Word;
+
+            var operandSizeOverride = ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
+            return this.defaultOperandSize == Size.Word
+                ? (operandSizeOverride ? Size.Dword : Size.Word)
+                : (operandSizeOverride ? Size.Word : this.defaultOperandSize);
         }
 
         private Size GetAddressSize()
@@ -598,7 +674,7 @@ namespace Fantasm.Disassembler
                 return addressSizeOverride ? Size.Dword : Size.Qword;
             }
             
-            return (this.default32BitOperands ^ addressSizeOverride) ? Size.Dword : Size.Word;
+            return ((this.defaultAddressSize == Size.Dword) ^ addressSizeOverride) ? Size.Dword : Size.Word;
         }
 
         private void ReadPrefix(InstructionPrefixes group, InstructionPrefixes prefix)
@@ -683,6 +759,18 @@ namespace Fantasm.Disassembler
             return BitConverter.ToInt32(this.buffer, 0);
         }
 
+        private void ReadDisplacement(Size size)
+        {
+            if (size == Size.Word)
+            {
+                this.displacement = this.ReadWord();
+            }
+            else
+            {
+                this.displacement = this.ReadDword();
+            }
+        }
+
         private OperandType Immediate(Size size)
         {
             switch (size)
@@ -738,6 +826,13 @@ namespace Fantasm.Disassembler
         private OperandType RegisterOrMemory(byte modrm, Size operandSize)
         {
             return this.RegisterOrMemory(modrm, this.GetBaseRegister(operandSize));
+        }
+
+        private OperandType FarPointer(Size size)
+        {
+            this.codeSegment = this.ReadWord();
+            this.ReadDisplacement(size);
+            return OperandType.FarPointer;
         }
 
         private static Exception InvalidInstructionBytes()

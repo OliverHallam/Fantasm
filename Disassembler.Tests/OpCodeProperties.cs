@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 
 namespace Fantasm.Disassembler.Tests
 {
@@ -12,7 +13,7 @@ namespace Fantasm.Disassembler.Tests
         public Instruction Mnemonic;
         public OperandFormat Operands;
         internal InstructionPrefixes SupportedPrefixes;
-        public Compatibility64 Compatibility64;
+        public Compatibility Compatibility;
         public Register Register;
 
         internal OpCodeProperties(
@@ -23,7 +24,7 @@ namespace Fantasm.Disassembler.Tests
             Instruction mnemonic,
             OperandFormat operands,
             InstructionPrefixes supportedPrefixes,
-            Compatibility64 compatibility64,
+            Compatibility compatibility,
             Register register)
         {
             this.RexPrefix = rex;
@@ -33,7 +34,7 @@ namespace Fantasm.Disassembler.Tests
             this.Mnemonic = mnemonic;
             this.Operands = operands;
             this.SupportedPrefixes = supportedPrefixes;
-            this.Compatibility64 = compatibility64;
+            this.Compatibility = compatibility;
             this.Register = register;
         }
 
@@ -46,7 +47,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -60,7 +61,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 OperandFormat.Register,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 register)
         {
         }
@@ -74,7 +75,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 OperandFormat.Register,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 register)
         {
         }
@@ -83,7 +84,7 @@ namespace Fantasm.Disassembler.Tests
             byte opCode,
             Instruction mnemonic,
             OperandFormat operands,
-            Compatibility64 compatibility64)
+            Compatibility compatibility)
             : this(
                 0,
                 OperandSize.Size32,
@@ -92,12 +93,54 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                compatibility64,
+                compatibility,
                 Register.None)
         {
         }
 
-        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandFormat operands, InstructionPrefixes prefixes)
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                0,
+                OperandSize.Size32,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operands,
+                InstructionPrefixes.None,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            RexPrefix rex,
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                rex,
+                OperandSize.Size32,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operands,
+                InstructionPrefixes.None,
+                Compatibility.NotEncodable32,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            Instruction mnemonic,
+            OperandFormat operands,
+            InstructionPrefixes prefixes)
             : this(
                 0,
                 OperandSize.Size32,
@@ -106,12 +149,17 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
 
-        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandSize operandSize, OperandFormat operands, InstructionPrefixes prefixes)
+        internal OpCodeProperties(
+            byte opCode,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands,
+            InstructionPrefixes prefixes)
             : this(
                 0,
                 operandSize,
@@ -120,7 +168,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -139,7 +187,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -160,7 +208,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -180,7 +228,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 supportedPrefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -194,7 +242,26 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeMod,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(
+                0,
+                operandSize,
+                new[] { opCode },
+                opCodeMod,
+                mnemonic,
+                operands,
+                InstructionPrefixes.None,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -204,7 +271,7 @@ namespace Fantasm.Disassembler.Tests
             Instruction mnemonic,
             OperandSize operandSize,
             OperandFormat operands,
-            Compatibility64 compatibility64)
+            Compatibility compatibility)
             : this(
                 0,
                 operandSize,
@@ -213,7 +280,27 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                compatibility64,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                0,
+                operandSize,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operands,
+                InstructionPrefixes.None,
+                compatibility,
                 Register.None)
         {
         }
@@ -227,7 +314,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -246,7 +333,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -260,7 +347,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -274,7 +361,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -288,7 +375,7 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 InstructionPrefixes.None,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
@@ -302,21 +389,37 @@ namespace Fantasm.Disassembler.Tests
                 mnemonic,
                 operands,
                 prefixes,
-                Compatibility64.Valid,
+                Compatibility.Valid,
                 Register.None)
         {
         }
 
         public override string ToString()
         {
-            var opCode = string.Join(" ", this.OpCode.Select(o => o.ToString("X2")));
-            if (this.OpCodeReg != 255)
+            var builder = new StringBuilder();
+
+            builder.Append(this.Mnemonic);
+            builder.Append(" (");
+
+            if ((this.RexPrefix & RexPrefix.W) != 0)
             {
-                opCode += "/" + this.OpCodeReg;
+                builder.Append("Rex.W ");
             }
 
+            var opCode = string.Join(" ", this.OpCode.Select(o => o.ToString("X2")));
+            builder.Append(opCode);
+
+            if (this.OpCodeReg != 255)
+            {
+                builder.Append("/" + this.OpCodeReg);
+            }
+
+            builder.Append(") ");
+
             var operands = this.Operands == OperandFormat.Register ? this.Register.ToString() : this.Operands.ToString();
-            return String.Format("{0} ({1}) {2}", this.Mnemonic, opCode, operands);
+            builder.Append(operands);
+
+            return builder.ToString();
         }
     }
 }

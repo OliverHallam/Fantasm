@@ -114,6 +114,39 @@ namespace Fantasm.Disassembler.Tests
             Assert.AreEqual(0x12345678, reader.GetDisplacement());
         }
 
+        [Test]
+        public void GetOperandDisplacement_CanReadRelativeAddress()
+        {
+            // call [EIP + 0x12345678]
+            var reader = ReadBytes32(0xe8, 0x78, 0x56, 0x34, 0x12);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.RelativeAddress, reader.GetOperandType(0));
+            Assert.AreEqual(0x12345678, reader.GetDisplacement());
+        }
+
+        [Test]
+        public void GetOperandDisplacement_CanReadPointerFromFarPointer()
+        {
+            // call [EIP + 0x12345678]
+            var reader = ReadBytes32(0x9A, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12);
+            reader.Read();
+
+            Assert.AreEqual(0x12345678, reader.GetDisplacement());
+        }
+
+        [Test]
+        public void GetOperandDisplacement_CanReadCodeSegmentPointerFromFarPointer()
+        {
+            // call [EIP + 0x12345678]
+            var reader = ReadBytes32(0x9A, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12);
+            reader.Read();
+
+            Assert.AreEqual(unchecked ((short)0x9ABC), reader.GetSegmentSelector());
+        }
+
         // TODO: read clears all memory parameters
+
+        // TODO: Add method to get pointer format for memory arguments
     }
 }

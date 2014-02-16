@@ -3,34 +3,44 @@
     /// <summary>
     /// The component bits of an <c>SIB</c> byte.
     /// </summary>
-    struct SibBits
+    internal struct SibBits
     {
-        private int scaleBits;
-        private int indexBits;
-        private int baseBits;
+        #region Fields
+
+        private readonly int baseBits;
+        private readonly int indexBits;
+        private readonly int scaleBits;
+
+        #endregion
+
+        #region Constructors and Destructors
 
         public SibBits(RexPrefix rex, byte sib)
         {
-            scaleBits = sib >> 6;
+            this.scaleBits = sib >> 6;
 
-            indexBits = (sib & 0x38) >> 3;
+            this.indexBits = (sib & 0x38) >> 3;
             if ((rex & RexPrefix.X) != 0)
             {
-                indexBits |= 8;
+                this.indexBits |= 8;
             }
 
-            baseBits = sib & 0x7;
+            this.baseBits = sib & 0x7;
             if ((rex & RexPrefix.B) != 0)
             {
-                baseBits |= 8;
+                this.baseBits |= 8;
             }
         }
 
-        public int Scale
+        #endregion
+
+        #region Public Properties
+
+        public int Base
         {
             get
             {
-                return this.scaleBits;
+                return this.baseBits;
             }
         }
 
@@ -42,12 +52,14 @@
             }
         }
 
-        public int Base
+        public int Scale
         {
             get
             {
-                return this.baseBits;
+                return this.scaleBits;
             }
         }
+
+        #endregion
     }
 }

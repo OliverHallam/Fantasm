@@ -5,6 +5,8 @@ namespace Fantasm.Disassembler
     /// </summary>
     internal static class RegDecoder
     {
+        #region Public Methods and Operators
+
         /// <summary>
         /// Gets the register associated with the specified reg bits.
         /// </summary>
@@ -24,7 +26,7 @@ namespace Fantasm.Disassembler
         {
             if (reg >= 8)
             {
-                return baseRegister + reg;    
+                return baseRegister + reg;
             }
             if (reg < 4)
             {
@@ -36,6 +38,10 @@ namespace Fantasm.Disassembler
             }
             return baseRegister + GetDiSiBpSpRegisterOffset(reg);
         }
+
+        #endregion
+
+        #region Methods
 
         private static int GetABCDRegisterOffset(int reg)
         {
@@ -61,5 +67,7 @@ namespace Fantasm.Disassembler
             // [4,5,6,7] => [7,6,5,4] (SP, BP, SI, DI)
             return 11 - reg;
         }
+
+        #endregion
     }
 }

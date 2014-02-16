@@ -5,9 +5,15 @@
     /// </summary>
     internal struct ModRMBits
     {
+        #region Fields
+
         private readonly int mod;
         private readonly int reg;
         private readonly int rm;
+
+        #endregion
+
+        #region Constructors and Destructors
 
         public ModRMBits(RexPrefix rex, byte modrm)
         {
@@ -26,6 +32,10 @@
             }
         }
 
+        #endregion
+
+        #region Public Properties
+
         public int Mod
         {
             get
@@ -43,6 +53,13 @@
             }
         }
 
+        public int RM
+        {
+            get
+            {
+                return this.rm;
+            }
+        }
         public int Reg
         {
             get
@@ -51,12 +68,6 @@
             }
         }
 
-        public int RM
-        {
-            get
-            {
-                return this.rm;
-            }
-        }
+        #endregion
     }
 }

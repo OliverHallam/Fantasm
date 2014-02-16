@@ -25,7 +25,8 @@ namespace Fantasm.Disassembler
             RexPrefix rex,
             Size addressSize,
             Register operandSizeBaseRegister,
-            ref ModRMBits modrmBits, Register addressSizeBaseRegister)
+            Register addressSizeBaseRegister,
+            ref ModRMBits modrmBits)
         {
             this.mod = modrmBits.Mod;
 

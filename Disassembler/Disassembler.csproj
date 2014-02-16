@@ -48,14 +48,21 @@
     <Compile Include="ExecutionMode.cs" />
     <Compile Include="ExecutionModeExtensions.cs" />
     <Compile Include="ExecutionModes.cs" />
+    <Compile Include="InstructionByteStream.cs" />
     <Compile Include="InstructionPrefixes.cs" />
     <Compile Include="InstructionReader.cs" />
     <Compile Include="Instruction.cs" />
+    <Compile Include="ModRMBits.cs" />
+    <Compile Include="ModRMDecoder.cs" />
     <Compile Include="OperandType.cs" />
     <Compile Include="OperandTypeExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Register.cs" />
+    <Compile Include="RegDecoder.cs" />
     <Compile Include="RexPrefix.cs" />
+    <Compile Include="SibBits.cs" />
+    <Compile Include="SibDecoder.cs" />
+    <Compile Include="Size.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InstructionReader.ModRM.cs" />

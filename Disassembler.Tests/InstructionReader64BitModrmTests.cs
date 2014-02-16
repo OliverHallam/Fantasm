@@ -543,10 +543,10 @@ namespace Fantasm.Disassembler.Tests
         [TestCase(5, Register.R13)]
         [TestCase(6, Register.R14)]
         [TestCase(7, Register.R15)]
-        public void ModRM_ForSibAddressWithRexB_ReadsCorrectIndexRegister(byte sibIndex, Register register)
+        public void ModRM_ForSibAddressWithRexX_ReadsCorrectIndexRegister(byte sibIndex, Register register)
         {
             // ADD ([RAX + index]) 0
-            var reader = ReadBytes64(0x41, 0x80, 0x04, (byte)(sibIndex << 3), 0x00);
+            var reader = ReadBytes64(0x42, 0x80, 0x04, (byte)(sibIndex << 3), 0x00);
             reader.Read();
 
             Assert.AreEqual(register, reader.GetIndexRegister());
@@ -582,7 +582,7 @@ namespace Fantasm.Disassembler.Tests
         public void ModRM_ForSibAddressWithAddressSizeOverrideAndRexB_ReadsCorrectIndexRegister(byte sibIndex, Register register)
         {
             // ADD ([EAX + index]) 0
-            var reader = ReadBytes64(0x67, 0x41, 0x80, 0x04, (byte)(sibIndex << 3), 0x00);
+            var reader = ReadBytes64(0x67, 0x42, 0x80, 0x04, (byte)(sibIndex << 3), 0x00);
             reader.Read();
 
             Assert.AreEqual(register, reader.GetIndexRegister());

@@ -8,20 +8,11 @@ namespace Fantasm.Disassembler
     /// </summary>
     public partial class InstructionReader
     {
-        private enum Size
-        {
-            Byte,
-            Word,
-            Dword,
-            Qword,
-        }
-
-        private readonly Stream stream;
         private readonly ExecutionModes executionMode;
         private readonly Size defaultOperandSize;
         private readonly Size defaultAddressSize;
 
-        private readonly byte[] buffer = new byte[4];
+        private readonly InstructionByteStream instructionByteStream;
 
         private InstructionPrefixes prefixes;
         private RexPrefix rex = RexPrefix.Magic;
@@ -52,7 +43,7 @@ namespace Fantasm.Disassembler
         /// </param>
         public InstructionReader(Stream stream, ExecutionMode executionMode, bool default32BitOperands)
         {
-            this.stream = stream;
+            this.instructionByteStream = new InstructionByteStream(stream);
             this.executionMode = executionMode.ToExecutionModes();
             this.defaultOperandSize = (default32BitOperands || executionMode == ExecutionMode.Long64Bit)
                 ? Size.Dword
@@ -230,7 +221,7 @@ namespace Fantasm.Disassembler
             // if the lock prefix wasn't handled
             if ((this.prefixes & InstructionPrefixes.Lock) != 0 && !this.locked)
             {
-                throw InvalidInstructionBytes();
+                throw InvalidInstruction();
             }
             return true;
         }
@@ -250,14 +241,17 @@ namespace Fantasm.Disassembler
 
             while (true)
             {
-                var nextByte = this.stream.ReadByte();
-                if (nextByte < 0)
+                byte nextByte;
+                if (readAny)
                 {
-                    if (readAny)
+                    nextByte = this.instructionByteStream.ReadByte();
+                }
+                else
+                {
+                    if (!this.instructionByteStream.TryReadByte(out nextByte))
                     {
-                        throw InvalidInstructionBytes();
+                        return false;
                     }
-                    return false;
                 }
                 readAny = true;
 
@@ -335,7 +329,7 @@ namespace Fantasm.Disassembler
                     case 0x62:
                         if (this.executionMode == ExecutionModes.Long64Bit)
                         {
-                            throw InvalidInstructionBytes();
+                            throw InvalidInstruction();
                         }
                         return this.Read_Reg_RM(Instruction.Bound, this.GetOperandSize());
                     case 0x63:
@@ -366,10 +360,10 @@ namespace Fantasm.Disassembler
                         var registerSize = ((nextByte & 1) != 0) ? operandSize : Size.Byte;
                         var immediateSize = nextByte == 0x81 ? operandSize : Size.Byte;
 
-                        var modrm = this.ReadByte();
-                        this.instruction = this.GetGroup1Opcode(modrm);
+                        var modrm = this.ReadModRM();
+                        this.instruction = this.GetGroup1Opcode(modrm.OpCode);
                         this.operandCount = 2;
-                        this.operand1 = this.RegisterOrMemory(modrm, registerSize);
+                        this.operand1 = this.RegisterOrMemory(ref modrm, registerSize);
                         this.operand2 = this.Immediate(immediateSize);
                         return this.LockIfMemory();
                     }
@@ -380,7 +374,7 @@ namespace Fantasm.Disassembler
                     case 0x9A:
                         if (this.executionMode == ExecutionModes.Long64Bit)
                         {
-                            throw InvalidInstructionBytes();
+                            throw InvalidInstruction();
                         }
                         this.instruction = Instruction.CallFar;
                         this.operandCount = 1;
@@ -399,7 +393,7 @@ namespace Fantasm.Disassembler
                         this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
                         continue;
                     case 0xF1:
-                        throw InvalidInstructionBytes();
+                        throw InvalidInstruction();
                     case 0xF2:
                         this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
                         continue;
@@ -421,18 +415,17 @@ namespace Fantasm.Disassembler
             var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
             this.operandCount = 1;
 
-            var modrm = this.ReadByte();
-            var opCode = (modrm & 0x38) >> 3;
-            switch (opCode)
+            var modrm = this.ReadModRM();
+            switch (modrm.Reg)
             {
                 case 2:
                     this.instruction = Instruction.Call;
-                    this.operand1 = this.RegisterOrMemory(modrm, operandSize);
+                    this.operand1 = this.RegisterOrMemory(ref modrm, operandSize);
                     break;
 
                 case 3:
                     this.instruction = Instruction.CallFar;
-                    this.operand1 = this.Memory(modrm, operandSize);
+                    this.operand1 = this.Memory(ref modrm, operandSize);
                     break;
 
                 default:
@@ -444,7 +437,7 @@ namespace Fantasm.Disassembler
 
         private bool ReadTwoByteInstruction()
         {
-            var opCodeByte = this.ReadByte();
+            var opCodeByte = this.instructionByteStream.ReadByte();
 
             switch (opCodeByte)
             {
@@ -462,15 +455,14 @@ namespace Fantasm.Disassembler
                 case 0xB9:
                 {
                     // Group 10
-                    var modrm = this.ReadByte();
                     return this.ReadInstructionNoOperands(Instruction.Ud1, ExecutionModes.All);
                 }
                 case 0xBA:
                 {
-                    var modrm = this.ReadByte();
-                    this.instruction = this.GetGroup8Opcode(modrm);
+                    var modrm = this.ReadModRM();
+                    this.instruction = this.GetGroup8Opcode(modrm.OpCode);
                     this.operandCount = 2;
-                    this.operand1 = this.RegisterOrMemory(modrm, this.GetOperandSize());
+                    this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
                     this.operand2 = this.ImmediateByte();
                     return true;
                 }
@@ -497,12 +489,22 @@ namespace Fantasm.Disassembler
                         throw this.UndefinedBehaviour();
                     }
                     this.operand1 = OperandType.Register;
-                    this.register = this.GetRegister(RexPrefix.B, opCodeByte & 0x7, this.GetBaseRegister(operandSize));
+                    this.register = RegDecoder.GetRegister(this.rex != 0, this.GetOpcodeReg(this.rex, opCodeByte), this.GetBaseRegister(operandSize));
                     return true;
 
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private int GetOpcodeReg(RexPrefix rex, byte opcode)
+        {
+            var reg = opcode & 0x7;
+            if ((rex & RexPrefix.B) != 0)
+            {
+                reg |= 8;
+            }
+            return reg;
         }
 
         private bool ReadBinaryArithmetic(Instruction instruction, int opCode)
@@ -562,10 +564,15 @@ namespace Fantasm.Disassembler
             this.instruction = instruction;
             this.operandCount = 2;
             var operandBaseRegister = this.GetBaseRegister(size); 
-            var modrm = this.ReadByte();
-            this.operand1 = this.ModRMRegister(modrm, operandBaseRegister);
-            this.operand2 = this.RegisterOrMemory(modrm, operandBaseRegister, size);
+            var modrm = this.ReadModRM();
+            this.operand1 = this.ModRMRegister(ref modrm, operandBaseRegister);
+            this.operand2 = this.RegisterOrMemory(ref modrm, operandBaseRegister, size);
             return true;
+        }
+
+        private ModRMBits ReadModRM()
+        {
+            return new ModRMBits(this.rex, this.instructionByteStream.ReadByte());
         }
 
         private bool Read_RM_Reg(Instruction instruction, Size size)
@@ -573,15 +580,14 @@ namespace Fantasm.Disassembler
             this.instruction = instruction;
             this.operandCount = 2;
             var operandBaseRegister = this.GetBaseRegister(size);
-            var modrm = this.ReadByte();
-            this.operand1 = this.RegisterOrMemory(modrm, operandBaseRegister, size);
-            this.operand2 = this.ModRMRegister(modrm, operandBaseRegister);
+            var modrm = this.ReadModRM();
+            this.operand1 = this.RegisterOrMemory(ref modrm, operandBaseRegister, size);
+            this.operand2 = this.ModRMRegister(ref modrm, operandBaseRegister);
             return true;
         }
 
-        private Instruction GetGroup1Opcode(int modrm)
+        private Instruction GetGroup1Opcode(int opCode)
         {
-            var opCode = (modrm & 0x38) >> 3;
             switch (opCode)
             {
                 case 0:
@@ -598,9 +604,8 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private Instruction GetGroup8Opcode(int modrm)
+        private Instruction GetGroup8Opcode(int opCode)
         {
-            var opCode = (modrm & 0x38) >> 3;
             switch (opCode)
             {
                 case 4:
@@ -616,18 +621,8 @@ namespace Fantasm.Disassembler
                     return Instruction.Btc;
 
                 default:
-                    throw InvalidInstructionBytes();
+                    throw InvalidInstruction();
             }
-        }
-
-        private byte ReadByte()
-        {
-            var modrm = this.stream.ReadByte();
-            if (modrm < 0)
-            {
-                throw InvalidInstructionBytes();
-            }
-            return (byte)modrm;
         }
 
         private void ReadRexPrefix(int nextByte)
@@ -665,12 +660,12 @@ namespace Fantasm.Disassembler
             if (this.rex != 0)
             {
                 // REX prefix must appear after all other prefixes.
-                throw InvalidInstructionBytes();
+                throw InvalidInstruction();
             }
 
             if ((this.prefixes & group) != 0)
             {
-                throw InvalidInstructionBytes();
+                throw InvalidInstruction();
             }
 
             this.prefixes |= prefix;
@@ -709,48 +704,32 @@ namespace Fantasm.Disassembler
         {
             if ((this.prefixes & InstructionPrefixes.Lock) != 0)
             {
-                throw InvalidInstructionBytes();
+                throw InvalidInstruction();
             }
 
             if ((this.executionMode & executionModes) == 0)
             {
-                throw InvalidInstructionBytes();
+                throw InvalidInstruction();
             }
 
             this.instruction = instruction;
         }
 
-        private short ReadWord()
-        {
-            var bytesRead = this.stream.Read(this.buffer, 0, 2);
-            if (bytesRead < 2)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            return BitConverter.ToInt16(this.buffer, 0);
-        }
-
-        private int ReadDword()
-        {
-            var bytesRead = this.stream.Read(this.buffer, 0, 4);
-            if (bytesRead < 4)
-            {
-                throw InvalidInstructionBytes();
-            }
-
-            return BitConverter.ToInt32(this.buffer, 0);
-        }
-
         private void ReadDisplacement(Size size)
         {
-            if (size == Size.Word)
+            switch (size)
             {
-                this.displacement = this.ReadWord();
-            }
-            else
-            {
-                this.displacement = this.ReadDword();
+                case Size.Byte:
+                    this.displacement = this.instructionByteStream.ReadByte();
+                    break;
+                case Size.Word:
+                    this.displacement = this.instructionByteStream.ReadWord();
+                    break;
+                case Size.Dword:
+                    this.displacement = this.instructionByteStream.ReadDword();
+                    break;
+                case Size.Qword:
+                    throw new NotImplementedException();
             }
         }
 
@@ -769,19 +748,19 @@ namespace Fantasm.Disassembler
 
         private OperandType ImmediateDword()
         {
-            this.immediate = this.ReadDword();
+            this.immediate = this.instructionByteStream.ReadDword();
             return OperandType.ImmediateDword;
         }
 
         private OperandType ImmediateWord()
         {
-            this.immediate = this.ReadWord();
+            this.immediate = this.instructionByteStream.ReadWord();
             return OperandType.ImmediateWord;
         }
 
         private OperandType ImmediateByte()
         {
-            this.immediate = this.ReadByte();
+            this.immediate = this.instructionByteStream.ReadByte();
             return OperandType.ImmediateByte;
         }
 
@@ -806,26 +785,106 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private OperandType RegisterOrMemory(byte modrm, Size operandSize)
+        private OperandType RegisterOrMemory(ref ModRMBits modrmBits, Size operandSize)
         {
-            return this.RegisterOrMemory(modrm, this.GetBaseRegister(operandSize), operandSize);
+            return this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
+        }
+
+        private OperandType RegisterOrMemory(ref ModRMBits modrmBits, Register baseRegister, Size operandSize)
+        {
+            var addressSize = this.GetAddressSize();
+            var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
+            var decoder = new ModRMDecoder(this.executionMode, this.rex, addressSize, baseRegister, ref modrmBits, addressSizeBaseRegister);
+
+            this.baseRegister = decoder.BaseRegister;
+            this.indexRegister = decoder.IndexRegister;
+
+            if (decoder.IsDirectRegister)
+            {
+                return OperandType.DirectRegister;
+            }
+
+            if (decoder.NeedsSib)
+            {
+                this.ReadSibByte(decoder.Mod, addressSizeBaseRegister);
+            }
+
+            this.ReadDisplacement(decoder.DisplacementSize);
+
+            switch (operandSize)
+            {
+                case Size.Byte:
+                    return OperandType.BytePointer;
+                case Size.Word:
+                    return OperandType.WordPointer;
+                case Size.Dword:
+                    return OperandType.DwordPointer;
+                default:
+                    return OperandType.QwordPointer;
+            }
+        }
+
+        private static Register GetAddressSizeBaseRegister(Size addressSize)
+        {
+            switch (addressSize)
+            {
+                case Size.Qword:
+                    return Register.Rax;
+                case Size.Dword:
+                    return Register.Eax;
+                case Size.Word:
+                    return Register.Ax;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
+        private OperandType Memory(ref ModRMBits modrmBits, Size operandSize)
+        {
+            var operandType = this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
+
+            if (operandType == OperandType.DirectRegister)
+            {
+                throw this.InvalidInstruction();
+            }
+
+            return operandType;
+        }
+
+        private OperandType ModRMRegister(ref ModRMBits modrmBits, Register baseRegister)
+        {
+            this.register = RegDecoder.GetRegister(this.rex != 0, modrmBits.Reg, baseRegister);
+            return OperandType.Register;
+        }
+
+        private void ReadSibByte(int mod, Register addressSizeBaseRegister)
+        {
+            var sibByte = this.instructionByteStream.ReadByte();
+            var sibDecoder = new SibDecoder(this.rex, mod, sibByte, addressSizeBaseRegister);
+            this.baseRegister = sibDecoder.BaseRegister;
+            this.scale = sibDecoder.Scale;
+            this.indexRegister = sibDecoder.IndexRegister;
+            if (sibDecoder.RequiresDisplacement)
+            {
+                this.displacement = this.instructionByteStream.ReadDword();
+            }
         }
 
         private OperandType FarPointer(Size size)
         {
-            this.codeSegment = this.ReadWord();
+            this.codeSegment = this.instructionByteStream.ReadWord();
             this.ReadDisplacement(size);
             return OperandType.FarPointerLiteral;
-        }
-
-        private static Exception InvalidInstructionBytes()
-        {
-            return new FormatException("The data does not represent a valid instruction.");
         }
 
         private Exception UndefinedBehaviour()
         {
             return new FormatException("The behaviour of the specified instuction is undefined.");
+        }
+
+        private Exception InvalidInstruction()
+        {
+            return new FormatException("The data does not represent a valid instruction.");
         }
     }
 }

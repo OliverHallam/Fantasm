@@ -62,6 +62,10 @@
         /// </summary>
         Mq,
 
+        /// <summary>
+        /// The first (and only) operand is a 128-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mdq,
 
         /// <summary>
         /// The operand is a register encoded in the instruction.
@@ -150,16 +154,34 @@
 
         /// <summary>
         /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
+        /// memory address or 8-bit register specified by a modR/M byte.
+        /// </summary>
+        Gd_Eb,
+
+        /// <summary>
+        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
+        /// memory address or 16-bit register specified by a modR/M byte.
+        /// </summary>
+        Gd_Ew,
+
+        /// <summary>
+        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
         /// memory address or 32-bit register specified by a modR/M byte.
         /// </summary>
         Gd_Ed,
+
+        /// <summary>
+        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
+        /// memory address or 64-bit register specified by a modR/M byte.
+        /// </summary>
+        Gd_Eq,
 
         /// <summary>
         /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
         /// operand is an immediate dword.
         /// </summary>
         Eq_Id,
-            
+
         /// <summary>
         /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
         /// operand is an immediate byte.
@@ -176,6 +198,6 @@
         /// The first operand is a 64 bit register from the modR/M reg field, and the second operand is a
         /// memory address or 64-bit register specified by a modR/M byte.
         /// </summary>
-        Gq_Eq,
+        Gq_Eq
     }
 }

@@ -77,6 +77,14 @@
         QwordPointer,
 
         /// <summary>
+        /// The operand is a memory access referencing a 128-bit value.  In this case the memory address accessed is
+        /// <c>[DirectRegister + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
+        /// from the <see cref="InstructionReader.GetBaseRegister"/>, <see cref="InstructionReader.GetIndexRegister"/>,
+        /// <see cref="InstructionReader.GetScale"/> and <see cref="InstructionReader.GetDisplacement"/> methods.
+        /// </summary>
+        OwordPointer,
+
+        /// <summary>
         /// The operand is an address, relative to the start of the next instruction.  The value of operand can be
         /// retrieved from the <see cref="InstructionReader.GetDisplacement"/> method.
         /// </summary>
@@ -87,6 +95,8 @@
         /// selector can be retrieved from the <see cref="InstructionReader.GetSegmentSelector" /> method, and the
         /// offset can be retrieved from the <see cref="InstructionReader.GetDisplacement"/> method.
         /// </summary>
-        FarPointerLiteral
+        FarPointerLiteral,
+
+
     }
 }

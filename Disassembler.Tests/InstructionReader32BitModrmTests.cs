@@ -152,11 +152,11 @@ namespace Fantasm.Disassembler.Tests
         [Test]
         public void ModRM_WithRegisterOperand_DecodesRegister()
         {
-            // ADD AL CL
+            // ADD AL AH
             var reader = ReadBytes32(0x00, 0xe0);
             reader.Read();
 
-            Assert.AreEqual(Register.Cl, reader.GetRegister());
+            Assert.AreEqual(Register.Ah, reader.GetRegister());
         }
 
         [Test]

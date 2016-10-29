@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
 
 using NUnit.Framework;
 
@@ -143,26 +142,26 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 4, Instruction.Bt, OperandSize.Size32, OperandFormat.Ed_Ib),
             new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 4, Instruction.Bt, OperandFormat.Eq_Ib),
 
-            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Gw),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Gd),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandFormat.Eq_Gq),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Ib),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Ib),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandFormat.Eq_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Gw, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Gd, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBB }, Instruction.Btc, OperandFormat.Eq_Gq, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size16, OperandFormat.Ew_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandSize.Size32, OperandFormat.Ed_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 7, Instruction.Btc, OperandFormat.Eq_Ib, InstructionPrefixes.Lock),
 
-            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Gw),
-            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Gd),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandFormat.Eq_Gq),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Ib),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Ib),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandFormat.Eq_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Gw, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Gd, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xB3 }, Instruction.Btr, OperandFormat.Eq_Gq, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size16, OperandFormat.Ew_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandSize.Size32, OperandFormat.Ed_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 6, Instruction.Btr, OperandFormat.Eq_Ib, InstructionPrefixes.Lock),
 
-            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Gw),
-            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Gd),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandFormat.Eq_Gq),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Ib),
-            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Ib),
-            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq_Ib),
+            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Gw, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Gd, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandFormat.Eq_Gq, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size16, OperandFormat.Ew_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed_Ib, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq_Ib, InstructionPrefixes.Lock),
 
             new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size16, OperandFormat.Jw, Compatibility.NotEncodable64), 
             new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size32, OperandFormat.Jd),
@@ -174,7 +173,162 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size16, OperandFormat.Mw), 
             new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size32, OperandFormat.Md, Compatibility.NotEncodable64), 
             new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandFormat.Mq, Compatibility.NotEncodable32), 
-            new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.CallFar, OperandFormat.Mq), 
+            new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.CallFar, OperandFormat.Mq),
+
+            new OpCodeProperties(0x98, Instruction.Cbw, OperandSize.Size16, OperandFormat.None), 
+            new OpCodeProperties(0x98, Instruction.Cwde, OperandSize.Size32, OperandFormat.None), 
+            new OpCodeProperties(RexPrefix.W, 0x98, Instruction.Cdqe, OperandFormat.None), 
+
+            new OpCodeProperties(0xF8, Instruction.Clc, OperandFormat.None), 
+
+            new OpCodeProperties(0xFC, Instruction.Cld, OperandFormat.None), 
+            
+            new OpCodeProperties(0xFA, Instruction.Cli, OperandFormat.None), 
+
+            new OpCodeProperties(new byte[] { 0x0f, 0x06 }, Instruction.Clts, OperandFormat.None), 
+
+            new OpCodeProperties(0xF5, Instruction.Cmc, OperandFormat.None), 
+
+            new OpCodeProperties(new byte[] { 0x0F, 0x47 }, Instruction.Cmova, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x47 }, Instruction.Cmova, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x47 }, Instruction.Cmova, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovae, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovae, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x43 }, Instruction.Cmovae, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovb, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovb, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x42 }, Instruction.Cmovb, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x46 }, Instruction.Cmovbe, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x46 }, Instruction.Cmovbe, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x46 }, Instruction.Cmovbe, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovc, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovc, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x42 }, Instruction.Cmovc, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x44 }, Instruction.Cmove, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x44 }, Instruction.Cmove, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x44 }, Instruction.Cmove, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4F }, Instruction.Cmovg, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4F }, Instruction.Cmovg, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4F }, Instruction.Cmovg, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4D }, Instruction.Cmovge, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4D }, Instruction.Cmovge, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4D }, Instruction.Cmovge, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4C }, Instruction.Cmovl, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4C }, Instruction.Cmovl, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4C }, Instruction.Cmovl, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4E }, Instruction.Cmovle, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4E }, Instruction.Cmovle, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4E }, Instruction.Cmovle, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x46 }, Instruction.Cmovna, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x46 }, Instruction.Cmovna, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x46 }, Instruction.Cmovna, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovnae, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x42 }, Instruction.Cmovnae, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x42 }, Instruction.Cmovnae, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovnb, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovnb, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x43 }, Instruction.Cmovnb, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x47 }, Instruction.Cmovnbe, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x47 }, Instruction.Cmovnbe, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x47 }, Instruction.Cmovnbe, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovnc, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x43 }, Instruction.Cmovnc, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x43 }, Instruction.Cmovnc, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x45 }, Instruction.Cmovne, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x45 }, Instruction.Cmovne, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x45 }, Instruction.Cmovne, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4E }, Instruction.Cmovng, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4E }, Instruction.Cmovng, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4E }, Instruction.Cmovng, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4C }, Instruction.Cmovnge, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4C }, Instruction.Cmovnge, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4C }, Instruction.Cmovnge, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4D }, Instruction.Cmovnl, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4D }, Instruction.Cmovnl, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4D }, Instruction.Cmovnl, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4F }, Instruction.Cmovnle, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4F }, Instruction.Cmovnle, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4F }, Instruction.Cmovnle, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x41 }, Instruction.Cmovno, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x41 }, Instruction.Cmovno, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x41 }, Instruction.Cmovno, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4B }, Instruction.Cmovnp, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4B }, Instruction.Cmovnp, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4B }, Instruction.Cmovnp, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x49 }, Instruction.Cmovns, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x49 }, Instruction.Cmovns, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x49 }, Instruction.Cmovns, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x45 }, Instruction.Cmovnz, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x45 }, Instruction.Cmovnz, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x45 }, Instruction.Cmovnz, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x40 }, Instruction.Cmovo, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x40 }, Instruction.Cmovo, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x40 }, Instruction.Cmovo, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4A }, Instruction.Cmovp, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4A }, Instruction.Cmovp, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4A }, Instruction.Cmovp, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4A }, Instruction.Cmovpe, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4A }, Instruction.Cmovpe, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4A }, Instruction.Cmovpe, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4B }, Instruction.Cmovpo, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x4B }, Instruction.Cmovpo, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x4B }, Instruction.Cmovpo, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x48 }, Instruction.Cmovs, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x48 }, Instruction.Cmovs, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x48 }, Instruction.Cmovs, OperandFormat.Eq_Gq),
+            new OpCodeProperties(new byte[] { 0x0F, 0x44 }, Instruction.Cmovz, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(new byte[] { 0x0F, 0x44 }, Instruction.Cmovz, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x44 }, Instruction.Cmovz, OperandFormat.Eq_Gq),
+
+            new OpCodeProperties(0x3C, Instruction.Cmp, OperandFormat.AL_Ib),
+            new OpCodeProperties(0x3D, Instruction.Cmp, OperandSize.Size16, OperandFormat.AX_Iw),
+            new OpCodeProperties(0x3D, Instruction.Cmp, OperandSize.Size32, OperandFormat.EAX_Id),
+            new OpCodeProperties(RexPrefix.W, 0x3D, Instruction.Cmp, OperandFormat.RAX_Id), 
+            new OpCodeProperties(0x80, 7, Instruction.Cmp, OperandFormat.Eb_Ib),
+            new OpCodeProperties(RexPrefix.W, 0x80, 7, Instruction.Cmp, OperandFormat.Eb_Ib),
+            new OpCodeProperties(0x81, 7, Instruction.Cmp, OperandSize.Size16, OperandFormat.Ew_Iw),
+            new OpCodeProperties(0x81, 7, Instruction.Cmp, OperandSize.Size32, OperandFormat.Ed_Id),
+            new OpCodeProperties(RexPrefix.W, 0x81, 7, Instruction.Cmp, OperandFormat.Eq_Id),
+            new OpCodeProperties(0x83, 7, Instruction.Cmp, OperandSize.Size16, OperandFormat.Ew_Ib),
+            new OpCodeProperties(0x83, 7, Instruction.Cmp, OperandSize.Size32, OperandFormat.Ed_Ib),
+            new OpCodeProperties(RexPrefix.W, 0x83, 7, Instruction.Cmp, OperandFormat.Eq_Ib),
+            new OpCodeProperties(0x38, Instruction.Cmp, OperandFormat.Eb_Gb),
+            new OpCodeProperties(RexPrefix.W, 0x38, Instruction.Cmp, OperandFormat.Eb_Gb),
+            new OpCodeProperties(0x39, Instruction.Cmp, OperandSize.Size16, OperandFormat.Ew_Gw),
+            new OpCodeProperties(0x39, Instruction.Cmp, OperandSize.Size32, OperandFormat.Ed_Gd),
+            new OpCodeProperties(RexPrefix.W, 0x39, Instruction.Cmp, OperandFormat.Eq_Gq),
+            new OpCodeProperties(0x3A, Instruction.Cmp, OperandFormat.Gb_Eb),
+            new OpCodeProperties(RexPrefix.W, 0x3A, Instruction.Cmp, OperandFormat.Gb_Eb),
+            new OpCodeProperties(0x3B, Instruction.Cmp, OperandSize.Size16, OperandFormat.Gw_Ew),
+            new OpCodeProperties(0x3B, Instruction.Cmp, OperandSize.Size32, OperandFormat.Gd_Ed),
+            new OpCodeProperties(RexPrefix.W, 0x3B, Instruction.Cmp, OperandFormat.Gq_Eq),
+
+            new OpCodeProperties(0xA6, Instruction.Cmpsb, OperandFormat.None),
+            new OpCodeProperties(0xA7, Instruction.Cmpsw, OperandSize.Size16, OperandFormat.None),
+            new OpCodeProperties(0xA7, Instruction.Cmpsd, OperandSize.Size32, OperandFormat.None),
+            new OpCodeProperties(RexPrefix.W, 0xA7, Instruction.Cmpsq, OperandFormat.None),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xB0 }, Instruction.Cmpxchg, OperandFormat.Eb_Gb, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xB0 }, Instruction.Cmpxchg, OperandFormat.Eb_Gb, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xB1 }, Instruction.Cmpxchg, OperandSize.Size16, OperandFormat.Ew_Gw, InstructionPrefixes.Lock),
+            new OpCodeProperties(new byte[] { 0x0F, 0xB1 }, Instruction.Cmpxchg, OperandSize.Size32, OperandFormat.Ed_Gd, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xB1 }, Instruction.Cmpxchg, OperandFormat.Eq_Gq, InstructionPrefixes.Lock),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xC7 }, 1, Instruction.Cmpxchg8b, OperandFormat.Mq, InstructionPrefixes.Lock),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xC7 }, 1, Instruction.Cmpxchg16b, OperandFormat.Mdq, InstructionPrefixes.Lock),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0xA2 }, Instruction.Cpuid, OperandFormat.None),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd_Eb, InstructionPrefixes.RepNZ),
+            new OpCodeProperties((RexPrefix)0, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd_Eb, InstructionPrefixes.RepNZ),
+            new OpCodeProperties(new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandSize.Size16, OperandFormat.Gd_Ew, InstructionPrefixes.RepNZ),
+            new OpCodeProperties(new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandSize.Size32, OperandFormat.Gd_Ed, InstructionPrefixes.RepNZ),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd_Eb, InstructionPrefixes.RepNZ),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandFormat.Gd_Eq, InstructionPrefixes.RepNZ),
+
+            new OpCodeProperties(0x99, Instruction.Cwd, OperandSize.Size16, OperandFormat.None),
+            new OpCodeProperties(0x99, Instruction.Cdq, OperandSize.Size32, OperandFormat.None),
+            new OpCodeProperties(RexPrefix.W, 0x99, Instruction.Cqo, OperandFormat.None)
         };
 
         [Test]
@@ -244,6 +398,12 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Mq:
                     Assert.AreEqual(1, reader.OperandCount);
                     Assert.AreEqual(OperandType.QwordPointer, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Mdq:
+                    Assert.AreEqual(1, reader.OperandCount);
+                    Assert.AreEqual(OperandType.OwordPointer, reader.GetOperandType(0));
                     Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
                     break;
 
@@ -385,14 +545,6 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(Register.Ebp, reader.GetRegister());
                     break;
 
-                case OperandFormat.Gd_Ed:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
-                    break;
-
                 case OperandFormat.Eq_Id:
                     Assert.AreEqual(2, reader.OperandCount);
                     Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
@@ -415,6 +567,38 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
                     Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
                     Assert.AreEqual(Register.Rbp, reader.GetRegister());
+                    break;
+
+                case OperandFormat.Gd_Eb:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Gd_Ew:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Gd_Ed:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Gd_Eq:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
+                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
+                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
                     break;
 
                 case OperandFormat.Gq_Eq:
@@ -563,6 +747,7 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Mw:
                 case OperandFormat.Md:
                 case OperandFormat.Mq:
+                case OperandFormat.Mdq:
                     modrm = 0x07;
                     break;
 
@@ -578,6 +763,11 @@ namespace Fantasm.Disassembler.Tests
         private byte[] GetBytes(OpCodeProperties opCode, byte modrm)
         {
             var bytes = new List<byte>();
+
+            if ((opCode.SupportedPrefixes & InstructionPrefixes.RepNZ) != 0)
+            {
+                bytes.Add(0xF2);
+            }
 
             if (opCode.RexPrefix != 0)
             {
@@ -625,6 +815,7 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Eq:
                 case OperandFormat.Mw:
                 case OperandFormat.Md:
+                case OperandFormat.Mdq:
                 case OperandFormat.Mq:
                     bytes.Add((byte)(modrm | (opCode.OpCodeReg << 3)));
                     break;
@@ -648,7 +839,10 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Gb_Eb:
                 case OperandFormat.Gw_Ew:
+                case OperandFormat.Gd_Eb:
+                case OperandFormat.Gd_Ew:
                 case OperandFormat.Gd_Ed:
+                case OperandFormat.Gd_Eq:
                 case OperandFormat.Gq_Eq:
                 case OperandFormat.Eb_Gb:
                 case OperandFormat.Ew_Gw:

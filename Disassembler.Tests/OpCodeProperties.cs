@@ -1,29 +1,528 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 
 namespace Fantasm.Disassembler.Tests
 {
     public class OpCodeProperties
     {
-        public OperandSize OperandSize;
+        internal OperandSize OperandSize;
         internal RexPrefix RexPrefix;
-        public byte[] OpCode;
-        public byte OpCodeReg;
-        public Instruction Mnemonic;
-        public OperandFormat Operands;
-        internal InstructionPrefixes SupportedPrefixes;
-        public Compatibility Compatibility;
-        public Register Register;
+        internal byte[] OpCode;
+        internal byte OpCodeReg;
+        internal Instruction Mnemonic;
+        internal OperandFormat Operands;
+        internal InstructionPrefixes Prefixes;
+        internal Compatibility Compatibility;
+        internal Register Register;
+
+        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
 
         internal OpCodeProperties(
-            RexPrefix rex,
+            byte opCode,
+            Instruction mnemonic,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte opCode,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandSize operandSize, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            Instruction mnemonic,
             OperandSize operandSize,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                operandSize,
+                operands,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            Register register,
+            Compatibility compatibility)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                operandSize,
+                OperandFormat.Register,
+                compatibility,
+                register)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte opCode,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                0,
+                new[] { opCode },
+                255,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(byte opCode, byte opCodeReg, Instruction mnemonic, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands,
+            Compatibility compatibility)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operandSize,
+                operands,
+                compatibility,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                0,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte[] opCode,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(prefixes, 0, opCode, 255, mnemonic, OperandSize.Size32, operands, Compatibility.Valid, Register.None)
+        {
+        }
+
+        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, Register register)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                OperandFormat.Register,
+                Compatibility.Valid,
+                register)
+        {
+        }
+
+        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, OperandSize operandSize, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                opCode,
+                255,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte[] opCode,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(prefixes, 0, opCode, 255, mnemonic, operandSize, operands, Compatibility.Valid, Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
             byte[] opCode,
             byte opCodeReg,
             Instruction mnemonic,
             OperandFormat operands,
-            InstructionPrefixes supportedPrefixes,
+            InstructionPrefixes prefixes)
+            : this(
+                prefixes,
+                0,
+                opCode,
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            byte[] opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                opCode,
+                opCodeReg,
+                mnemonic,
+                operandSize,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            byte[] opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands)
+            : this(prefixes, 0, opCode, opCodeReg, mnemonic, operandSize, operands, Compatibility.Valid, Register.None)
+        {
+        }
+
+        internal OpCodeProperties(RexPrefix rex, byte opCode, Instruction mnemonic, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                new[] { opCode },
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            RexPrefix rex,
+            byte opCode,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                RexPrefix.Magic | rex,
+                new[] { opCode },
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            RexPrefix rex,
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.NotEncodable32,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            RexPrefix rex,
+            byte opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                RexPrefix.Magic | rex,
+                new[] { opCode },
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.NotEncodable32,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(RexPrefix rex, byte[] opCode, Instruction mnemonic, OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            RexPrefix rex,
+            byte[] opCode,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                RexPrefix.Magic | rex,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.NotEncodable32,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(RexPrefix rex, byte[] opCode, Instruction mnemonic, Register register)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                OperandFormat.Register,
+                Compatibility.Valid,
+                register)
+        {
+        }
+
+        internal OpCodeProperties(
+            RexPrefix rex,
+            byte[] opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                opCode,
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.Valid,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            RexPrefix rex,
+            byte[] opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandFormat operands)
+            : this(
+                prefixes,
+                RexPrefix.Magic | rex,
+                opCode,
+                opCodeReg,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.NotEncodable32,
+                Register.None)
+        {
+        }
+
+        internal OpCodeProperties(
+            InstructionPrefixes prefixes,
+            RexPrefix rex,
+            byte[] opCode,
+            byte opCodeReg,
+            Instruction mnemonic,
+            OperandSize operandSize,
+            OperandFormat operands,
             Compatibility compatibility,
             Register register)
         {
@@ -33,502 +532,9 @@ namespace Fantasm.Disassembler.Tests
             this.OpCodeReg = opCodeReg;
             this.Mnemonic = mnemonic;
             this.Operands = operands;
-            this.SupportedPrefixes = supportedPrefixes;
+            this.Prefixes = prefixes;
             this.Compatibility = compatibility;
             this.Register = register;
-        }
-
-        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandFormat operands)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, Register register)
-            : this(
-                0,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                OperandFormat.Register,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                register)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            Instruction mnemonic,
-            OperandFormat operands,
-            Compatibility compatibility)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                compatibility,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands,
-            Compatibility compatibility)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                compatibility,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes supportedPrefixes)
-            : this(
-                0,
-                OperandSize.Size32,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                supportedPrefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands,
-            InstructionPrefixes supportedPrefixes)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                supportedPrefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(byte opCode, Instruction mnemonic, OperandSize operandSize, OperandFormat operands)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands,
-            Compatibility compatibility)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                compatibility,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands,
-            Compatibility compatibility)
-            : this(
-                0,
-                operandSize,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                compatibility,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, OperandSize operandSize, OperandFormat operands)
-            : this(
-                0,
-                operandSize,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(byte[] opCode, Instruction mnemonic, OperandFormat operands)
-            : this(
-                0,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte[] opCode,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                0,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte[] opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                0,
-                OperandSize.Size32,
-                opCode,
-                opCodeReg,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte[] opCode,
-            Instruction mnemonic,
-            OperandSize size,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                0,
-                size,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte[] opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands)
-            : this(
-                0,
-                operandSize,
-                opCode,
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            byte[] opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandSize operandSize,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(0, operandSize, opCode, opCodeReg, mnemonic, operands, prefixes, Compatibility.Valid, Register.None)
-        {
-        }
-
-        internal OpCodeProperties(RexPrefix rex, byte[] opCode, Instruction mnemonic, Register register)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                OperandFormat.Register,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                register)
-        {
-        }
-
-        internal OpCodeProperties(
-            RexPrefix rex,
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.NotEncodable32,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            RexPrefix rex,
-            byte opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes supportedPrefixes)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                new[] { opCode },
-                opCodeReg,
-                mnemonic,
-                operands,
-                supportedPrefixes,
-                Compatibility.NotEncodable32,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            RexPrefix rex,
-            byte[] opCode,
-            byte opCodeReg,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                opCode,
-                opCodeReg,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.NotEncodable32,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(
-            RexPrefix rex,
-            byte[] opCode,
-            Instruction mnemonic,
-            OperandFormat operands,
-            InstructionPrefixes prefixes)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.NotEncodable32,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(RexPrefix rex, byte opCode, Instruction mnemonic, OperandFormat operands)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(RexPrefix rex, byte[] opCode, Instruction mnemonic, OperandFormat operands)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                opCode,
-                255,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(RexPrefix rex, byte[] opCode, byte opCodeReg, Instruction mnemonic, OperandFormat operands)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                opCode,
-                opCodeReg,
-                mnemonic,
-                operands,
-                InstructionPrefixes.None,
-                Compatibility.Valid,
-                Register.None)
-        {
-        }
-
-        internal OpCodeProperties(RexPrefix rex, byte opCode, Instruction mnemonic, OperandFormat operands, InstructionPrefixes prefixes)
-            : this(
-                RexPrefix.Magic | rex,
-                OperandSize.Size32,
-                new[] { opCode },
-                255,
-                mnemonic,
-                operands,
-                prefixes,
-                Compatibility.Valid,
-                Register.None)
-        {
         }
 
         public override string ToString()

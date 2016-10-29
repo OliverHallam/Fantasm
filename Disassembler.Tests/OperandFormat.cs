@@ -33,6 +33,11 @@
         Awd,
 
         /// <summary>
+        /// The first (and only) operand is a memory address or 8-bit register specified by a ModRM byte,
+        /// </summary>
+        Eb,
+
+        /// <summary>
         /// The first (and only) operand is a memory address or 16-bit register specified by a ModRM byte,
         /// </summary>
         Ew,

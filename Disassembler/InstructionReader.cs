@@ -550,9 +550,24 @@ namespace Fantasm.Disassembler
                     case 0x26:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
                         continue;
+                    case 0x27:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+
+                        return this.ReadInstructionNoOperands(Instruction.Daa);
+
                     case 0x2E:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
                         continue;
+                    case 0x2F:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+
+                        return this.ReadInstructionNoOperands(Instruction.Das);
 
                     case 0x36:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentSS);
@@ -584,6 +599,13 @@ namespace Fantasm.Disassembler
                     case 0x45:
                     case 0x46:
                     case 0x47:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            this.ReadRexPrefix(nextByte);
+                            continue;
+                        }
+                        goto default;
+
                     case 0x48:
                     case 0x49:
                     case 0x4A:
@@ -592,12 +614,12 @@ namespace Fantasm.Disassembler
                     case 0x4D:
                     case 0x4E:
                     case 0x4F:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        if (this.executionMode != ExecutionModes.Long64Bit)
                         {
-                            this.ReadRexPrefix(nextByte);
-                            continue;
+                            return this.ReadWithRegisterFromOpcode(Instruction.Dec, nextByte, this.GetOperandSize());
                         }
-                        goto default;
+                        this.ReadRexPrefix(nextByte);
+                        continue;
 
                     case 0x62:
                         if (this.executionMode == ExecutionModes.Long64Bit)
@@ -697,6 +719,10 @@ namespace Fantasm.Disassembler
 
                     case 0xF5:
                         return this.ReadInstructionNoOperands(Instruction.Cmc);
+                    case 0xF6:
+                        return this.ReadGroup3Instruction(Size.Byte);
+                    case 0xF7:
+                        return this.ReadGroup3Instruction(this.GetOperandSize());
                     case 0xF8:
                         return this.ReadInstructionNoOperands(Instruction.Clc);
                     case 0xFA:
@@ -704,6 +730,8 @@ namespace Fantasm.Disassembler
                     case 0xFC:
                         return this.ReadInstructionNoOperands(Instruction.Cld);
 
+                    case 0xFE:
+                        return this.ReadGroup4Instruction();
                     case 0xFF:
                         return this.ReadGroup5Instruction();
 
@@ -713,29 +741,69 @@ namespace Fantasm.Disassembler
             }
         }
 
+        private bool ReadGroup3Instruction(Size size)
+        {
+            var modrm = this.ReadModRM();
+            switch (modrm.Reg)
+            {
+                case 6:
+                    this.instruction = Instruction.Div;
+                    this.operandCount = 1;
+                    this.operand1 = this.RegisterOrMemory(ref modrm, size);
+                    return true;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private bool ReadGroup4Instruction()
+        {
+            var modrm = this.ReadModRM();
+            switch (modrm.Reg)
+            {
+                case 1:
+                    this.instruction = Instruction.Dec;
+                    this.operandCount = 1;
+                    this.operand1 = this.RegisterOrMemory(ref modrm, Size.Byte);
+                    return this.LockIfMemory();
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         private bool ReadGroup5Instruction()
         {
-            var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
             this.operandCount = 1;
 
             var modrm = this.ReadModRM();
             switch (modrm.Reg)
             {
+                case 1:
+                    this.instruction = Instruction.Dec;
+                    this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
+                    return this.LockIfMemory();
+
                 case 2:
+                {
+                    var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
                     this.instruction = Instruction.Call;
                     this.operand1 = this.RegisterOrMemory(ref modrm, operandSize);
-                    break;
+                    return true;
+                }
 
                 case 3:
+                {
+                    var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
                     this.instruction = Instruction.CallFar;
                     this.operand1 = this.Memory(ref modrm, operandSize);
-                    break;
+                    return true;
+                }
 
                 default:
                     throw new NotImplementedException();
             }
-
-            return true;
         }
 
         private bool ReadGroup9Instruction()
@@ -759,8 +827,6 @@ namespace Fantasm.Disassembler
                 default:
                     throw new NotImplementedException();
             }
-
-            return true;
         }
 
         private Instruction GetSizeExtendedAlias(Instruction wordInstruction, Instruction dwordInstruction, Instruction qwordInstruction)
@@ -956,23 +1022,29 @@ namespace Fantasm.Disassembler
                 case 0xCD:
                 case 0xCE:
                 case 0xCF:
-                    this.instruction = Instruction.Bswap;
-                    this.operandCount = 1;
                     var operandSize = this.GetOperandSize();
                     if (operandSize == Size.Word)
                     {
                         throw this.UndefinedBehaviour();
                     }
-                    this.operand1 = OperandType.Register;
-                    this.register = RegDecoder.GetRegister(
-                        this.rex != 0,
-                        this.GetOpcodeReg(opCodeByte),
-                        this.GetBaseRegister(operandSize));
-                    return true;
+
+                    return this.ReadWithRegisterFromOpcode(Instruction.Bswap, opCodeByte, operandSize);
 
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private bool ReadWithRegisterFromOpcode(Instruction instruction, byte opCodeByte, Size operandSize)
+        {
+            this.instruction = instruction;
+            this.operandCount = 1;
+            this.operand1 = OperandType.Register;
+            this.register = RegDecoder.GetRegister(
+                this.rex != 0,
+                this.GetOpcodeReg(opCodeByte),
+                this.GetBaseRegister(operandSize));
+            return true;
         }
 
         private bool ReadThreeByteInstructionA()
@@ -1100,7 +1172,7 @@ namespace Fantasm.Disassembler
 
         private Exception UndefinedBehaviour()
         {
-            return new FormatException("The behaviour of the specified instuction is undefined.");
+            return new FormatException("The behaviour of the specified instruction is undefined.");
         }
 
         #endregion

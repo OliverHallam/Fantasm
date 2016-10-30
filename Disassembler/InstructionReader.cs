@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 namespace Fantasm.Disassembler
 {

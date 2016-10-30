@@ -31,11 +31,11 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes16(0x80, 0x06, 0x34, 0x12, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
-            Assert.AreEqual(Register.None, reader.GetBaseRegister());
-            Assert.AreEqual(Register.None, reader.GetIndexRegister());
-            Assert.AreEqual(1, reader.GetScale());
-            Assert.AreEqual(0x1234, reader.GetDisplacement());
+            Assert.AreEqual(OperandType.BytePointer, reader.Operand1.Type);
+            Assert.AreEqual(Register.None, reader.Operand1.GetBaseRegister());
+            Assert.AreEqual(Register.None, reader.Operand1.GetIndexRegister());
+            Assert.AreEqual(1, reader.Operand1.GetScale());
+            Assert.AreEqual(0x1234, reader.Operand1.GetDisplacement());
         }
 
         [Test]
@@ -52,11 +52,11 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes16(0x80, rm, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
-            Assert.AreEqual(baseRegister, reader.GetBaseRegister());
-            Assert.AreEqual(indexRegister, reader.GetIndexRegister());
-            Assert.AreEqual(1, reader.GetScale());
-            Assert.AreEqual(0, reader.GetDisplacement());
+            Assert.AreEqual(OperandType.BytePointer, reader.Operand1.Type);
+            Assert.AreEqual(baseRegister, reader.Operand1.GetBaseRegister());
+            Assert.AreEqual(indexRegister, reader.Operand1.GetIndexRegister());
+            Assert.AreEqual(1, reader.Operand1.GetScale());
+            Assert.AreEqual(0, reader.Operand1.GetDisplacement());
         }
         
         [Test]
@@ -77,11 +77,11 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes16(0x80, (byte)(0x40 | rm), 0x23, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
-            Assert.AreEqual(baseRegister, reader.GetBaseRegister());
-            Assert.AreEqual(indexRegister, reader.GetIndexRegister());
-            Assert.AreEqual(1, reader.GetScale());
-            Assert.AreEqual(0x23, reader.GetDisplacement());
+            Assert.AreEqual(OperandType.BytePointer, reader.Operand1.Type);
+            Assert.AreEqual(baseRegister, reader.Operand1.GetBaseRegister());
+            Assert.AreEqual(indexRegister, reader.Operand1.GetIndexRegister());
+            Assert.AreEqual(1, reader.Operand1.GetScale());
+            Assert.AreEqual(0x23, reader.Operand1.GetDisplacement());
         }
 
         [Test]
@@ -102,11 +102,11 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes16(0x80, (byte)(0x80 | rm), 0x23, 0x01, 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.BytePointer, reader.GetOperandType(0));
-            Assert.AreEqual(baseRegister, reader.GetBaseRegister());
-            Assert.AreEqual(indexRegister, reader.GetIndexRegister());
-            Assert.AreEqual(1, reader.GetScale());
-            Assert.AreEqual(0x0123, reader.GetDisplacement());
+            Assert.AreEqual(OperandType.BytePointer, reader.Operand1.Type);
+            Assert.AreEqual(baseRegister, reader.Operand1.GetBaseRegister());
+            Assert.AreEqual(indexRegister, reader.Operand1.GetIndexRegister());
+            Assert.AreEqual(1, reader.Operand1.GetScale());
+            Assert.AreEqual(0x0123, reader.Operand1.GetDisplacement());
         }
         
         [Test]
@@ -124,8 +124,8 @@ namespace Fantasm.Disassembler.Tests
             var reader = ReadBytes16(0x80, (byte)(0xc0 | modrmReg), 0x00);
             reader.Read();
 
-            Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-            Assert.AreEqual(register, reader.GetBaseRegister());
+            Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+            Assert.AreEqual(register, reader.Operand1.GetBaseRegister());
         }
     }
 }

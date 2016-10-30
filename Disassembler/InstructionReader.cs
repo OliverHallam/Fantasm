@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Fantasm.Disassembler
 {
@@ -15,35 +17,27 @@ namespace Fantasm.Disassembler
         private readonly ExecutionModes executionMode;
 
         private readonly InstructionByteStream instructionByteStream;
-        private Register baseRegister;
-        private short codeSegment;
-        private int displacement;
-        private int immediate;
-        private Register indexRegister;
 
         private Instruction instruction = Instruction.Unknown;
         private bool locked;
 
-        private OperandType operand1;
-        private OperandType operand2;
-        private int operandCount;
+        private Operand operand1;
+        private Operand operand2;
         private InstructionPrefixes prefixes;
-        private Register register;
         private RexPrefix rex = RexPrefix.Magic;
-        private int scale;
 
         #endregion
 
         #region Constructors and Destructors
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="InstructionReader" /> class.
+        /// Initializes a new instance of the <see cref="InstructionReader" /> class.
         /// </summary>
         /// <param name="stream">The stream to read the instruction data from.</param>
         /// <param name="executionMode">The execution mode.</param>
         /// <param name="default32BitOperands">
-        ///     <see langword="true" /> if the default operand size is 32 bits; otherwise <see langword="false" />.  This
-        ///     corresponds to the D flag in segment descriptor for the code segment block.
+        /// <see langword="true" /> if the default operand size is 32 bits; otherwise <see langword="false" />.  This
+        /// corresponds to the D flag in segment descriptor for the code segment block.
         /// </param>
         public InstructionReader(Stream stream, ExecutionMode executionMode, bool default32BitOperands)
         {
@@ -56,7 +50,7 @@ namespace Fantasm.Disassembler
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="InstructionReader" /> class.
+        /// Initializes a new instance of the <see cref="InstructionReader" /> class.
         /// </summary>
         /// <param name="stream">The stream to read the instruction data from.</param>
         /// <param name="executionMode">The execution mode.</param>
@@ -70,176 +64,30 @@ namespace Fantasm.Disassembler
         #region Public Properties
 
         /// <summary>
-        ///     Gets the current instruction.
+        /// Gets the current instruction.
         /// </summary>
-        public Instruction Instruction
-        {
-            get
-            {
-                return this.instruction;
-            }
-        }
-
-        /// <summary>
-        ///     Gets the number of operands for the current instruction.
-        /// </summary>
-        public int OperandCount
-        {
-            get
-            {
-                return this.operandCount;
-            }
-        }
+        public Instruction Instruction => this.instruction;
 
         #endregion
 
         #region Public Methods and Operators
 
         /// <summary>
-        ///     Gets the base register of a memory access operand, or the register in place of a memory access.
+        /// The first operand for the instruction.
         /// </summary>
-        /// <returns>
-        ///     A member of the <see cref="register" /> enumeration.
-        /// </returns>
-        /// <remarks>
-        ///     This is <c>baseOperandSizeRegister</c> in the formula <c>[baseOperandSizeRegister + indexRegister*Scale + Displacement]</c>.
-        /// </remarks>
-        public Register GetBaseRegister()
-        {
-            return this.baseRegister;
-        }
+        public Operand Operand1 => this.operand1;
 
         /// <summary>
-        ///     Gets the displacement parameter of a memory access operand, the value of a relative address operand, or
-        ///     the offset from a far pointer.
+        /// The first operand for the instruction.
         /// </summary>
-        /// <returns>
-        ///     The displacement, in bytes.
-        /// </returns>
-        /// <remarks>
-        ///     This is <c>Displacement</c> in the formula <c>[baseOperandSizeRegister + indexRegister*Scale + Displacement]</c>.
-        /// </remarks>
-        public int GetDisplacement()
-        {
-            return this.displacement;
-        }
+        public Operand Operand2 => this.operand2;
 
         /// <summary>
-        ///     Gets the value of the immediate operand.
+        /// Attempts to read the next instruction from the stream.
         /// </summary>
         /// <returns>
-        ///     The value of the immediate operand, or <c>0</c> if there was none.
-        /// </returns>
-        /// <remarks>
-        ///     This is the value of any operand with type <see cref="OperandType.ImmediateByte" />,
-        ///     <see cref="OperandType.ImmediateWord" /> or <see cref="OperandType.ImmediateDword" />
-        /// </remarks>
-        public int GetImmediateValue()
-        {
-            return this.immediate;
-        }
-
-        /// <summary>
-        ///     Gets the value of the second immediate operand.
-        /// </summary>
-        /// <returns>
-        ///     The value of the immediate operand, or <c>0</c> if there was none.
-        /// </returns>
-        /// <remarks>
-        ///     This is the value of any operand with type <see cref="OperandType.ImmediateByte" />,
-        ///     <see cref="OperandType.ImmediateWord" /> or <see cref="OperandType.ImmediateDword" />
-        /// </remarks>
-        public int GetImmediateValue2()
-        {
-            // we re-use the displacement for this rare case
-            return this.displacement;
-        }
-
-        /// <summary>
-        ///     Gets the index register of a memory access operand.
-        /// </summary>
-        /// <returns>
-        ///     A member of the <see cref="register" /> enumeration.
-        /// </returns>
-        /// <remarks>
-        ///     This is <c>indexRegister</c> in the formula <c>[baseOperandSizeRegister + indexRegister*Scale + Displacement]</c>.
-        /// </remarks>
-        public Register GetIndexRegister()
-        {
-            return this.indexRegister;
-        }
-
-        /// <summary>
-        ///     Gets the type of the specified operand.
-        /// </summary>
-        /// <param name="index">
-        ///     The index of the operand.
-        /// </param>
-        /// <returns>
-        ///     A member of the <see cref="OperandType" /> enumeration.
-        /// </returns>
-        public OperandType GetOperandType(int index)
-        {
-            if (index < 0 || index >= this.operandCount)
-            {
-                throw new ArgumentException("The index is not valid for this instruction", "index");
-            }
-
-            switch (index)
-            {
-                default:
-                    return this.operand1;
-
-                case 1:
-                    return this.operand2;
-            }
-        }
-
-        /// <summary>
-        ///     Gets The value of the register operand.
-        /// </summary>
-        /// <returns>
-        ///     The value of the register operand, or <see cref="Disassembler.Register.None" /> if there was none.
-        /// </returns>
-        /// <remarks>
-        ///     This is the value of any operand with type <see cref="OperandType.Register" />.
-        /// </remarks>
-        public Register GetRegister()
-        {
-            return this.register;
-        }
-
-        /// <summary>
-        ///     Gets the scale parameter of a memory access operand.
-        /// </summary>
-        /// <returns>
-        ///     Either 1, 2, 4 or 8.
-        /// </returns>
-        /// <remarks>
-        ///     This is <c>Scale</c> in the formula <c>[baseOperandSizeRegister + indexRegister*Scale + Displacement]</c>.
-        /// </remarks>
-        public int GetScale()
-        {
-            return this.scale;
-        }
-
-        /// <summary>
-        ///     Gets the code segment selector from a far pointer operand.
-        /// </summary>
-        /// <returns>
-        ///     The selector for the code segment that the pointer resides in.
-        /// </returns>
-        public short GetSegmentSelector()
-        {
-            return this.codeSegment;
-        }
-
-        /// <summary>
-        ///     Attempts to read the next instruction from the stream.
-        /// </summary>
-        /// <returns>
-        ///     <see langword="true" /> if there are more isntructions; <see langword="false" /> if the reader has reached
-        ///     the end of the stream.
+        /// <see langword="true" /> if there are more isntructions; <see langword="false" /> if the reader has reached
+        /// the end of the stream.
         /// </returns>
         public bool Read()
         {
@@ -260,6 +108,314 @@ namespace Fantasm.Disassembler
 
         #region Methods
 
+        private bool ReadInstruction()
+        {
+            this.prefixes = InstructionPrefixes.None;
+            this.locked = false;
+            this.rex = 0;
+            this.instruction = Instruction.Unknown;
+            this.operand1 = default(Operand);
+            this.operand2 = default(Operand);
+
+            var readAny = false;
+
+            while (true)
+            {
+                byte nextByte;
+                if (readAny)
+                {
+                    nextByte = this.instructionByteStream.ReadByte();
+                }
+                else
+                {
+                    if (!this.instructionByteStream.TryReadByte(out nextByte))
+                    {
+                        return false;
+                    }
+                }
+                readAny = true;
+
+                switch (nextByte)
+                {
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x04:
+                    case 0x05:
+                        this.ReadBinaryOperation(Instruction.Add, nextByte);
+                        this.LockIfMemory();
+                        break;
+
+                    case 0x0F:
+                        this.ReadTwoByteInstruction();
+                        break;
+
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x14:
+                    case 0x15:
+                        this.ReadBinaryOperation(Instruction.Adc, nextByte);
+                        this.LockIfMemory();
+                        break;
+
+                    case 0x20:
+                    case 0x21:
+                    case 0x22:
+                    case 0x23:
+                    case 0x24:
+                    case 0x25:
+                        this.ReadBinaryOperation(Instruction.And, nextByte);
+                        this.LockIfMemory();
+                        break;
+
+                    case 0x26:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        continue;
+                    case 0x27:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+
+                        Instruction instruction1 = Instruction.Daa;
+                        this.ReadInstruction(instruction1);
+                        break;
+
+                    case 0x2E:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
+                        continue;
+                    case 0x2F:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+
+                        Instruction instruction2 = Instruction.Das;
+                        this.ReadInstruction(instruction2);
+                        break;
+
+                    case 0x36:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentSS);
+                        continue;
+                    case 0x37:
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
+                        Instruction instruction3 = Instruction.Aaa;
+                        this.ReadInstruction(instruction3);
+                        break;
+
+                    case 0x38:
+                    case 0x39:
+                    case 0x3A:
+                    case 0x3B:
+                    case 0x3C:
+                    case 0x3D:
+                        this.ReadBinaryOperation(Instruction.Cmp, nextByte);
+                        break;
+
+                    case 0x3E:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
+                        continue;
+                    case 0x3F:
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
+                        Instruction instruction4 = Instruction.Aas;
+                        this.ReadInstruction(instruction4);
+                        break;
+
+                    case 0x40:
+                    case 0x41:
+                    case 0x42:
+                    case 0x43:
+                    case 0x44:
+                    case 0x45:
+                    case 0x46:
+                    case 0x47:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            this.ReadRexPrefix(nextByte);
+                            continue;
+                        }
+                        goto default;
+
+                    case 0x48:
+                    case 0x49:
+                    case 0x4A:
+                    case 0x4B:
+                    case 0x4C:
+                    case 0x4D:
+                    case 0x4E:
+                    case 0x4F:
+                        if (this.executionMode != ExecutionModes.Long64Bit)
+                        {
+                            this.ReadWithRegisterFromOpcode(Instruction.Dec, nextByte, this.GetOperandSize());
+                            break;
+                        }
+                        this.ReadRexPrefix(nextByte);
+                        continue;
+
+                    case 0x62:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+                        this.Read_Reg_RM(Instruction.Bound, this.GetOperandSize());
+                        break;
+                    case 0x63:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw new NotImplementedException();
+                        }
+                        this.Read_RM_Reg(Instruction.Arpl, Size.Word);
+                        break;
+                    case 0x64:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        continue;
+                    case 0x65:
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);
+                        continue;
+                    case 0x66:
+                        this.ReadPrefix(InstructionPrefixes.Group3Mask, InstructionPrefixes.OperandSizeOverride);
+                        continue;
+                    case 0x67:
+                        this.ReadPrefix(InstructionPrefixes.Group4Mask, InstructionPrefixes.AddressSizeOverride);
+                        continue;
+
+                    case 0x80:
+                    case 0x81:
+                    case 0x82:
+                    case 0x83:
+                    {
+                        var operandSize = this.GetOperandSize();
+                        var registerSize = ((nextByte & 1) != 0) ? operandSize : Size.Byte;
+                        var immediateSize = nextByte == 0x81 ? operandSize : Size.Byte;
+
+                        var modrm = this.ReadModRM();
+                        this.instruction = this.GetGroup1Opcode(modrm.OpCode);
+                        this.operand1 = this.RegisterOrMemory(ref modrm, registerSize);
+                        this.operand2 = this.Immediate(immediateSize);
+                        if (this.instruction != Instruction.Cmp)
+                        {
+                            this.LockIfMemory();
+                        }
+                        break;
+                    }
+
+                    case 0x90:
+                        Instruction instruction5 = Instruction.Nop;
+                        this.ReadInstruction(instruction5);
+                        break;
+
+                    case 0x98:
+                    {
+                        var alias = this.GetSizeExtendedAlias(Instruction.Cbw, Instruction.Cwde, Instruction.Cdqe);
+                        this.ReadInstruction(alias);
+                        break;
+                    }
+                    case 0x99:
+                    {
+                        var alias = this.GetSizeExtendedAlias(Instruction.Cwd, Instruction.Cdq, Instruction.Cqo);
+                        this.ReadInstruction(alias);
+                        break;
+                    }
+
+
+                    case 0x9A:
+                        if (this.executionMode == ExecutionModes.Long64Bit)
+                        {
+                            throw this.InvalidInstruction();
+                        }
+                        this.instruction = Instruction.CallFar;
+                        this.operand1 = this.ReadFarPointerOperand(this.GetOperandSize());
+                        break;
+
+                    case 0xA6:
+                        Instruction instruction6 = Instruction.Cmpsb;
+                        this.ReadInstruction(instruction6);
+                        break;
+
+                    case 0xA7:
+                    {
+                        var alias = this.GetSizeExtendedAlias(Instruction.Cmpsw, Instruction.Cmpsd, Instruction.Cmpsq);
+                        this.ReadInstruction(alias);
+                        break;
+                    }
+
+                    case 0xC8:
+                        this.instruction = Instruction.Enter;
+                        this.operand1 = this.ReadImmediateWordOperand();
+                        this.operand2 = this.ReadImmediateByteOperand();
+                        break;
+
+                    case 0xD4:
+                        this.ReadAsciiAdjustWithBase(Instruction.Aam);
+                        break;
+                    case 0xD5:
+                        this.ReadAsciiAdjustWithBase(Instruction.Aad);
+                        break;
+
+                    case 0xE8:
+                        this.Read_Jz(Instruction.Call);
+                        break;
+
+                    case 0xF0:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
+                        continue;
+                    case 0xF1:
+                        throw this.InvalidInstruction();
+                    case 0xF2:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
+                        continue;
+                    case 0xF3:
+                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
+                        continue;
+
+                    case 0xF5:
+                        Instruction instruction7 = Instruction.Cmc;
+                        this.ReadInstruction(instruction7);
+                        break;
+                    case 0xF6:
+                        this.ReadGroup3Instruction(Size.Byte);
+                        break;
+                    case 0xF7:
+                        this.ReadGroup3Instruction(this.GetOperandSize());
+                        break;
+                    case 0xF8:
+                        Instruction instruction8 = Instruction.Clc;
+                        this.ReadInstruction(instruction8);
+                        break;
+                    case 0xFA:
+                        Instruction instruction9 = Instruction.Cli;
+                        this.ReadInstruction(instruction9);
+                        break;
+                    case 0xFC:
+                        Instruction instruction10 = Instruction.Cld;
+                        this.ReadInstruction(instruction10);
+                        break;
+
+                    case 0xFE:
+                        this.ReadGroup4Instruction();
+                        break;
+                    case 0xFF:
+                        this.ReadGroup5Instruction();
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                return true;
+            }
+        }
+
+        private Operand ReadFarPointerOperand(Size size)
+        {
+            var segment = this.instructionByteStream.ReadWord();
+            var displacement = this.ReadImmediateValue(size);
+            return Operand.FarPointer(segment, displacement);
+        }
+
         private static Register GetAddressSizeBaseRegister(Size addressSize)
         {
             switch (addressSize)
@@ -273,13 +429,6 @@ namespace Fantasm.Disassembler
                 default:
                     throw new InvalidOperationException();
             }
-        }
-
-        private OperandType FarPointer(Size size)
-        {
-            this.codeSegment = this.instructionByteStream.ReadWord();
-            this.ReadDisplacement(size);
-            return OperandType.FarPointerLiteral;
         }
 
         private Size GetAddressSize()
@@ -374,41 +523,36 @@ namespace Fantasm.Disassembler
                 : (operandSizeOverride ? Size.Word : this.defaultOperandSize);
         }
 
-        private OperandType Immediate(Size size)
+        private Operand Immediate(Size operandSize)
         {
-            switch (size)
+            switch (operandSize)
             {
                 case Size.Byte:
-                    return this.ImmediateByte();
+                    return this.ReadImmediateByteOperand();
                 case Size.Word:
-                    return this.ImmediateWord();
+                    return this.ReadImmediateWordOperand();
                 default:
-                    return this.ImmediateDword();
+                    // even when our operands are QWords we still use dword immediate values.
+                    return this.ReadImmediateDwordOperand();
             }
         }
 
-        private OperandType ImmediateByte()
+        private Operand ReadImmediateByteOperand()
         {
-            this.immediate = this.instructionByteStream.ReadByte();
-            return OperandType.ImmediateByte;
+            var value = this.instructionByteStream.ReadByte();
+            return Operand.ImmediateByte(value);
         }
 
-        private OperandType ImmediateDword()
+        private Operand ReadImmediateWordOperand()
         {
-            this.immediate = this.instructionByteStream.ReadDword();
-            return OperandType.ImmediateDword;
+            var value = this.instructionByteStream.ReadWord();
+            return Operand.ImmediateWord(value);
         }
 
-        private OperandType ImmediateWord()
+        private Operand ReadImmediateDwordOperand()
         {
-            this.immediate = this.instructionByteStream.ReadWord();
-            return OperandType.ImmediateWord;
-        }
-
-        private OperandType ImplicitRegister(Register implicitRegister)
-        {
-            this.register = implicitRegister;
-            return OperandType.Register;
+            var value = this.instructionByteStream.ReadDword();
+            return Operand.ImmediateDword(value);
         }
 
         private Exception InvalidInstruction()
@@ -416,46 +560,43 @@ namespace Fantasm.Disassembler
             return new FormatException("The data does not represent a valid instruction.");
         }
 
-        private bool LockIfMemory()
+        private void LockIfMemory()
         {
-            if (this.operand1.IsMemoryAccess() && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            if (this.operand1.Type.IsMemoryAccess() && (this.prefixes & InstructionPrefixes.Lock) != 0)
             {
                 this.locked = true;
             }
-            return true;
         }
 
-        private OperandType Memory(ref ModRMBits modrmBits, Size operandSize)
+        private Operand Memory(ref ModRMBits modrmBits, Size operandSize)
         {
-            var operandType = this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
+            var operand = this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
 
-            if (operandType == OperandType.DirectRegister)
+            if (operand.Type == OperandType.Register)
             {
                 throw this.InvalidInstruction();
             }
 
-            return operandType;
+            return operand;
         }
 
-        private OperandType ModRMRegister(ref ModRMBits modrmBits, Register baseOperandSizeRegister)
+        private Operand ModRMRegister(ref ModRMBits modrmBits, Register baseOperandSizeRegister)
         {
-            this.register = RegDecoder.GetRegister(this.rex != 0, modrmBits.Reg, baseOperandSizeRegister);
-            return OperandType.Register;
+            var register = RegDecoder.GetRegister(this.rex != 0, modrmBits.Reg, baseOperandSizeRegister);
+            return Operand.DirectRegister(register);
         }
 
-        private bool ReadAsciiAdjustWithBase(Instruction instruction)
+        private void ReadAsciiAdjustWithBase(Instruction instruction)
         {
             this.TestExecutionMode(ExecutionModes.CompatibilityMode);
             this.ReadInstruction(instruction);
-            this.operandCount = 1;
-            this.operand1 = this.ImmediateByte();
+            var imm = this.instructionByteStream.ReadByte();
+
             // special case: AAD is a synonym for AAD 0AH
-            if (this.immediate == 0x0A)
+            if (imm != 0x0A)
             {
-                this.operandCount = 0;
-                this.immediate = 0;
+                this.operand1 = Operand.ImmediateByte(imm);
             }
-            return true;
         }
 
         /// <summary>
@@ -464,7 +605,7 @@ namespace Fantasm.Disassembler
         /// <param name="instruction">The instruction.</param>
         /// <param name="opCode">The opcode.</param>
         /// <returns><see langword="true" /></returns>
-        private bool ReadBinaryOperation(Instruction instruction, int opCode)
+        private void ReadBinaryOperation(Instruction instruction, int opCode)
         {
             var size = (opCode & 1) == 0 ? Size.Byte : this.GetOperandSize();
 
@@ -484,337 +625,77 @@ namespace Fantasm.Disassembler
                     this.Read_rAx_Imm(instruction, size);
                     break;
             }
-            return true;
         }
 
-        private void ReadDisplacement(Size size)
+        private int ReadImmediateValue(Size size)
         {
             switch (size)
             {
+                case Size.None:
+                    return 0;
+
                 case Size.Byte:
-                    this.displacement = this.instructionByteStream.ReadByte();
-                    break;
+                    return this.instructionByteStream.ReadByte();
+
                 case Size.Word:
-                    this.displacement = this.instructionByteStream.ReadWord();
-                    break;
+                    return this.instructionByteStream.ReadWord();
+
                 case Size.Dword:
-                    this.displacement = this.instructionByteStream.ReadDword();
-                    break;
-                case Size.Qword:
+                    return this.instructionByteStream.ReadDword();
+
+                default:
                     throw new NotImplementedException();
             }
         }
 
-        private bool ReadInstruction()
-        {
-            this.prefixes = InstructionPrefixes.None;
-            this.locked = false;
-            this.rex = 0;
-            this.instruction = Instruction.Unknown;
-            this.operandCount = 0;
-            this.immediate = this.displacement = 0;
-            this.register = this.baseRegister = this.indexRegister = Register.None;
-            this.scale = 1;
-
-            var readAny = false;
-
-            while (true)
-            {
-                byte nextByte;
-                if (readAny)
-                {
-                    nextByte = this.instructionByteStream.ReadByte();
-                }
-                else
-                {
-                    if (!this.instructionByteStream.TryReadByte(out nextByte))
-                    {
-                        return false;
-                    }
-                }
-                readAny = true;
-
-                switch (nextByte)
-                {
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x04:
-                    case 0x05:
-                        return this.ReadBinaryOperation(Instruction.Add, nextByte) && this.LockIfMemory();
-
-                    case 0x0F:
-                        return this.ReadTwoByteInstruction();
-
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x14:
-                    case 0x15:
-                        return this.ReadBinaryOperation(Instruction.Adc, nextByte) && this.LockIfMemory();
-
-                    case 0x20:
-                    case 0x21:
-                    case 0x22:
-                    case 0x23:
-                    case 0x24:
-                    case 0x25:
-                        return this.ReadBinaryOperation(Instruction.And, nextByte) && this.LockIfMemory();
-
-                    case 0x26:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
-                        continue;
-                    case 0x27:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-
-                        return this.ReadInstructionNoOperands(Instruction.Daa);
-
-                    case 0x2E:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
-                        continue;
-                    case 0x2F:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-
-                        return this.ReadInstructionNoOperands(Instruction.Das);
-
-                    case 0x36:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentSS);
-                        continue;
-                    case 0x37:
-                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
-                        return this.ReadInstructionNoOperands(Instruction.Aaa);
-
-                    case 0x38:
-                    case 0x39:
-                    case 0x3A:
-                    case 0x3B:
-                    case 0x3C:
-                    case 0x3D:
-                        return this.ReadBinaryOperation(Instruction.Cmp, nextByte);
-
-                    case 0x3E:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
-                        continue;
-                    case 0x3F:
-                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
-                        return this.ReadInstructionNoOperands(Instruction.Aas);
-
-                    case 0x40:
-                    case 0x41:
-                    case 0x42:
-                    case 0x43:
-                    case 0x44:
-                    case 0x45:
-                    case 0x46:
-                    case 0x47:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            this.ReadRexPrefix(nextByte);
-                            continue;
-                        }
-                        goto default;
-
-                    case 0x48:
-                    case 0x49:
-                    case 0x4A:
-                    case 0x4B:
-                    case 0x4C:
-                    case 0x4D:
-                    case 0x4E:
-                    case 0x4F:
-                        if (this.executionMode != ExecutionModes.Long64Bit)
-                        {
-                            return this.ReadWithRegisterFromOpcode(Instruction.Dec, nextByte, this.GetOperandSize());
-                        }
-                        this.ReadRexPrefix(nextByte);
-                        continue;
-
-                    case 0x62:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-                        return this.Read_Reg_RM(Instruction.Bound, this.GetOperandSize());
-                    case 0x63:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw new NotImplementedException();
-                        }
-                        return this.Read_RM_Reg(Instruction.Arpl, Size.Word);
-                    case 0x64:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
-                        continue;
-                    case 0x65:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);
-                        continue;
-                    case 0x66:
-                        this.ReadPrefix(InstructionPrefixes.Group3Mask, InstructionPrefixes.OperandSizeOverride);
-                        continue;
-                    case 0x67:
-                        this.ReadPrefix(InstructionPrefixes.Group4Mask, InstructionPrefixes.AddressSizeOverride);
-                        continue;
-
-                    case 0x80:
-                    case 0x81:
-                    case 0x82:
-                    case 0x83:
-                    {
-                        var operandSize = this.GetOperandSize();
-                        var registerSize = ((nextByte & 1) != 0) ? operandSize : Size.Byte;
-                        var immediateSize = nextByte == 0x81 ? operandSize : Size.Byte;
-
-                        var modrm = this.ReadModRM();
-                        this.instruction = this.GetGroup1Opcode(modrm.OpCode);
-                        this.operandCount = 2;
-                        this.operand1 = this.RegisterOrMemory(ref modrm, registerSize);
-                        this.operand2 = this.Immediate(immediateSize);
-                        return this.instruction == Instruction.Cmp || this.LockIfMemory();
-                    }
-
-                    case 0x90:
-                        return this.ReadInstructionNoOperands(Instruction.Nop);
-
-                    case 0x98:
-                    {
-                        var alias = this.GetSizeExtendedAlias(Instruction.Cbw, Instruction.Cwde, Instruction.Cdqe);
-                        return this.ReadInstructionNoOperands(alias);
-                    }
-                    case 0x99:
-                    {
-                        var alias = this.GetSizeExtendedAlias(Instruction.Cwd, Instruction.Cdq, Instruction.Cqo);
-                        return this.ReadInstructionNoOperands(alias);
-                    }
-
-
-                    case 0x9A:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-                        this.instruction = Instruction.CallFar;
-                        this.operandCount = 1;
-                        this.operand1 = this.FarPointer(this.GetOperandSize());
-                        return true;
-
-                    case 0xA6:
-                        return this.ReadInstructionNoOperands(Instruction.Cmpsb);
-
-                    case 0xA7:
-                    {
-                        var alias = this.GetSizeExtendedAlias(Instruction.Cmpsw, Instruction.Cmpsd, Instruction.Cmpsq);
-                        return this.ReadInstructionNoOperands(alias);
-                    }
-
-                    case 0xC8:
-                        this.instruction = Instruction.Enter;
-                        this.operandCount = 2;
-                        this.operand1 = this.ImmediateWord();
-                        this.operand2 = OperandType.ImmediateByte2;
-                        this.displacement = this.instructionByteStream.ReadByte();
-                        return true;
-
-                    case 0xD4:
-                        return this.ReadAsciiAdjustWithBase(Instruction.Aam);
-                    case 0xD5:
-                        return this.ReadAsciiAdjustWithBase(Instruction.Aad);
-
-                    case 0xE8:
-                        return this.Read_Jz(Instruction.Call);
-
-                    case 0xF0:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Lock);
-                        continue;
-                    case 0xF1:
-                        throw this.InvalidInstruction();
-                    case 0xF2:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.RepNE);
-                        continue;
-                    case 0xF3:
-                        this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
-                        continue;
-
-                    case 0xF5:
-                        return this.ReadInstructionNoOperands(Instruction.Cmc);
-                    case 0xF6:
-                        return this.ReadGroup3Instruction(Size.Byte);
-                    case 0xF7:
-                        return this.ReadGroup3Instruction(this.GetOperandSize());
-                    case 0xF8:
-                        return this.ReadInstructionNoOperands(Instruction.Clc);
-                    case 0xFA:
-                        return this.ReadInstructionNoOperands(Instruction.Cli);
-                    case 0xFC:
-                        return this.ReadInstructionNoOperands(Instruction.Cld);
-
-                    case 0xFE:
-                        return this.ReadGroup4Instruction();
-                    case 0xFF:
-                        return this.ReadGroup5Instruction();
-
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-        }
-
-        private bool ReadGroup3Instruction(Size size)
+        private void ReadGroup3Instruction(Size size)
         {
             var modrm = this.ReadModRM();
             switch (modrm.Reg)
             {
                 case 6:
                     this.instruction = Instruction.Div;
-                    this.operandCount = 1;
                     this.operand1 = this.RegisterOrMemory(ref modrm, size);
-                    return true;
+                    break;
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        private bool ReadGroup4Instruction()
+        private void ReadGroup4Instruction()
         {
             var modrm = this.ReadModRM();
             switch (modrm.Reg)
             {
                 case 1:
                     this.instruction = Instruction.Dec;
-                    this.operandCount = 1;
                     this.operand1 = this.RegisterOrMemory(ref modrm, Size.Byte);
-                    return this.LockIfMemory();
+                    this.LockIfMemory();
+                    break;
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        private bool ReadGroup5Instruction()
+        private void ReadGroup5Instruction()
         {
-            this.operandCount = 1;
-
             var modrm = this.ReadModRM();
             switch (modrm.Reg)
             {
                 case 1:
                     this.instruction = Instruction.Dec;
                     this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
-                    return this.LockIfMemory();
+                    this.LockIfMemory();
+                    break;
 
                 case 2:
                 {
                     var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
                     this.instruction = Instruction.Call;
                     this.operand1 = this.RegisterOrMemory(ref modrm, operandSize);
-                    return true;
+                    break;
                 }
 
                 case 3:
@@ -822,7 +703,7 @@ namespace Fantasm.Disassembler
                     var operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : this.GetOperandSize();
                     this.instruction = Instruction.CallFar;
                     this.operand1 = this.Memory(ref modrm, operandSize);
-                    return true;
+                    break;
                 }
 
                 default:
@@ -830,10 +711,8 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private bool ReadGroup9Instruction()
+        private void ReadGroup9Instruction()
         {
-            this.operandCount = 1;
-
             var modrm = this.ReadModRM();
             switch (modrm.Reg)
             {
@@ -846,7 +725,7 @@ namespace Fantasm.Disassembler
                     {
                         this.locked = true;
                     }
-                    return true;
+                    break;
 
                 default:
                     throw new NotImplementedException();
@@ -886,20 +765,6 @@ namespace Fantasm.Disassembler
             }
         }
 
-        /// <summary>
-        ///     Reads an instruction that takes no operands.
-        /// </summary>
-        /// <param name="instruction">The instruction mnemonic.</param>
-        /// <returns>
-        ///     Always returns <see langword="true" />
-        /// </returns>
-        private bool ReadInstructionNoOperands(Instruction instruction)
-        {
-            this.ReadInstruction(instruction);
-            this.operandCount = 0;
-            return true;
-        }
-
         private ModRMBits ReadModRM()
         {
             return new ModRMBits(this.rex, this.instructionByteStream.ReadByte());
@@ -926,120 +791,171 @@ namespace Fantasm.Disassembler
             this.rex = (RexPrefix)nextByte;
         }
 
-        private void ReadSibByte(int mod, Register addressSizeBaseRegister)
+        private Operand ReadSibOperand(int mod, Size size, Register addressSizeBaseRegister, Size displacementSize)
         {
             var sibByte = this.instructionByteStream.ReadByte();
             var sibDecoder = new SibDecoder(this.rex, mod, sibByte, addressSizeBaseRegister);
-            this.baseRegister = sibDecoder.BaseRegister;
-            this.scale = sibDecoder.Scale;
-            this.indexRegister = sibDecoder.IndexRegister;
-            if (sibDecoder.RequiresDisplacement)
+            int displacement;
+            if (displacementSize != Size.None)
             {
-                this.displacement = this.instructionByteStream.ReadDword();
+                displacement = this.ReadImmediateValue(displacementSize);
             }
+            else if (sibDecoder.RequiresDisplacement)
+            {
+                displacement = this.instructionByteStream.ReadDword();
+            }
+            else
+            {
+                displacement = 0;
+            }
+            return Operand.MemoryAccess((int)size, sibDecoder.BaseRegister, sibDecoder.Scale, sibDecoder.IndexRegister, displacement);
         }
 
-        private bool ReadTwoByteInstruction()
+        private void ReadTwoByteInstruction()
         {
             var opCodeByte = this.instructionByteStream.ReadByte();
 
             switch (opCodeByte)
             {
                 case 0x06:
-                    return this.ReadInstructionNoOperands(Instruction.Clts);
+                    Instruction instruction1 = Instruction.Clts;
+                    this.ReadInstruction(instruction1);
+                    break;
                 case 0x0b:
-                    return this.ReadInstructionNoOperands(Instruction.Ud2);
+                    Instruction instruction2 = Instruction.Ud2;
+                    this.ReadInstruction(instruction2);
+                    break;
 
                 case 0x38:
-                    return this.ReadThreeByteInstructionA();
+                    this.ReadThreeByteInstructionA();
+                    break;
+
                 case 0x40:
-                    return this.Read_RM_Reg(Instruction.Cmovo, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovo, this.GetOperandSize());
+                    break;
                 case 0x41:
-                    return this.Read_RM_Reg(Instruction.Cmovno, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovno, this.GetOperandSize());
+                    break;
                 case 0x42:
                     // CMOVB, CMOVNAE, CMOVC
-                    return this.Read_RM_Reg(Instruction.Cmovb, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovb, this.GetOperandSize());
+                    break;
                 case 0x43:
                     // CMOVAE, CMOVNB, CMOVNC
-                    return this.Read_RM_Reg(Instruction.Cmovae, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovae, this.GetOperandSize());
+                    break;
                 case 0x44:
                     // CMOVE, CMOVZ
-                    return this.Read_RM_Reg(Instruction.Cmove, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmove, this.GetOperandSize());
+                    break;
                 case 0x45:
                     // CMOVNE, CMOVNZ
-                    return this.Read_RM_Reg(Instruction.Cmovne, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovne, this.GetOperandSize());
+                    break;
                 case 0x46:
                     // CMOVBE, CMOVNA
-                    return this.Read_RM_Reg(Instruction.Cmovbe, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovbe, this.GetOperandSize());
+                    break;
                 case 0x47:
                     // CMOVA, CMOVNBE
-                    return this.Read_RM_Reg(Instruction.Cmova, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmova, this.GetOperandSize());
+                    break;
                 case 0x48:
-                    return this.Read_RM_Reg(Instruction.Cmovs, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovs, this.GetOperandSize());
+                    break;
                 case 0x49:
-                    return this.Read_RM_Reg(Instruction.Cmovns, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovns, this.GetOperandSize());
+                    break;
                 case 0x4A:
                     // CMOVP, CMOVPE
-                    return this.Read_RM_Reg(Instruction.Cmovp, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovp, this.GetOperandSize());
+                    break;
                 case 0x4B:
                     // CMOVNP, CMOVPO
-                    return this.Read_RM_Reg(Instruction.Cmovnp, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovnp, this.GetOperandSize());
+                    break;
                 case 0x4C:
                     // CMOVL, CMOVNGE
-                    return this.Read_RM_Reg(Instruction.Cmovl, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovl, this.GetOperandSize());
+                    break;
                 case 0x4D:
                     // CMOVGE, CMOVNL
-                    return this.Read_RM_Reg(Instruction.Cmovge, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovge, this.GetOperandSize());
+                    break;
                 case 0x4E:
                     // CMOVLE, CMOVNG
-                    return this.Read_RM_Reg(Instruction.Cmovle, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovle, this.GetOperandSize());
+                    break;
                 case 0x4F:
                     // CMOVG, CMOVNLE
-                    return this.Read_RM_Reg(Instruction.Cmovg, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Cmovg, this.GetOperandSize());
+                    break;
 
                 case 0x77:
-                    return this.ReadInstructionNoOperands(Instruction.Emms);
+                    Instruction instruction3 = Instruction.Emms;
+                    this.ReadInstruction(instruction3);
+                    break;
 
                 case 0xA2:
-                    return this.ReadInstructionNoOperands(Instruction.Cpuid);
+                    Instruction instruction4 = Instruction.Cpuid;
+                    this.ReadInstruction(instruction4);
+                    break;
                 case 0xA3:
-                    return this.Read_RM_Reg(Instruction.Bt, this.GetOperandSize());
+                    this.Read_RM_Reg(Instruction.Bt, this.GetOperandSize());
+                    break;
 
                 case 0xAB:
-                    return this.Read_RM_Reg(Instruction.Bts, this.GetOperandSize()) && this.LockIfMemory();
+                    this.Read_RM_Reg(Instruction.Bts, this.GetOperandSize());
+                    this.LockIfMemory();
+                    break;
 
                 case 0xB0:
-                    return this.Read_RM_Reg(Instruction.Cmpxchg, Size.Byte) && this.LockIfMemory();
-
+                    this.Read_RM_Reg(Instruction.Cmpxchg, Size.Byte);
+                    this.LockIfMemory();
+                    break;
                 case 0xB1:
-                    return this.Read_RM_Reg(Instruction.Cmpxchg, this.GetOperandSize()) && this.LockIfMemory();
+                    this.Read_RM_Reg(Instruction.Cmpxchg, this.GetOperandSize());
+                    this.LockIfMemory();
+                    break;
 
                 case 0xB3:
-                    return this.Read_RM_Reg(Instruction.Btr, this.GetOperandSize()) && this.LockIfMemory();
+                    this.Read_RM_Reg(Instruction.Btr, this.GetOperandSize());
+                    this.LockIfMemory();
+                    break;
 
                 case 0xB9:
                 {
                     // Group 10
-                    return this.ReadInstructionNoOperands(Instruction.Ud1);
+                    Instruction instruction5 = Instruction.Ud1;
+                    this.ReadInstruction(instruction5);
+                    break;
                 }
                 case 0xBA:
                 {
                     var modrm = this.ReadModRM();
                     this.instruction = this.GetGroup8Opcode(modrm.OpCode);
-                    this.operandCount = 2;
                     this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
-                    this.operand2 = this.ImmediateByte();
-                    return this.instruction == Instruction.Bt || this.LockIfMemory();
+                    this.operand2 = this.ReadImmediateByteOperand();
+                    if (this.instruction != Instruction.Bt)
+                    {
+                        this.LockIfMemory();
+                    }
+                    break;
                 }
                 case 0xBB:
-                    return this.Read_RM_Reg(Instruction.Btc, this.GetOperandSize()) && this.LockIfMemory();
+                    this.Read_RM_Reg(Instruction.Btc, this.GetOperandSize());
+                    this.LockIfMemory();
+                    break;
                 case 0xBC:
-                    return this.Read_Reg_RM(Instruction.Bsf, this.GetOperandSize());
+                    this.Read_Reg_RM(Instruction.Bsf, this.GetOperandSize());
+                    break;
                 case 0xBD:
-                    return this.Read_Reg_RM(Instruction.Bsr, this.GetOperandSize());
+                    this.Read_Reg_RM(Instruction.Bsr, this.GetOperandSize());
+                    break;
 
                 case 0xC7:
-                    return this.ReadGroup9Instruction();
+                    this.ReadGroup9Instruction();
+                    break;
 
                 case 0xC8:
                 case 0xC9:
@@ -1055,26 +971,25 @@ namespace Fantasm.Disassembler
                         throw this.UndefinedBehaviour();
                     }
 
-                    return this.ReadWithRegisterFromOpcode(Instruction.Bswap, opCodeByte, operandSize);
+                    this.ReadWithRegisterFromOpcode(Instruction.Bswap, opCodeByte, operandSize);
+                    break;
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        private bool ReadWithRegisterFromOpcode(Instruction instruction, byte opCodeByte, Size operandSize)
+        private void ReadWithRegisterFromOpcode(Instruction instruction, byte opCodeByte, Size operandSize)
         {
             this.instruction = instruction;
-            this.operandCount = 1;
-            this.operand1 = OperandType.Register;
-            this.register = RegDecoder.GetRegister(
+            var register = RegDecoder.GetRegister(
                 this.rex != 0,
                 this.GetOpcodeReg(opCodeByte),
                 this.GetBaseRegister(operandSize));
-            return true;
+            this.operand1 = Operand.DirectRegister(register);
         }
 
-        private bool ReadThreeByteInstructionA()
+        private void ReadThreeByteInstructionA()
         {
             // instructions starting 0F 38
             var opCodeByte = this.instructionByteStream.ReadByte();
@@ -1084,13 +999,15 @@ namespace Fantasm.Disassembler
                 case 0xF0:
                     if ((this.prefixes & InstructionPrefixes.RepNZ) != 0)
                     {
-                        return this.Read_Reg_RM(Instruction.Crc32, Size.Dword, Size.Byte);
+                        this.Read_Reg_RM(Instruction.Crc32, Size.Dword, Size.Byte);
+                        break;
                     }
                     goto default;
                 case 0xF1:
                     if ((this.prefixes & InstructionPrefixes.RepNZ) != 0)
                     {
-                        return this.Read_Reg_RM(Instruction.Crc32, Size.Dword, this.GetOperandSize());
+                        this.Read_Reg_RM(Instruction.Crc32, Size.Dword, this.GetOperandSize());
+                        break;
                     }
                     goto default;
 
@@ -1099,63 +1016,52 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private bool Read_Jz(Instruction instruction)
+        private void Read_Jz(Instruction instruction)
         {
             this.instruction = instruction;
-            this.operandCount = 1;
-            this.operand1 = OperandType.RelativeAddress;
-            this.ReadDisplacement(this.GetOperandSize());
-            return true;
+            var offset = this.ReadImmediateValue(this.GetOperandSize());
+            this.operand1 = Operand.RelativeAddress(offset);
         }
 
-        private bool Read_RM_Reg(Instruction instruction, Size size)
+        private void Read_RM_Reg(Instruction instruction, Size size)
         {
             this.instruction = instruction;
-            this.operandCount = 2;
             var operandBaseRegister = this.GetBaseRegister(size);
             var modrm = this.ReadModRM();
             this.operand1 = this.RegisterOrMemory(ref modrm, operandBaseRegister, size);
             this.operand2 = this.ModRMRegister(ref modrm, operandBaseRegister);
-            return true;
         }
 
-        private bool Read_Reg_RM(Instruction instruction, Size size)
+        private void Read_Reg_RM(Instruction instruction, Size size)
         {
             this.instruction = instruction;
-            this.operandCount = 2;
             var modrm = this.ReadModRM();
             var baseRegister = this.GetBaseRegister(size);
             this.operand1 = this.ModRMRegister(ref modrm, baseRegister);
             this.operand2 = this.RegisterOrMemory(ref modrm, baseRegister, size);
-            return true;
         }
 
-        private bool Read_Reg_RM(Instruction instruction, Size regSize, Size rmSize)
+        private void Read_Reg_RM(Instruction instruction, Size regSize, Size rmSize)
         {
             this.instruction = instruction;
-            this.operandCount = 2;
             var modrm = this.ReadModRM();
             this.operand1 = this.ModRMRegister(ref modrm, this.GetBaseRegister(regSize));
             this.operand2 = this.RegisterOrMemory(ref modrm, this.GetBaseRegister(rmSize), rmSize);
-            return true;
         }
 
-        private bool Read_rAx_Imm(Instruction instruction, Size size)
+        private void Read_rAx_Imm(Instruction instruction, Size size)
         {
             this.instruction = instruction;
-            this.operandCount = 2;
-            var operandBaseRegister = this.GetBaseRegister(size);
-            this.operand1 = this.ImplicitRegister(operandBaseRegister);
+            this.operand1 = Operand.DirectRegister(this.GetBaseRegister(size));
             this.operand2 = this.Immediate(size);
-            return true;
         }
 
-        private OperandType RegisterOrMemory(ref ModRMBits modrmBits, Size operandSize)
+        private Operand RegisterOrMemory(ref ModRMBits modrmBits, Size operandSize)
         {
             return this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
         }
 
-        private OperandType RegisterOrMemory(ref ModRMBits modrmBits, Register operandSizeBaseRegister, Size operandSize)
+        private Operand RegisterOrMemory(ref ModRMBits modrmBits, Register operandSizeBaseRegister, Size operandSize)
         {
             var addressSize = this.GetAddressSize();
             var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
@@ -1167,35 +1073,21 @@ namespace Fantasm.Disassembler
                 addressSizeBaseRegister,
                 ref modrmBits);
 
-            this.baseRegister = decoder.BaseRegister;
-            this.indexRegister = decoder.IndexRegister;
-
             if (decoder.IsDirectRegister)
             {
-                return OperandType.DirectRegister;
+                return Operand.DirectRegister(decoder.BaseRegister);
             }
 
             if (decoder.NeedsSib)
             {
-                this.ReadSibByte(decoder.Mod, addressSizeBaseRegister);
+                return this.ReadSibOperand(decoder.Mod, operandSize, addressSizeBaseRegister, decoder.DisplacementSize);
             }
 
-            this.ReadDisplacement(decoder.DisplacementSize);
-
-            switch (operandSize)
-            {
-                case Size.Byte:
-                    return OperandType.BytePointer;
-                case Size.Word:
-                    return OperandType.WordPointer;
-                case Size.Dword:
-                    return OperandType.DwordPointer;
-                case Size.Qword:
-                    return OperandType.QwordPointer;
-                default:
-                    return OperandType.OwordPointer;
-            }
+            var displacement = this.ReadImmediateValue(decoder.DisplacementSize);
+            return Operand.MemoryAccess((int)operandSize, decoder.BaseRegister, 1, decoder.IndexRegister, displacement);
         }
+
+
 
         private Exception UndefinedBehaviour()
         {

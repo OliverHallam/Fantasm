@@ -387,277 +387,255 @@ namespace Fantasm.Disassembler.Tests
             switch (opCode.Operands)
             {
                 case OperandFormat.None:
-                    Assert.AreEqual(0, reader.OperandCount);
+                    Assert.AreEqual(OperandType.None, reader.Operand1.Type);
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Ib:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(0));
-                    Assert.AreEqual(0x11, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand1.Type);
+                    Assert.AreEqual(0x11, reader.Operand1.GetImmediateValue());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Iw_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(0));
-                    Assert.AreEqual(0x1111, reader.GetImmediateValue());
-                    Assert.AreEqual(OperandType.ImmediateByte2, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue2());
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.Operand1.Type);
+                    Assert.AreEqual(0x1111, reader.Operand1.GetImmediateValue());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Register:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.Register, reader.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(opCode.Register, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Eb:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Ew:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Ed:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Esp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Eq:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Mw:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.WordPointer, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Bx, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.WordPointer, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Bx, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Md:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DwordPointer, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Edi, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.DwordPointer, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Edi, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Mq:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.QwordPointer, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.QwordPointer, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rdi, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Mdq:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.OwordPointer, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rdi, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.OwordPointer, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rdi, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Jw:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.RelativeAddress, reader.GetOperandType(0));
-                    Assert.AreEqual(0x1111, reader.GetDisplacement());
+                    Assert.AreEqual(OperandType.RelativeAddress, reader.Operand1.Type);
+                    Assert.AreEqual(0x1111, reader.Operand1.GetDisplacement());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Jd:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.RelativeAddress, reader.GetOperandType(0));
-                    Assert.AreEqual(0x11111111, reader.GetDisplacement());
+                    Assert.AreEqual(OperandType.RelativeAddress, reader.Operand1.Type);
+                    Assert.AreEqual(0x11111111, reader.Operand1.GetDisplacement());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Aww:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.FarPointerLiteral, reader.GetOperandType(0));
-                    Assert.AreEqual(0x1111, reader.GetSegmentSelector());
-                    Assert.AreEqual(0x2222, reader.GetDisplacement());
+                    Assert.AreEqual(OperandType.FarPointer, reader.Operand1.Type);
+                    Assert.AreEqual(0x1111, reader.Operand1.GetSegmentSelector());
+                    Assert.AreEqual(0x2222, reader.Operand1.GetDisplacement());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.Awd:
-                    Assert.AreEqual(1, reader.OperandCount);
-                    Assert.AreEqual(OperandType.FarPointerLiteral, reader.GetOperandType(0));
-                    Assert.AreEqual(0x1111, reader.GetSegmentSelector());
-                    Assert.AreEqual(0x22222222, reader.GetDisplacement());
+                    Assert.AreEqual(OperandType.FarPointer, reader.Operand1.Type);
+                    Assert.AreEqual(0x1111, reader.Operand1.GetSegmentSelector());
+                    Assert.AreEqual(0x22222222, reader.Operand1.GetDisplacement());
+                    Assert.AreEqual(OperandType.None, reader.Operand2.Type);
                     break;
 
                 case OperandFormat.AL_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Al, reader.GetRegister());
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Al, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.AX_Iw:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ax, reader.GetRegister());
-                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(1));
-                    Assert.AreEqual(0x2222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Ax, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.Operand2.Type);
+                    Assert.AreEqual(0x2222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.EAX_Id:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Eax, reader.GetRegister());
-                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Eax, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.Operand2.Type);
+                    Assert.AreEqual(0x22222222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.RAX_Id:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rax, reader.GetRegister());
-                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rax, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.Operand2.Type);
+                    Assert.AreEqual(0x22222222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Eb_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Eb_Gb:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.Operand2.GetRegister());
                     break;
 
                 case OperandFormat.Gb_Eb:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Bpl : Register.Ch, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Ew_Iw:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(1));
-                    Assert.AreEqual(0x2222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.Operand2.Type);
+                    Assert.AreEqual(0x2222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Ew_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Ew_Gw:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Bp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Bp, reader.Operand2.GetRegister());
                     break;
 
                 case OperandFormat.Gw_Ew:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Bp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Bp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Ed_Id:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Esp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.Operand2.Type);
+                    Assert.AreEqual(0x22222222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Ed_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Esp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Ed_Gd:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Esp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Ebp, reader.Operand2.GetRegister());
                     break;
 
                 case OperandFormat.Eq_Id:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateDword, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22222222, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateDword, reader.Operand2.Type);
+                    Assert.AreEqual(0x22222222, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Eq_Ib:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(1));
-                    Assert.AreEqual(0x22, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.ImmediateByte, reader.Operand2.Type);
+                    Assert.AreEqual(0x22, reader.Operand2.GetImmediateValue());
                     break;
 
                 case OperandFormat.Eq_Gq:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Rbp, reader.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand1.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Rbp, reader.Operand2.GetRegister());
                     break;
 
                 case OperandFormat.Gd_Eb:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Ebp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(opCode.RexPrefix != 0 ? Register.Spl : Register.Ah, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Gd_Ew:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Sp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Ebp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Sp, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Gd_Ed:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Esp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Ebp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Esp, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Gd_Eq:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Ebp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Ebp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand2.GetBaseRegister());
                     break;
 
                 case OperandFormat.Gq_Eq:
-                    Assert.AreEqual(2, reader.OperandCount);
-                    Assert.AreEqual(OperandType.Register, reader.GetOperandType(0));
-                    Assert.AreEqual(Register.Rbp, reader.GetRegister());
-                    Assert.AreEqual(OperandType.DirectRegister, reader.GetOperandType(1));
-                    Assert.AreEqual(Register.Rsp, reader.GetBaseRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
+                    Assert.AreEqual(Register.Rbp, reader.Operand1.GetRegister());
+                    Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+                    Assert.AreEqual(Register.Rsp, reader.Operand2.GetBaseRegister());
                     break;
 
                 default:
@@ -775,7 +753,8 @@ namespace Fantasm.Disassembler.Tests
 
             reader.Read();
 
-            Assert.AreEqual(0, reader.OperandCount);
+            Assert.AreEqual(OperandType.None, reader.Operand1.Type);
+            Assert.AreEqual(OperandType.None, reader.Operand2.Type);
         }
 
         [Test]
@@ -787,7 +766,8 @@ namespace Fantasm.Disassembler.Tests
 
             reader.Read();
 
-            Assert.AreEqual(0, reader.OperandCount);
+            Assert.AreEqual(OperandType.None, reader.Operand1.Type);
+            Assert.AreEqual(OperandType.None, reader.Operand2.Type);
         }
 
         private byte[] GetBytes(OpCodeProperties opCode)

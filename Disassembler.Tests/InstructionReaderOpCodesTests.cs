@@ -361,6 +361,11 @@ namespace Fantasm.Disassembler.Tests
             new OpCodeProperties(0xF7, 6, Instruction.Div, OperandSize.Size16, OperandFormat.Ew),
             new OpCodeProperties(0xF7, 6, Instruction.Div, OperandSize.Size32, OperandFormat.Ed),
             new OpCodeProperties(RexPrefix.W, 0xF7, 6, Instruction.Div, OperandFormat.Eq),
+
+            new OpCodeProperties(new byte[] { 0x0f, 0x77 }, Instruction.Emms, OperandFormat.None),
+
+            new OpCodeProperties(0xC8, Instruction.Enter, OperandFormat.Iw_Ib),
+
         };
 
         [Test]
@@ -389,6 +394,14 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(1, reader.OperandCount);
                     Assert.AreEqual(OperandType.ImmediateByte, reader.GetOperandType(0));
                     Assert.AreEqual(0x11, reader.GetImmediateValue());
+                    break;
+
+                case OperandFormat.Iw_Ib:
+                    Assert.AreEqual(2, reader.OperandCount);
+                    Assert.AreEqual(OperandType.ImmediateWord, reader.GetOperandType(0));
+                    Assert.AreEqual(0x1111, reader.GetImmediateValue());
+                    Assert.AreEqual(OperandType.ImmediateByte2, reader.GetOperandType(1));
+                    Assert.AreEqual(0x22, reader.GetImmediateValue2());
                     break;
 
                 case OperandFormat.Register:
@@ -818,6 +831,12 @@ namespace Fantasm.Disassembler.Tests
             {
                 case OperandFormat.Ib:
                     bytes.Add(0x11);
+                    break;
+
+                case OperandFormat.Iw_Ib:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x22);
                     break;
 
                 case OperandFormat.Jw:

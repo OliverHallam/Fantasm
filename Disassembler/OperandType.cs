@@ -26,6 +26,21 @@
         ImmediateDword,
 
         /// <summary>
+        /// The operand is an 8-bit immediate value.
+        /// </summary>
+        ImmediateByte2,
+
+        /// <summary>
+        /// The operand is a 16-bit immediate value.
+        /// </summary>
+        ImmediateWord2,
+
+        /// <summary>
+        /// The operand is a 32-bit immediate value.
+        /// </summary>
+        ImmediateDword2,
+
+        /// <summary>
         /// The operand is the value of a register in place of a memory access, retrievable from the
         /// <see cref="InstructionReader.GetBaseRegister" /> property.
         /// </summary>

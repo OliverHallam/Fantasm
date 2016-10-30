@@ -140,6 +140,22 @@ namespace Fantasm.Disassembler
         }
 
         /// <summary>
+        ///     Gets the value of the second immediate operand.
+        /// </summary>
+        /// <returns>
+        ///     The value of the immediate operand, or <c>0</c> if there was none.
+        /// </returns>
+        /// <remarks>
+        ///     This is the value of any operand with type <see cref="OperandType.ImmediateByte" />,
+        ///     <see cref="OperandType.ImmediateWord" /> or <see cref="OperandType.ImmediateDword" />
+        /// </remarks>
+        public int GetImmediateValue2()
+        {
+            // we re-use the displacement for this rare case
+            return this.displacement;
+        }
+
+        /// <summary>
         ///     Gets the index register of a memory access operand.
         /// </summary>
         /// <returns>
@@ -697,6 +713,14 @@ namespace Fantasm.Disassembler
                         return this.ReadInstructionNoOperands(alias);
                     }
 
+                    case 0xC8:
+                        this.instruction = Instruction.Enter;
+                        this.operandCount = 2;
+                        this.operand1 = this.ImmediateWord();
+                        this.operand2 = OperandType.ImmediateByte2;
+                        this.displacement = this.instructionByteStream.ReadByte();
+                        return true;
+
                     case 0xD4:
                         return this.ReadAsciiAdjustWithBase(Instruction.Aam);
                     case 0xD5:
@@ -972,6 +996,9 @@ namespace Fantasm.Disassembler
                 case 0x4F:
                     // CMOVG, CMOVNLE
                     return this.Read_RM_Reg(Instruction.Cmovg, this.GetOperandSize());
+
+                case 0x77:
+                    return this.ReadInstructionNoOperands(Instruction.Emms);
 
                 case 0xA2:
                     return this.ReadInstructionNoOperands(Instruction.Cpuid);

@@ -446,8 +446,10 @@ namespace Fantasm.Disassembler
                     return Register.Eax;
                 case Size.Word:
                     return Register.Ax;
-                default:
+                case Size.Byte:
                     return Register.Al;
+                default:
+                    throw new InvalidOperationException();
             }
         }
 
@@ -581,18 +583,6 @@ namespace Fantasm.Disassembler
                 default:
                     return false;
             }
-        }
-
-        private Operand Memory(ref ModRMBits modrmBits, Size operandSize)
-        {
-            var operand = this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
-
-            if (operand.Type == OperandType.Register)
-            {
-                throw this.InvalidInstruction();
-            }
-
-            return operand;
         }
 
         private Operand ModRMRegister(ref ModRMBits modrmBits, Register baseOperandSizeRegister)
@@ -1049,22 +1039,43 @@ namespace Fantasm.Disassembler
             return this.RegisterOrMemory(ref modrmBits, this.GetBaseRegister(operandSize), operandSize);
         }
 
+        private Operand Memory(ref ModRMBits modrmBits, Size operandSize)
+        {
+            var addressSize = this.GetAddressSize();
+
+            if (ModRMDecoder.DirectRegister(ref modrmBits))
+            {
+                throw this.InvalidInstruction();
+            }
+
+            return this.ReadMemoryAccessOperand(ref modrmBits, operandSize, addressSize);
+        }
+
         private Operand RegisterOrMemory(ref ModRMBits modrmBits, Register operandSizeBaseRegister, Size operandSize)
         {
             var addressSize = this.GetAddressSize();
+
+            if (ModRMDecoder.DirectRegister(ref modrmBits))
+            {
+                var register = ModRMDecoder.GetRegister(this.rex, operandSizeBaseRegister, ref modrmBits);
+                return Operand.DirectRegister(register);
+            }
+
+            return this.ReadMemoryAccessOperand(ref modrmBits, operandSize, addressSize);
+        }
+
+        private Operand ReadMemoryAccessOperand(
+            ref ModRMBits modrmBits,
+            Size operandSize,
+            Size addressSize)
+        {
             var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
             var decoder = new ModRMDecoder(
-                this.executionMode,
-                this.rex,
-                addressSize,
-                operandSizeBaseRegister,
-                addressSizeBaseRegister,
-                ref modrmBits);
-
-            if (decoder.IsDirectRegister)
-            {
-                return Operand.DirectRegister(decoder.BaseRegister);
-            }
+                              this.executionMode,
+                              this.rex,
+                              addressSize,
+                              addressSizeBaseRegister,
+                              ref modrmBits);
 
             if (decoder.NeedsSib)
             {
@@ -1074,8 +1085,6 @@ namespace Fantasm.Disassembler
             var displacement = this.ReadImmediateValue(decoder.DisplacementSize);
             return Operand.MemoryAccess((int)operandSize, decoder.BaseRegister, 1, decoder.IndexRegister, displacement);
         }
-
-
 
         private Exception UndefinedBehaviour()
         {

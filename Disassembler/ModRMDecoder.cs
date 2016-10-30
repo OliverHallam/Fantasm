@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Fantasm.Disassembler
 {
@@ -10,7 +11,6 @@ namespace Fantasm.Disassembler
         #region Fields
 
         private readonly Register baseRegister;
-        private readonly bool isDirectRegister;
         private readonly Size displacementSize;
         private readonly Register indexRegister;
         private readonly int mod;
@@ -24,21 +24,12 @@ namespace Fantasm.Disassembler
             ExecutionModes executionMode,
             RexPrefix rex,
             Size addressSize,
-            Register operandSizeBaseRegister,
             Register addressSizeBaseRegister,
             ref ModRMBits modrmBits)
         {
             this.mod = modrmBits.Mod;
 
-            this.isDirectRegister = modrmBits.Mod == 3;
-            if (this.isDirectRegister)
-            {
-                this.baseRegister = RegDecoder.GetRegister(rex != 0, modrmBits.RM, operandSizeBaseRegister);
-                this.displacementSize = Size.None;
-                this.indexRegister = Register.None;
-                this.needsSib = false;
-                return;
-            }
+            Debug.Assert(!DirectRegister(ref modrmBits));
 
             switch (addressSize)
             {
@@ -69,55 +60,27 @@ namespace Fantasm.Disassembler
 
         #endregion
 
+        public static bool DirectRegister(ref ModRMBits modrmBits)
+        {
+            return modrmBits.Mod == 3;
+        }
+
+        public static Register GetRegister(RexPrefix rex, Register operandSizeBaseRegister, ref ModRMBits modrmBits)
+        {
+            return RegDecoder.GetRegister(rex != 0, modrmBits.RM, operandSizeBaseRegister);
+        }
+
         #region Public Properties
 
-        public Register BaseRegister
-        {
-            get
-            {
-                return this.baseRegister;
-            }
-        }
+        public Register BaseRegister => this.baseRegister;
 
-        public Size DisplacementSize
-        {
-            get
-            {
-                return this.displacementSize;
-            }
-        }
+        public Size DisplacementSize => this.displacementSize;
 
-        public Register IndexRegister
-        {
-            get
-            {
-                return this.indexRegister;
-            }
-        }
+        public Register IndexRegister => this.indexRegister;
 
-        public bool IsDirectRegister
-        {
-            get
-            {
-                return this.isDirectRegister;
-            }
-        }
+        public int Mod => this.mod;
 
-        public int Mod
-        {
-            get
-            {
-                return this.mod;
-            }
-        }
-
-        public bool NeedsSib
-        {
-            get
-            {
-                return this.needsSib;
-            }
-        }
+        public bool NeedsSib => this.needsSib;
 
         #endregion
 

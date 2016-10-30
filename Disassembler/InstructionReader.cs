@@ -791,23 +791,11 @@ namespace Fantasm.Disassembler
             this.rex = (RexPrefix)nextByte;
         }
 
-        private Operand ReadSibOperand(int mod, Size size, Register addressSizeBaseRegister, Size displacementSize)
+        private Operand ReadSibOperand(int mod, Size size, Register addressSizeBaseRegister, Size displacementOverride)
         {
             var sibByte = this.instructionByteStream.ReadByte();
-            var sibDecoder = new SibDecoder(this.rex, mod, sibByte, addressSizeBaseRegister);
-            int displacement;
-            if (displacementSize != Size.None)
-            {
-                displacement = this.ReadImmediateValue(displacementSize);
-            }
-            else if (sibDecoder.RequiresDisplacement)
-            {
-                displacement = this.instructionByteStream.ReadDword();
-            }
-            else
-            {
-                displacement = 0;
-            }
+            var sibDecoder = new SibDecoder(this.rex, mod, sibByte, addressSizeBaseRegister, displacementOverride);
+            var displacement = this.ReadImmediateValue(sibDecoder.DisplacementSize);
             return Operand.MemoryAccess((int)size, sibDecoder.BaseRegister, sibDecoder.Scale, sibDecoder.IndexRegister, displacement);
         }
 

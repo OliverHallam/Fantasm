@@ -19,7 +19,6 @@ namespace Fantasm.Disassembler
         private readonly InstructionByteStream instructionByteStream;
 
         private Instruction instruction = Instruction.Unknown;
-        private bool locked;
 
         private Operand operand1;
         private Operand operand2;
@@ -97,10 +96,14 @@ namespace Fantasm.Disassembler
             }
 
             // if the lock prefix wasn't handled
-            if ((this.prefixes & InstructionPrefixes.Lock) != 0 && !this.locked)
+            if ((this.prefixes & InstructionPrefixes.Lock) != 0)
             {
-                throw this.InvalidInstruction();
+                if (!CanBeLocked(this.instruction) || !this.operand1.Type.IsMemoryAccess())
+                {
+                    throw this.InvalidInstruction();
+                }
             }
+
             return true;
         }
 
@@ -111,7 +114,6 @@ namespace Fantasm.Disassembler
         private bool ReadInstruction()
         {
             this.prefixes = InstructionPrefixes.None;
-            this.locked = false;
             this.rex = 0;
             this.instruction = Instruction.Unknown;
             this.operand1 = default(Operand);
@@ -144,7 +146,6 @@ namespace Fantasm.Disassembler
                     case 0x04:
                     case 0x05:
                         this.ReadBinaryOperation(Instruction.Add, nextByte);
-                        this.LockIfMemory();
                         break;
 
                     case 0x0F:
@@ -158,7 +159,6 @@ namespace Fantasm.Disassembler
                     case 0x14:
                     case 0x15:
                         this.ReadBinaryOperation(Instruction.Adc, nextByte);
-                        this.LockIfMemory();
                         break;
 
                     case 0x20:
@@ -168,7 +168,6 @@ namespace Fantasm.Disassembler
                     case 0x24:
                     case 0x25:
                         this.ReadBinaryOperation(Instruction.And, nextByte);
-                        this.LockIfMemory();
                         break;
 
                     case 0x26:
@@ -295,10 +294,6 @@ namespace Fantasm.Disassembler
                         this.instruction = this.GetGroup1Opcode(modrm.OpCode);
                         this.operand1 = this.RegisterOrMemory(ref modrm, registerSize);
                         this.operand2 = this.Immediate(immediateSize);
-                        if (this.instruction != Instruction.Cmp)
-                        {
-                            this.LockIfMemory();
-                        }
                         break;
                     }
 
@@ -560,11 +555,33 @@ namespace Fantasm.Disassembler
             return new FormatException("The data does not represent a valid instruction.");
         }
 
-        private void LockIfMemory()
+        private static bool CanBeLocked(Instruction instruction)
         {
-            if (this.operand1.Type.IsMemoryAccess() && (this.prefixes & InstructionPrefixes.Lock) != 0)
+            switch (instruction)
             {
-                this.locked = true;
+                case Instruction.Adc:
+                case Instruction.Add:
+                case Instruction.And:
+                case Instruction.Btc:
+                case Instruction.Btr:
+                case Instruction.Bts:
+                case Instruction.Cmpxchg:
+                case Instruction.Cmpxchg8b:
+                case Instruction.Cmpxchg16b:
+                case Instruction.Dec:
+                case Instruction.Inc:
+                case Instruction.Neg:
+                case Instruction.Not:
+                case Instruction.Or:
+                case Instruction.Sbb:
+                case Instruction.Sub:
+                case Instruction.Xor:
+                case Instruction.Xadd:
+                case Instruction.Xchg:
+                    return true;
+
+                default:
+                    return false;
             }
         }
 
@@ -671,7 +688,6 @@ namespace Fantasm.Disassembler
                 case 1:
                     this.instruction = Instruction.Dec;
                     this.operand1 = this.RegisterOrMemory(ref modrm, Size.Byte);
-                    this.LockIfMemory();
                     break;
 
                 default:
@@ -687,7 +703,6 @@ namespace Fantasm.Disassembler
                 case 1:
                     this.instruction = Instruction.Dec;
                     this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
-                    this.LockIfMemory();
                     break;
 
                 case 2:
@@ -721,10 +736,6 @@ namespace Fantasm.Disassembler
                     var operandSize = isExtended ? Size.Oword : Size.Qword;
                     this.instruction = isExtended ? Instruction.Cmpxchg16b : Instruction.Cmpxchg8b;
                     this.operand1 = this.Memory(ref modrm, operandSize);
-                    if ((this.prefixes & InstructionPrefixes.Lock) != 0)
-                    {
-                        this.locked = true;
-                    }
                     break;
 
                 default:
@@ -894,21 +905,17 @@ namespace Fantasm.Disassembler
 
                 case 0xAB:
                     this.Read_RM_Reg(Instruction.Bts, this.GetOperandSize());
-                    this.LockIfMemory();
                     break;
 
                 case 0xB0:
                     this.Read_RM_Reg(Instruction.Cmpxchg, Size.Byte);
-                    this.LockIfMemory();
                     break;
                 case 0xB1:
                     this.Read_RM_Reg(Instruction.Cmpxchg, this.GetOperandSize());
-                    this.LockIfMemory();
                     break;
 
                 case 0xB3:
                     this.Read_RM_Reg(Instruction.Btr, this.GetOperandSize());
-                    this.LockIfMemory();
                     break;
 
                 case 0xB9:
@@ -924,15 +931,10 @@ namespace Fantasm.Disassembler
                     this.instruction = this.GetGroup8Opcode(modrm.OpCode);
                     this.operand1 = this.RegisterOrMemory(ref modrm, this.GetOperandSize());
                     this.operand2 = this.ReadImmediateByteOperand();
-                    if (this.instruction != Instruction.Bt)
-                    {
-                        this.LockIfMemory();
-                    }
                     break;
                 }
                 case 0xBB:
                     this.Read_RM_Reg(Instruction.Btc, this.GetOperandSize());
-                    this.LockIfMemory();
                     break;
                 case 0xBC:
                     this.Read_Reg_RM(Instruction.Bsf, this.GetOperandSize());

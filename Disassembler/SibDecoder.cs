@@ -7,7 +7,7 @@
     {
         #region Constructors and Destructors
 
-        public SibDecoder(RexPrefix rex, int mod, byte sib, Register baseRegister, Size displacementOverride)
+        public SibDecoder(RexPrefix rex, int mod, byte sib, Register baseRegister)
         {
             var hasRex = rex != 0;
 
@@ -33,8 +33,8 @@
             }
             else
             {
-                this.DisplacementSize = displacementOverride;
                 this.BaseRegister = RegDecoder.GetRegister(hasRex, sibBits.Base, baseRegister);
+                this.DisplacementSize = ModRMDecoder.DefaultDisplacementSize(mod);
             }
         }
 

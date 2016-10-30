@@ -790,14 +790,6 @@ namespace Fantasm.Disassembler
             this.rex = (RexPrefix)nextByte;
         }
 
-        private Operand ReadSibOperand(int mod, Size size, Register addressSizeBaseRegister, Size displacementOverride)
-        {
-            var sibByte = this.instructionByteStream.ReadByte();
-            var sibDecoder = new SibDecoder(this.rex, mod, sibByte, addressSizeBaseRegister, displacementOverride);
-            var displacement = this.ReadImmediateValue(sibDecoder.DisplacementSize);
-            return Operand.MemoryAccess((int)size, sibDecoder.BaseRegister, sibDecoder.Scale, sibDecoder.IndexRegister, displacement);
-        }
-
         private void ReadTwoByteInstruction()
         {
             var opCodeByte = this.instructionByteStream.ReadByte();
@@ -1070,17 +1062,20 @@ namespace Fantasm.Disassembler
             Size addressSize)
         {
             var addressSizeBaseRegister = GetAddressSizeBaseRegister(addressSize);
-            var decoder = new ModRMDecoder(
-                              this.executionMode,
-                              this.rex,
-                              addressSize,
-                              addressSizeBaseRegister,
-                              ref modrmBits);
-
-            if (decoder.NeedsSib)
+            if (ModRMDecoder.UseSib(addressSize, ref modrmBits))
             {
-                return this.ReadSibOperand(decoder.Mod, operandSize, addressSizeBaseRegister, decoder.DisplacementSize);
+                var sibByte = this.instructionByteStream.ReadByte();
+                var sibDecoder = new SibDecoder(this.rex, modrmBits.Mod, sibByte, addressSizeBaseRegister);
+                var displacement1 = this.ReadImmediateValue(sibDecoder.DisplacementSize);
+                return Operand.MemoryAccess((int)operandSize, sibDecoder.BaseRegister, sibDecoder.Scale, sibDecoder.IndexRegister, displacement1);
             }
+
+            var decoder = new ModRMDecoder(
+                  this.executionMode,
+                  this.rex,
+                  addressSize,
+                  addressSizeBaseRegister,
+                  ref modrmBits);
 
             var displacement = this.ReadImmediateValue(decoder.DisplacementSize);
             return Operand.MemoryAccess((int)operandSize, decoder.BaseRegister, 1, decoder.IndexRegister, displacement);

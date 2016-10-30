@@ -13,7 +13,6 @@ namespace Fantasm.Disassembler
         private readonly Register baseRegister;
         private readonly Size displacementSize;
         private readonly Register indexRegister;
-        private readonly int mod;
         private readonly bool needsSib;
 
         #endregion
@@ -27,9 +26,8 @@ namespace Fantasm.Disassembler
             Register addressSizeBaseRegister,
             ref ModRMBits modrmBits)
         {
-            this.mod = modrmBits.Mod;
-
             Debug.Assert(!DirectRegister(ref modrmBits));
+            Debug.Assert(!UseSib(addressSize, ref modrmBits));
 
             switch (addressSize)
             {
@@ -70,6 +68,11 @@ namespace Fantasm.Disassembler
             return RegDecoder.GetRegister(rex != 0, modrmBits.RM, operandSizeBaseRegister);
         }
 
+        public static bool UseSib(Size addressSize, ref ModRMBits modrmBits)
+        {
+            return addressSize != Size.Word && (modrmBits.RM & 7) == 4;
+        }
+
         #region Public Properties
 
         public Register BaseRegister => this.baseRegister;
@@ -77,8 +80,6 @@ namespace Fantasm.Disassembler
         public Size DisplacementSize => this.displacementSize;
 
         public Register IndexRegister => this.indexRegister;
-
-        public int Mod => this.mod;
 
         public bool NeedsSib => this.needsSib;
 
@@ -133,29 +134,8 @@ namespace Fantasm.Disassembler
             out bool needsSib,
             out Size displacementSize)
         {
-            switch (mod)
-            {
-                case 1:
-                    displacementSize = Size.Byte;
-                    break;
-
-                case 2:
-                    displacementSize = Size.Dword;
-                    break;
-
-                default:
-                    displacementSize = Size.None;
-                    break;
-            }
-
             switch (rm & 7)
             {
-                case 4:
-                    // use sib byte;
-                    baseRegister = Register.None;
-                    needsSib = true;
-                    break;
-
                 case 5:
                     if (mod != 0)
                     {
@@ -178,9 +158,25 @@ namespace Fantasm.Disassembler
                     break;
 
                 default:
+                    displacementSize = DefaultDisplacementSize(mod);
                     baseRegister = RegDecoder.GetRegister(rex != 0, rm, addressSizeBaseRegister);
                     needsSib = false;
                     break;
+            }
+        }
+
+        public static Size DefaultDisplacementSize(int mod)
+        {
+            switch (mod)
+            {
+                case 1:
+                    return Size.Byte;
+
+                case 2:
+                    return Size.Dword;
+
+                default:
+                    return Size.None;
             }
         }
 

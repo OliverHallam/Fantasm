@@ -357,6 +357,9 @@
             new OpCodeProperties(new byte[] { 0x0f, 0x77 }, Instruction.Emms, OperandFormat.None),
 
             new OpCodeProperties(0xC8, Instruction.Enter, OperandFormat.Iw, OperandFormat.Ib),
+
+            new OpCodeProperties(0xF4, Instruction.Hlt),
+
         };
     }
 }

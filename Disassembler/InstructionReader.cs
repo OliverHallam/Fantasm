@@ -363,7 +363,9 @@ namespace Fantasm.Disassembler
                     case 0xF3:
                         this.ReadPrefix(InstructionPrefixes.Group1Mask, InstructionPrefixes.Rep);
                         continue;
-
+                    case 0xF4:
+                        this.ReadInstruction(Instruction.Hlt);
+                        break;
                     case 0xF5:
                         Instruction instruction7 = Instruction.Cmc;
                         this.ReadInstruction(instruction7);

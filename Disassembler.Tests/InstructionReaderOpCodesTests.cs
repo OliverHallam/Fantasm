@@ -10,8 +10,13 @@ namespace Fantasm.Disassembler.Tests
     [TestFixture(Description = "Tests of the InstructionReader class for specific OpCodes")]
     public class InstructionReaderOpCodesTests
     {
+        public OpCodeProperties[] AllOpcodes()
+        {
+            return OpCodes.All;
+        }
+
         [Test]
-        [TestCaseSource(nameof(OpCodes.All))]
+        [TestCaseSource(nameof(AllOpcodes))]
         public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(OpCodeProperties opCode)
         {
             var modrm = GetModrm(opCode);

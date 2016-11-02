@@ -172,11 +172,7 @@ namespace Fantasm.Disassembler
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
                         continue;
                     case 0x27:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
                         Instruction instruction1 = Instruction.Daa;
                         this.ReadInstruction(instruction1);
                         break;
@@ -185,11 +181,7 @@ namespace Fantasm.Disassembler
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentCS);
                         continue;
                     case 0x2F:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
-
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
                         Instruction instruction2 = Instruction.Das;
                         this.ReadInstruction(instruction2);
                         break;
@@ -202,7 +194,6 @@ namespace Fantasm.Disassembler
                         Instruction instruction3 = Instruction.Aaa;
                         this.ReadInstruction(instruction3);
                         break;
-
                     case 0x38:
                     case 0x39:
                     case 0x3A:
@@ -211,7 +202,6 @@ namespace Fantasm.Disassembler
                     case 0x3D:
                         this.ReadBinaryOperation(Instruction.Cmp, nextByte);
                         break;
-
                     case 0x3E:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentDS);
                         continue;
@@ -253,21 +243,15 @@ namespace Fantasm.Disassembler
                         continue;
 
                     case 0x62:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw this.InvalidInstruction();
-                        }
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
                         this.Read_Reg_RM(Instruction.Bound, this.GetOperandSize());
                         break;
                     case 0x63:
-                        if (this.executionMode == ExecutionModes.Long64Bit)
-                        {
-                            throw new NotImplementedException();
-                        }
+                        this.TestExecutionMode(ExecutionModes.CompatibilityMode);
                         this.Read_RM_Reg(Instruction.Arpl, Size.Word);
                         break;
                     case 0x64:
-                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentES);
+                        this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentFS);
                         continue;
                     case 0x65:
                         this.ReadPrefix(InstructionPrefixes.Group2Mask, InstructionPrefixes.SegmentGS);

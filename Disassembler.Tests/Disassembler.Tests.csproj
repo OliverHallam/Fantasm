@@ -59,6 +59,7 @@
     <Compile Include="InstructionReaderTestBase.cs" />
     <Compile Include="InstructionReaderTests.cs" />
     <Compile Include="OpCodeProperties.cs" />
+    <Compile Include="OpCodes.cs" />
     <Compile Include="OperandFormat.cs" />
     <Compile Include="OperandSize.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

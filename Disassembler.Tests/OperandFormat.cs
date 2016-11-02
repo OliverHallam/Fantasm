@@ -3,19 +3,24 @@
     public enum OperandFormat
     {
         /// <summary>
-        /// The instruction takes no operands.
+        /// The operand is not present
         /// </summary>
         None,
 
         /// <summary>
-        /// The operand is a single byte.
+        /// The operand is a single immedate byte.
         /// </summary>
         Ib,
 
         /// <summary>
-        /// The first operand is a two byte literal, and the second operand is a single byte.
+        /// The operand is a 16-bit immediate value.
         /// </summary>
-        Iw_Ib,
+        Iw,
+
+        /// <summary>
+        /// The operand is a 32-bit immediate value.
+        /// </summary>
+        Id,
 
         /// <summary>
         /// The operand is a 16-bit relative address.
@@ -83,132 +88,43 @@
         Register,
 
         /// <summary>
-        /// The first operand is the <c>AL</c> register and the second operand is an immediate byte.
+        /// The is the <c>AL</c> register.
         /// </summary>
-        AL_Ib,
+        AL,
 
         /// <summary>
-        /// The first operand is the <c>AX</c> register and the second operand is an immediate word.
+        /// The operand is the <c>AX</c> register.
         /// </summary>
-        AX_Iw,
+        AX,
 
         /// <summary>
-        /// The first operand is the <c>EAX</c> register and the second operand is an immediate dword.
+        /// The operand is the <c>EAX</c> register.
         /// </summary>
-        EAX_Id,
+        EAX,
 
         /// <summary>
-        /// The first operand is the <c>RAX</c> register and the second operand is an immediate dword.
+        /// The operand is the <c>RAX</c> register.
         /// </summary>
-        RAX_Id,
+        RAX,
 
         /// <summary>
-        /// The first operand is a memory address or 8-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate byte
+        /// The operand is an 8 bit register from the modR/M reg field.
         /// </summary>
-        Eb_Ib,
+        Gb,
 
         /// <summary>
-        /// The first operand is a memory address or 8-bit register specified by a ModRM byte, and the second
-        /// operand is an 8 bit register from the modR/M reg.
+        /// The operand is a 16 bit register from the modR/M reg field.
         /// </summary>
-        Eb_Gb,
+        Gw,
 
         /// <summary>
-        /// The first operand is a memory address or 16-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate byte.
+        /// The operand is a 32 bit register from the modR/M reg field.
         /// </summary>
-        Ew_Ib,
+        Gd,
 
         /// <summary>
-        /// The first operand is a memory address or 16-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate word.
+        /// The operand is a 64 bit register from the modR/M reg field.
         /// </summary>
-        Ew_Iw,
-
-        /// <summary>
-        /// The first operand is a memory address or 16-bit register specified by a ModRM byte, and the second
-        /// operand is a 16 bit register from the modR/M reg.
-        /// </summary>
-        Ew_Gw,
-
-
-        /// <summary>
-        /// The first operand is a memory address or 32-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate dword.
-        /// </summary>
-        Ed_Id,
-
-        /// <summary>
-        /// The first operand is a memory address or 32-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate byte.
-        /// </summary>
-        Ed_Ib,
-
-        /// <summary>
-        /// The first operand is a memory address or 32-bit register specified by a ModRM byte, and the second
-        /// operand is a 32 bit register from the modR/M reg.
-        /// </summary>
-        Ed_Gd,
-
-        /// <summary>
-        /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate dword.
-        /// </summary>
-        Eq_Id,
-
-        /// <summary>
-        /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
-        /// operand is an immediate byte.
-        /// </summary>
-        Eq_Ib,
-
-        /// <summary>
-        /// The first operand is a memory address or 64-bit register specified by a ModRM byte, and the second
-        /// operand is a 64 bit register from the modR/M reg.
-        /// </summary>
-        Eq_Gq,
-
-        /// <summary>
-        /// The first operand is an 8 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 8-bit register specified by a modR/M byte.
-        /// </summary>
-        Gb_Eb,
-
-        /// <summary>
-        /// The first operand is a 16 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 16-bit register specified by a modR/M byte.
-        /// </summary>
-        Gw_Ew,
-
-        /// <summary>
-        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 8-bit register specified by a modR/M byte.
-        /// </summary>
-        Gd_Eb,
-
-        /// <summary>
-        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 16-bit register specified by a modR/M byte.
-        /// </summary>
-        Gd_Ew,
-
-        /// <summary>
-        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 32-bit register specified by a modR/M byte.
-        /// </summary>
-        Gd_Ed,
-
-        /// <summary>
-        /// The first operand is a 32 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 64-bit register specified by a modR/M byte.
-        /// </summary>
-        Gd_Eq,
-
-        /// <summary>
-        /// The first operand is a 64 bit register from the modR/M reg field, and the second operand is a
-        /// memory address or 64-bit register specified by a modR/M byte.
-        /// </summary>
-        Gq_Eq
+        Gq,
     }
 }

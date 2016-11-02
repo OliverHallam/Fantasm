@@ -30,6 +30,7 @@ namespace Fantasm.Disassembler
             {
                 throw InvalidInstructionBytes();
             }
+
             return (byte)nextByte;
         }
 

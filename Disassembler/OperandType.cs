@@ -91,6 +91,6 @@
         /// from the <see cref="Operand.GetBaseRegister"/>, <see cref="Operand.GetIndexRegister"/>,
         /// <see cref="Operand.GetScale"/> and <see cref="Operand.GetDisplacement"/> methods.
         /// </summary>
-        OwordPointer,
+        DqwordPointer,
     }
 }

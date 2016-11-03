@@ -249,7 +249,7 @@ namespace Fantasm.Disassembler
                 case 8:
                     return OperandType.QwordPointer;
                 case 16:
-                    return OperandType.OwordPointer;
+                    return OperandType.DqwordPointer;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operandSize));
             }

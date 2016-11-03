@@ -314,8 +314,8 @@
             new OpCodeProperties(InstructionPrefixes.RepNZ, (RexPrefix)0, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd, OperandFormat.Eb),
             new OpCodeProperties(InstructionPrefixes.RepNZ, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandSize.Size16, OperandFormat.Gd, OperandFormat.Ew),
             new OpCodeProperties(InstructionPrefixes.RepNZ, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed),
-            new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd, OperandFormat.Eb),
-            new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandFormat.Gd, OperandFormat.Eq),
+            new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gq, OperandFormat.Eb),
+            new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandFormat.Gq, OperandFormat.Eq),
 
             new OpCodeProperties(0x99, Instruction.Cwd, OperandSize.Size16, OperandFormat.None),
             new OpCodeProperties(0x99, Instruction.Cdq, OperandSize.Size32, OperandFormat.None),

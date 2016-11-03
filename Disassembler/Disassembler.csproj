@@ -54,6 +54,7 @@
     <Compile Include="Instruction.cs" />
     <Compile Include="ModRMBits.cs" />
     <Compile Include="ModRMDecoder.cs" />
+    <Compile Include="OpCodeTables.cs" />
     <Compile Include="Operand.cs" />
     <Compile Include="OperandType.cs" />
     <Compile Include="OperandTypeExtensions.cs" />

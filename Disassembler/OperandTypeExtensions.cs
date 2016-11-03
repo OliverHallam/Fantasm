@@ -22,7 +22,7 @@
                 case OperandType.WordPointer:
                 case OperandType.DwordPointer:
                 case OperandType.QwordPointer:
-                case OperandType.OwordPointer:
+                case OperandType.DqwordPointer:
                     return true;
 
                 default:

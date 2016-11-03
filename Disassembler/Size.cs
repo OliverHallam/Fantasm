@@ -7,6 +7,6 @@ namespace Fantasm.Disassembler
         Word = 2,
         Dword = 4,
         Qword = 8,
-        Oword = 16
+        Dqword = 16
     }
 }

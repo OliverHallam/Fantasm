@@ -26,7 +26,7 @@ namespace Fantasm.Disassembler
             Register addressSizeBaseRegister,
             ref ModRMBits modrmBits)
         {
-            Debug.Assert(!DirectRegister(ref modrmBits));
+            Debug.Assert(!DirectRegister(modrmBits.Mod));
             Debug.Assert(!UseSib(addressSize, ref modrmBits));
 
             switch (addressSize)
@@ -58,9 +58,9 @@ namespace Fantasm.Disassembler
 
         #endregion
 
-        public static bool DirectRegister(ref ModRMBits modrmBits)
+        public static bool DirectRegister(int mod)
         {
-            return modrmBits.Mod == 3;
+            return mod == 3;
         }
 
         public static Register GetRegister(RexPrefix rex, Register operandSizeBaseRegister, ref ModRMBits modrmBits)

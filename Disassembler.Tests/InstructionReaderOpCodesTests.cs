@@ -102,7 +102,7 @@ namespace Fantasm.Disassembler.Tests
                     break;
 
                 case OperandFormat.Mdq:
-                    Assert.AreEqual(OperandType.OwordPointer, operand.Type);
+                    Assert.AreEqual(OperandType.DqwordPointer, operand.Type);
                     Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
                     break;
 

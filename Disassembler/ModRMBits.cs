@@ -17,9 +17,9 @@
 
         public ModRMBits(RexPrefix rex, byte modrm)
         {
-            this.mod = (modrm & 0xc0) >> 6;
+            this.mod = GetMod(modrm);
 
-            this.reg = (modrm & 0x38) >> 3;
+            this.reg = GetReg(modrm);
             if ((rex & RexPrefix.R) != 0)
             {
                 this.reg |= 8;
@@ -30,6 +30,16 @@
             {
                 this.rm = this.rm | 8;
             }
+        }
+
+        public static int GetMod(byte modrm)
+        {
+            return (modrm & 0xc0) >> 6;
+        }
+
+        public static int GetReg(byte modrm)
+        {
+            return (modrm & 0x38) >> 3;
         }
 
         #endregion

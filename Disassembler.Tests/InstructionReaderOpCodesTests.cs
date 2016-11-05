@@ -10,14 +10,14 @@ namespace Fantasm.Disassembler.Tests
     [TestFixture(Description = "Tests of the InstructionReader class for specific OpCodes")]
     public class InstructionReaderOpCodesTests
     {
-        public OpCodeProperties[] AllOpcodes()
+        public InstructionRepresentation[] AllOpcodes()
         {
             return OpCodes.All;
         }
 
         [Test]
         [TestCaseSource(nameof(AllOpcodes))]
-        public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(OpCodeProperties opCode)
+        public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(InstructionRepresentation opCode)
         {
             var modrm = GetModrm(opCode);
             var bytes = GetBytes(opCode, modrm);
@@ -39,7 +39,7 @@ namespace Fantasm.Disassembler.Tests
             Assert.IsFalse(reader.Read());
         }
 
-        private static void CheckOperand(OpCodeProperties opCode, OperandFormat operandType, Operand operand)
+        private static void CheckOperand(InstructionRepresentation opCode, OperandFormat operandType, Operand operand)
         {
             switch (operandType)
             {
@@ -189,7 +189,7 @@ namespace Fantasm.Disassembler.Tests
             }
         }
 
-        public static IEnumerable<OpCodeProperties> OpCodesWithLockUnsupported()
+        public static IEnumerable<InstructionRepresentation> OpCodesWithLockUnsupported()
         {
             return OpCodes.All.Where(o => !o.Prefixes.HasFlag(InstructionPrefixes.Lock));
         }
@@ -197,7 +197,7 @@ namespace Fantasm.Disassembler.Tests
         [Test]
         [TestCaseSource(nameof(OpCodesWithLockUnsupported))]
         [ExpectedException(typeof(FormatException))]
-        public void InstructionReader_ForLockPrefix_ThrowsFormatException(OpCodeProperties opCode)
+        public void InstructionReader_ForLockPrefix_ThrowsFormatException(InstructionRepresentation opCode)
         {
             var byteList = new List<byte> { 0xF0 };
             // use a memory address to smoke out false negatives
@@ -210,7 +210,7 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
         }
 
-        public static IEnumerable<OpCodeProperties> OpCodesWithLockSupported()
+        public static IEnumerable<InstructionRepresentation> OpCodesWithLockSupported()
         {
             return OpCodes.All.Where(o => o.Prefixes.HasFlag(InstructionPrefixes.Lock));
         }
@@ -218,7 +218,7 @@ namespace Fantasm.Disassembler.Tests
         [Test]
         [TestCaseSource(nameof(OpCodesWithLockSupported))]
         [ExpectedException(typeof(FormatException))]
-        public void InstructionReader_ForLockPrefixWithNoMemoryAccess_ThrowsFormatException(OpCodeProperties opCode)
+        public void InstructionReader_ForLockPrefixWithNoMemoryAccess_ThrowsFormatException(InstructionRepresentation opCode)
         {
             var byteList = new List<byte> { 0xF0 };
             byteList.AddRange(GetBytes(opCode, Combine(GetOpcodeModrm(opCode), 0xC0))); // EAX
@@ -232,7 +232,7 @@ namespace Fantasm.Disassembler.Tests
 
         [Test]
         [TestCaseSource(nameof(OpCodesWithLockSupported))]
-        public void InstructionReader_ForLockPrefixWithMemoryAccess_DoesNotThrow(OpCodeProperties opCode)
+        public void InstructionReader_ForLockPrefixWithMemoryAccess_DoesNotThrow(InstructionRepresentation opCode)
         {
             var byteList = new List<byte> { 0xF0 };
             byteList.AddRange(GetBytes(opCode, GetOpcodeModrm(opCode) ?? 0)); // [EAX]
@@ -244,7 +244,7 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
         }
 
-        private static ExecutionMode GetExecutionMode(OpCodeProperties opCode)
+        private static ExecutionMode GetExecutionMode(InstructionRepresentation opCode)
         {
             return (opCode.Compatibility & Compatibility.Compatibility64) != Compatibility.Valid
                 || opCode.OperandSize == OperandSize.Size16
@@ -252,7 +252,7 @@ namespace Fantasm.Disassembler.Tests
                 : ExecutionMode.Long64Bit;
         }
 
-        public IEnumerable<OpCodeProperties> InstructionsInvalidIn64Bit()
+        public IEnumerable<InstructionRepresentation> InstructionsInvalidIn64Bit()
         {
             return OpCodes.All.Where(o => o.Compatibility == Compatibility.Invalid64);
         }
@@ -260,7 +260,7 @@ namespace Fantasm.Disassembler.Tests
         [Test]
         [TestCaseSource(nameof(InstructionsInvalidIn64Bit))]
         [ExpectedException(typeof(FormatException))]
-        public void InstructionReader_For64BitMode_ThrowsFormatException(OpCodeProperties opCode)
+        public void InstructionReader_For64BitMode_ThrowsFormatException(InstructionRepresentation opCode)
         {
             var bytes = GetBytes(opCode, GetModrm(opCode));
             var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
@@ -268,7 +268,7 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
         }
 
-        public IEnumerable<OpCodeProperties> InstructionsWithMemoryParameters()
+        public IEnumerable<InstructionRepresentation> InstructionsWithMemoryParameters()
         {
             return OpCodes.All.Where(
                     opCode => opCode.Operands.Any(
@@ -279,7 +279,7 @@ namespace Fantasm.Disassembler.Tests
         [Test]
         [TestCaseSource(nameof(InstructionsWithMemoryParameters))]
         [ExpectedException(typeof(FormatException))]
-        public void InstructionReader_ForRegister_ThrowsFormatException(OpCodeProperties opCode)
+        public void InstructionReader_ForRegister_ThrowsFormatException(InstructionRepresentation opCode)
         {
             var bytes = GetBytes(opCode, Combine(GetOpcodeModrm(opCode), 0xC0)); // EAX
             var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
@@ -313,7 +313,7 @@ namespace Fantasm.Disassembler.Tests
             Assert.AreEqual(OperandType.None, reader.Operand2.Type);
         }
 
-        private static byte[] GetBytes(OpCodeProperties opCode, byte? modrm)
+        private static byte[] GetBytes(InstructionRepresentation opCode, byte? modrm)
         {
             var bytes = new List<byte>();
 
@@ -342,7 +342,7 @@ namespace Fantasm.Disassembler.Tests
             return bytes.ToArray();
         }
 
-        private static byte? GetOpcodeModrm(OpCodeProperties opCode)
+        private static byte? GetOpcodeModrm(InstructionRepresentation opCode)
         {
             // add the op code reg bits if necessary
             if (opCode.OpCodeReg != 255)
@@ -353,7 +353,7 @@ namespace Fantasm.Disassembler.Tests
             return null;
         }
 
-        private static byte? GetModrm(OpCodeProperties opCode)
+        private static byte? GetModrm(InstructionRepresentation opCode)
         {
             var modrm = GetOpcodeModrm(opCode);
             foreach (var operand in opCode.Operands)

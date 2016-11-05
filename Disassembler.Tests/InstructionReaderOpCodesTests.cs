@@ -32,8 +32,9 @@ namespace Fantasm.Disassembler.Tests
             Assert.AreEqual(opCode.Mnemonic, reader.Instruction);
 
             // check operands
-            CheckOperand(opCode, opCode.Operand1, reader.Operand1);
-            CheckOperand(opCode, opCode.Operand2, reader.Operand2);
+            CheckOperand(opCode, opCode.Operands.Length > 0 ? opCode.Operands[0] : OperandFormat.None, reader.Operand1);
+            CheckOperand(opCode, opCode.Operands.Length > 1 ? opCode.Operands[1] : OperandFormat.None, reader.Operand2);
+            CheckOperand(opCode, opCode.Operands.Length > 2 ? opCode.Operands[2] : OperandFormat.None, reader.Operand3);
 
             Assert.IsFalse(reader.Read());
         }
@@ -44,6 +45,11 @@ namespace Fantasm.Disassembler.Tests
             {
                 case OperandFormat.None:
                     Assert.AreEqual(OperandType.None, operand.Type);
+                    break;
+
+                case OperandFormat.Three:
+                    Assert.AreEqual(OperandType.ImmediateByte, operand.Type);
+                    Assert.AreEqual(3, operand.GetImmediateValue());
                     break;
 
                 case OperandFormat.Ib:
@@ -84,6 +90,11 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Eq:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(Register.Rsp, operand.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Mb:
+                    Assert.AreEqual(OperandType.BytePointer, operand.Type);
+                    Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Mw:
@@ -146,6 +157,11 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.RAX:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(Register.Rax, operand.GetRegister());
+                    break;
+
+                case OperandFormat.DX:
+                    Assert.AreEqual(OperandType.Register, operand.Type);
+                    Assert.AreEqual(Register.Dx, operand.GetRegister());
                     break;
 
                 case OperandFormat.Gb:
@@ -255,11 +271,9 @@ namespace Fantasm.Disassembler.Tests
         public IEnumerable<OpCodeProperties> InstructionsWithMemoryParameters()
         {
             return OpCodes.All.Where(
-                    o =>
-                        o.Operand1 == OperandFormat.Mw || o.Operand1 == OperandFormat.Md
-                        || o.Operand1 == OperandFormat.Mq || o.Operand1 == OperandFormat.Mdq
-                        || o.Operand2 == OperandFormat.Mw || o.Operand2 == OperandFormat.Md
-                        || o.Operand2 == OperandFormat.Mq || o.Operand2 == OperandFormat.Mdq);
+                    opCode => opCode.Operands.Any(
+                        operand => operand == OperandFormat.Mw || operand == OperandFormat.Md
+                        || operand == OperandFormat.Mq || operand == OperandFormat.Mdq));
         }
 
         [Test]
@@ -320,8 +334,10 @@ namespace Fantasm.Disassembler.Tests
                 bytes.Add(modrm.Value);
             }
 
-            WriteImmediateBytes(opCode.Operand1, bytes);
-            WriteImmediateBytes(opCode.Operand2, bytes);
+            foreach (var operand in opCode.Operands)
+            {
+                WriteImmediateBytes(operand, bytes);
+            }
 
             return bytes.ToArray();
         }
@@ -339,12 +355,12 @@ namespace Fantasm.Disassembler.Tests
 
         private static byte? GetModrm(OpCodeProperties opCode)
         {
-            return Combine(GetModrm(opCode.Operand1), GetModrm(opCode.Operand2), GetOpcodeModrm(opCode));
-        }
-
-        public static byte? Combine(byte? b1, byte? b2, byte? b3)
-        {
-            return Combine(Combine(b1, b2), b3);
+            var modrm = GetOpcodeModrm(opCode);
+            foreach (var operand in opCode.Operands)
+            {
+                modrm = Combine(modrm, GetModrm(operand));
+            }
+            return modrm;
         }
 
         public static byte? Combine(byte? b1, byte? b2)
@@ -363,11 +379,12 @@ namespace Fantasm.Disassembler.Tests
                     // AH/SP/ESP/RSP
                     return 0xC4;
 
+                case OperandFormat.Mb:
                 case OperandFormat.Mw:
                 case OperandFormat.Md:
-                case OperandFormat.Mdq:
                 case OperandFormat.Mq:
-                    // [BH]/[DI]/[EDI]/[RDI]
+                case OperandFormat.Mdq:
+                    // [DI]/[EDI]/[RDI]
                     return 0x07;
 
                 case OperandFormat.Gb:

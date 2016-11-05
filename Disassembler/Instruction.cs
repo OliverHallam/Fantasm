@@ -151,6 +151,8 @@
         CallFar,
         Ret,
         Iret,
+        Iretd,
+        Iretq,
         Int,
         Into,
         Bound,
@@ -173,6 +175,9 @@
         In,
         Out,
         Ins,
+        Insb,
+        Insw,
+        Insd,
         Outs,
 
         // Flag control (EFLAG) instructions

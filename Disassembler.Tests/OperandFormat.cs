@@ -43,42 +43,47 @@
         Awd,
 
         /// <summary>
-        /// The first (and only) operand is a memory address or 8-bit register specified by a ModRM byte,
+        /// The operand is a memory address or 8-bit register specified by a ModRM byte,
         /// </summary>
         Eb,
 
         /// <summary>
-        /// The first (and only) operand is a memory address or 16-bit register specified by a ModRM byte,
+        /// The operand is a memory address or 16-bit register specified by a ModRM byte,
         /// </summary>
         Ew,
 
         /// <summary>
-        /// The first (and only) operand is a memory address or 32-bit register specified by a ModRM byte,
+        /// The operand is a memory address or 32-bit register specified by a ModRM byte,
         /// </summary>
         Ed,
 
         /// <summary>
-        /// The first (and only) operand is a memory address or 64-bit register specified by a ModRM byte,
+        /// The operand is a memory address or 64-bit register specified by a ModRM byte,
         /// </summary>
         Eq,
 
         /// <summary>
-        /// The first (and only) operand is a 16-bit memory address specified by a ModRM byte
+        /// The operand is an 8-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mb,
+
+        /// <summary>
+        /// The operand is a 16-bit memory address specified by a ModRM byte
         /// </summary>
         Mw,
 
         /// <summary>
-        /// The first (and only) operand is a 32-bit memory address specified by a ModRM byte
+        /// The operand is a 32-bit memory address specified by a ModRM byte
         /// </summary>
         Md,
 
         /// <summary>
-        /// The first (and only) operand is a 64-bit memory address specified by a ModRM byte
+        /// The operand is a 64-bit memory address specified by a ModRM byte
         /// </summary>
         Mq,
 
         /// <summary>
-        /// The first (and only) operand is a 128-bit memory address specified by a ModRM byte
+        /// The operand is a 128-bit memory address specified by a ModRM byte
         /// </summary>
         Mdq,
 
@@ -108,6 +113,11 @@
         RAX,
 
         /// <summary>
+        /// The operand is the <c>DX</c> register.
+        /// </summary>
+        DX,
+        
+        /// <summary>
         /// The operand is an 8 bit register from the modR/M reg field.
         /// </summary>
         Gb,
@@ -126,5 +136,10 @@
         /// The operand is a 64 bit register from the modR/M reg field.
         /// </summary>
         Gq,
+
+        /// <summary>
+        /// The operand is the integer 3 (for INT 3)
+        /// </summary>
+        Three
     }
 }

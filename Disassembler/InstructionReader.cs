@@ -20,6 +20,7 @@ namespace Fantasm.Disassembler
 
         private Operand operand1;
         private Operand operand2;
+        private Operand operand3;
         private InstructionPrefixes prefixes;
         private RexPrefix rex = RexPrefix.Magic;
 
@@ -71,9 +72,14 @@ namespace Fantasm.Disassembler
         public Operand Operand1 => this.operand1;
 
         /// <summary>
-        /// The first operand for the instruction.
+        /// The second operand for the instruction.
         /// </summary>
         public Operand Operand2 => this.operand2;
+
+        /// <summary>
+        /// The third operand for the instruction
+        /// </summary>
+        public Operand Operand3 => this.operand3;
 
         #endregion
 
@@ -117,7 +123,7 @@ namespace Fantasm.Disassembler
                 throw this.InvalidInstruction();
             }
 
-            if ((this.prefixes & @group) != 0)
+            if ((this.prefixes & group) != 0)
             {
                 throw this.InvalidInstruction();
             }
@@ -233,6 +239,13 @@ namespace Fantasm.Disassembler
                 {
                     switch (nextByte)
                     {
+                        case 0x6D:
+                            this.instruction = this.GetSizeExtendedAlias(
+                                Instruction.Insw,
+                                Instruction.Insd,
+                                Instruction.Insd);
+                            break;
+
                         case 0x80:
                         case 0x81:
                         case 0x82:
@@ -241,14 +254,30 @@ namespace Fantasm.Disassembler
                             break;
 
                         case 0x98:
-                            this.instruction = this.GetSizeExtendedAlias(Instruction.Cbw, Instruction.Cwde, Instruction.Cdqe);
+                            this.instruction = this.GetSizeExtendedAlias(
+                                Instruction.Cbw,
+                                Instruction.Cwde,
+                                Instruction.Cdqe);
                             break;
                         case 0x99:
-                            this.instruction = this.GetSizeExtendedAlias(Instruction.Cwd, Instruction.Cdq, Instruction.Cqo);
+                            this.instruction = this.GetSizeExtendedAlias(
+                                Instruction.Cwd,
+                                Instruction.Cdq,
+                                Instruction.Cqo);
                             break;
 
                         case 0xA7:
-                            this.instruction = this.GetSizeExtendedAlias(Instruction.Cmpsw, Instruction.Cmpsd, Instruction.Cmpsq);
+                            this.instruction = this.GetSizeExtendedAlias(
+                                Instruction.Cmpsw,
+                                Instruction.Cmpsd,
+                                Instruction.Cmpsq);
+                            break;
+
+                        case 0xCF:
+                            this.instruction = this.GetSizeExtendedAlias(
+                                Instruction.Iret,
+                                Instruction.Iretd,
+                                Instruction.Iretq);
                             break;
 
                         case 0xF6:
@@ -285,7 +314,10 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private Instruction GetSizeExtendedAlias(Instruction wordInstruction, Instruction dwordInstruction, Instruction qwordInstruction)
+        private Instruction GetSizeExtendedAlias(
+            Instruction wordInstruction,
+            Instruction dwordInstruction,
+            Instruction qwordInstruction)
         {
             switch (this.GetOperandSize())
             {
@@ -311,6 +343,11 @@ namespace Fantasm.Disassembler
             {
                 switch (opCodeByte)
                 {
+                    case 0x01:
+                        opCode = OpCodeTables.Group7OpCodes[ModRMBits.GetReg(modrm)];
+                        this.instruction = opCode.Instruction;
+                        break;
+
                     case 0x38:
                         this.ReadThreeByteInstructionA();
                         return;
@@ -397,6 +434,9 @@ namespace Fantasm.Disassembler
 
             var operand2Encoding = (OperandEncoding)((int)(flags & OpCodeFlags.Operand2Mask) >> (int)OpCodeFlags.Operand2Shift);
             this.operand2 = this.ReadOperand(operand2Encoding, flags, operandSize, opCode, modrm);
+
+            var operand3Encoding = (OperandEncoding)((int)(flags & OpCodeFlags.Operand3Mask) >> (int)OpCodeFlags.Operand3Shift);
+            this.operand3 = this.ReadOperand(operand3Encoding, flags, operandSize, opCode, modrm);
         }
 
         private Size GetOperandSize(OpCodeFlags flags)
@@ -428,7 +468,13 @@ namespace Fantasm.Disassembler
                 case OperandEncoding.None:
                     return default(Operand);
 
-                case OperandEncoding.RAx:
+                case OperandEncoding.Three:
+                    return Operand.ImmediateByte(3);
+
+                case OperandEncoding.Dx:
+                    return Operand.DirectRegister(Register.Dx);
+
+                case OperandEncoding.Rax:
                     return Operand.DirectRegister(GetBaseRegister(operandSize));
 
                 case OperandEncoding.M:

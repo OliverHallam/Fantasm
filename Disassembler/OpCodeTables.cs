@@ -5,7 +5,9 @@ namespace Fantasm.Disassembler
     internal enum OperandEncoding : byte
     {
         None,
-        RAx,
+        Three,
+        Rax,
+        Dx,
         M,
         RM,
         Reg,
@@ -35,7 +37,9 @@ namespace Fantasm.Disassembler
 
         Ignore10 = 0x40,
 
-        Operand1RAx = OperandEncoding.RAx << Operand1Shift,
+        Operand1Three = OperandEncoding.Three << Operand1Shift,
+        Operand1Rax = OperandEncoding.Rax << Operand1Shift,
+        Operand1Dx = OperandEncoding.Dx << Operand1Shift,
         Operand1M = (OperandEncoding.M << Operand1Shift) | ModRM,
         Operand1RM = (OperandEncoding.RM << Operand1Shift) | ModRM,
         Operand1Reg = (OperandEncoding.Reg << Operand1Shift) | ModRM,
@@ -47,7 +51,9 @@ namespace Fantasm.Disassembler
         Operand1Mask = 0xFF00,
         Operand1Shift = 8,
 
-        Operand2RAx = OperandEncoding.RAx << Operand2Shift,
+        Operand2Three = OperandEncoding.Three << Operand2Shift,
+        Operand2Rax = OperandEncoding.Rax << Operand2Shift,
+        Operand2Dx = OperandEncoding.Dx << Operand2Shift,
         Operand2RM = (OperandEncoding.RM << Operand2Shift) | ModRM,
         Operand2M = (OperandEncoding.M << Operand2Shift) | ModRM,
         Operand2Reg = (OperandEncoding.Reg << Operand2Shift) | ModRM,
@@ -57,7 +63,21 @@ namespace Fantasm.Disassembler
         Operand2FarPointer = OperandEncoding.FarPointer << Operand2Shift,
         Operand2RelativeAddress = OperandEncoding.RelativeAddress << Operand2Shift,
         Operand2Mask = 0xFF0000,
-        Operand2Shift = 16
+        Operand2Shift = 16,
+
+        Operand3Three = OperandEncoding.Three << Operand3Shift,
+        Operand3Rax = OperandEncoding.Rax << Operand3Shift,
+        Operand3Dx = OperandEncoding.Dx << Operand3Shift,
+        Operand3RM = (OperandEncoding.RM << Operand3Shift) | ModRM,
+        Operand3M = (OperandEncoding.M << Operand3Shift) | ModRM,
+        Operand3Reg = (OperandEncoding.Reg << Operand3Shift) | ModRM,
+        Operand3OpCodeReg = (OperandEncoding.OpCodeReg << Operand3Shift),
+        Operand3Immediate = OperandEncoding.Immediate << Operand3Shift,
+        Operand3ImmediateByte = OperandEncoding.ImmediateByte << Operand3Shift,
+        Operand3FarPointer = OperandEncoding.FarPointer << Operand3Shift,
+        Operand3RelativeAddress = OperandEncoding.RelativeAddress << Operand3Shift,
+        Operand3Mask = unchecked((int)0xFF000000),
+        Operand3Shift = 24
     }
 
     internal struct OpCodeProperties
@@ -80,8 +100,8 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Add, OpCodeFlags.Lockable | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Add, OpCodeFlags.Lockable | OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
             new OpCodeProperties(Instruction.Add, OpCodeFlags.Lockable | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.Add, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
-            new OpCodeProperties(Instruction.Add, OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Add, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Add, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -97,8 +117,8 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Adc, OpCodeFlags.Lockable | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Adc, OpCodeFlags.Lockable | OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
             new OpCodeProperties(Instruction.Adc, OpCodeFlags.Lockable | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.Adc, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
-            new OpCodeProperties(Instruction.Adc, OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Adc, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Adc, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -114,8 +134,8 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.And, OpCodeFlags.Lockable | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.And, OpCodeFlags.Lockable | OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
             new OpCodeProperties(Instruction.And, OpCodeFlags.Lockable | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.And, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
-            new OpCodeProperties(Instruction.And, OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.And, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.And, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // ES segment prefix
             new OpCodeProperties(Instruction.Daa, OpCodeFlags.CompatibilityMode),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -139,19 +159,19 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Cmp, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Cmp, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
             new OpCodeProperties(Instruction.Cmp, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.Cmp, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
-            new OpCodeProperties(Instruction.Cmp, OpCodeFlags.Operand1RAx | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Cmp, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
+            new OpCodeProperties(Instruction.Cmp, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Immediate),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // DS segment prefix
             new OpCodeProperties(Instruction.Aas, OpCodeFlags.CompatibilityMode),
 
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), 
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1OpCodeReg), 
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1OpCodeReg),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1OpCodeReg),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1OpCodeReg),
@@ -187,11 +207,11 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // Operand size override
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // Address size override
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Imul, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand3Immediate),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Imul, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand3ImmediateByte),
+            new OpCodeProperties(Instruction.Insb, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // INSD/INSW
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
 
@@ -292,10 +312,10 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Int, OpCodeFlags.Operand1Three),
+            new OpCodeProperties(Instruction.Int, OpCodeFlags.Operand1ImmediateByte),
+            new OpCodeProperties(Instruction.Into, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // IRET/IRETD/IRETQ
 
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -318,16 +338,16 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.In, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2ImmediateByte),
+            new OpCodeProperties(Instruction.In, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2ImmediateByte),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Call, OpCodeFlags.Operand1RelativeAddress),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.In, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Dx),
+            new OpCodeProperties(Instruction.In, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Dx),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
 
@@ -352,14 +372,14 @@ namespace Fantasm.Disassembler
         public static OpCodeProperties[] TwoByteOpCodeMap =
         {
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.ModRM), // Group 7
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Clts, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Invd, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Ud2, OpCodeFlags.None),
@@ -536,7 +556,7 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Imul, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
 
             new OpCodeProperties(Instruction.Cmpxchg, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Cmpxchg, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
@@ -643,14 +663,14 @@ namespace Fantasm.Disassembler
             Instruction.Unknown,
             Instruction.Unknown,
             Instruction.Unknown,
-            Instruction.Unknown,
+            Instruction.Imul,
             Instruction.Div,
-            Instruction.Unknown,
+            Instruction.Idiv,
         };
 
         public static Instruction[] Group4Instructions =
         {
-            Instruction.Unknown,
+            Instruction.Inc,
             Instruction.Dec,
             Instruction.Unknown,
             Instruction.Unknown,
@@ -662,7 +682,7 @@ namespace Fantasm.Disassembler
 
         public static OpCodeProperties[] Group5OpCodes =
         {
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeForce64 | OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.CallFar, OpCodeFlags.OperandSizeForce64 | OpCodeFlags.Operand1M), // TODO: should have an extra 16 bits in the ptr
@@ -670,6 +690,18 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None)
+        };
+
+        public static OpCodeProperties[] Group7OpCodes =
+{
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Invlpg, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1M)
         };
 
         public static Instruction[] Group8Instructions =

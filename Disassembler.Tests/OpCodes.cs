@@ -5,10 +5,10 @@
         // Each row here corresponds to a line in the Intel manual
         public static OpCodeProperties[] All =
         {
-            new OpCodeProperties(0x37, Instruction.Aaa, OperandFormat.None, Compatibility.Invalid64),
-            new OpCodeProperties(0xD5, Instruction.Aad, OperandFormat.Ib, Compatibility.Invalid64),
-            new OpCodeProperties(0xD4, Instruction.Aam, OperandFormat.Ib, Compatibility.Invalid64),
-            new OpCodeProperties(0x3F, Instruction.Aas, OperandFormat.None, Compatibility.Invalid64),
+            new OpCodeProperties(0x37, Instruction.Aaa, Compatibility.Invalid64),
+            new OpCodeProperties(0xD5, Instruction.Aad, Compatibility.Invalid64, OperandFormat.Ib),
+            new OpCodeProperties(0xD4, Instruction.Aam, Compatibility.Invalid64, OperandFormat.Ib),
+            new OpCodeProperties(0x3F, Instruction.Aas, Compatibility.Invalid64),
 
             new OpCodeProperties(0x14, Instruction.Adc, OperandFormat.AL, OperandFormat.Ib),
             new OpCodeProperties(0x15, Instruction.Adc, OperandSize.Size16, OperandFormat.AX, OperandFormat.Iw),
@@ -79,10 +79,10 @@
             new OpCodeProperties(0x23, Instruction.And, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed),
             new OpCodeProperties(RexPrefix.W, 0x23, Instruction.And, OperandFormat.Gq, OperandFormat.Eq),
 
-            new OpCodeProperties(0x63, Instruction.Arpl, OperandFormat.Ew, OperandFormat.Gw, Compatibility.NotEncodable64),
+            new OpCodeProperties(0x63, Instruction.Arpl, Compatibility.NotEncodable64, OperandFormat.Ew, OperandFormat.Gw),
 
-            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size16, OperandFormat.Gw, OperandFormat.Ew, Compatibility.Invalid64),
-            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed, Compatibility.Invalid64),
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size16, Compatibility.Invalid64, OperandFormat.Gw, OperandFormat.Ew),
+            new OpCodeProperties(0x62, Instruction.Bound, OperandSize.Size32, Compatibility.Invalid64, OperandFormat.Gd, OperandFormat.Ed),
 
             new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size16, OperandFormat.Gw, OperandFormat.Ew),
             new OpCodeProperties(new byte[] { 0x0F, 0xBC }, Instruction.Bsf, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed),
@@ -154,16 +154,16 @@
             new OpCodeProperties(InstructionPrefixes.Lock, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandSize.Size32, OperandFormat.Ed, OperandFormat.Ib),
             new OpCodeProperties(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq, OperandFormat.Ib),
 
-            new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size16, OperandFormat.Jw, Compatibility.NotEncodable64),
+            new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size16, Compatibility.NotEncodable64, OperandFormat.Jw),
             new OpCodeProperties(0xE8, Instruction.Call, OperandSize.Size32, OperandFormat.Jd),
-            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size16, OperandFormat.Ew, Compatibility.NotEncodable64),
-            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size32, OperandFormat.Ed, Compatibility.NotEncodable64),
-            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandFormat.Eq, Compatibility.NotEncodable32),
-            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size16, OperandFormat.Aww, Compatibility.Invalid64),
-            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size32, OperandFormat.Awd, Compatibility.Invalid64),
+            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size16, Compatibility.NotEncodable64, OperandFormat.Ew),
+            new OpCodeProperties(0xFF, 2, Instruction.Call, OperandSize.Size32, Compatibility.NotEncodable64, OperandFormat.Ed),
+            new OpCodeProperties(0xFF, 2, Instruction.Call, Compatibility.NotEncodable32, OperandFormat.Eq),
+            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size16, Compatibility.Invalid64, OperandFormat.Aww),
+            new OpCodeProperties(0x9A, Instruction.CallFar, OperandSize.Size32, Compatibility.Invalid64, OperandFormat.Awd),
             new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size16, OperandFormat.Mw),
-            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size32, OperandFormat.Md, Compatibility.NotEncodable64),
-            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandFormat.Mq, Compatibility.NotEncodable32),
+            new OpCodeProperties(0xFF, 3, Instruction.CallFar, OperandSize.Size32, Compatibility.NotEncodable64, OperandFormat.Md),
+            new OpCodeProperties(0xFF, 3, Instruction.CallFar, Compatibility.NotEncodable32, OperandFormat.Mq),
             new OpCodeProperties(RexPrefix.W, 0xFF, 3, Instruction.CallFar, OperandFormat.Mq),
 
             new OpCodeProperties(0x98, Instruction.Cbw, OperandSize.Size16),
@@ -305,10 +305,10 @@
             new OpCodeProperties(InstructionPrefixes.Lock, new byte[] { 0x0F, 0xB1 }, Instruction.Cmpxchg, OperandSize.Size32, OperandFormat.Ed, OperandFormat.Gd),
             new OpCodeProperties(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xB1 }, Instruction.Cmpxchg, OperandFormat.Eq, OperandFormat.Gq),
 
-            new OpCodeProperties(new byte[] { 0x0F, 0xC7 }, 1, Instruction.Cmpxchg8b, OperandFormat.Mq, InstructionPrefixes.Lock),
+            new OpCodeProperties(InstructionPrefixes.Lock, new byte[] { 0x0F, 0xC7 }, 1, Instruction.Cmpxchg8b, OperandFormat.Mq),
             new OpCodeProperties(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xC7 }, 1, Instruction.Cmpxchg16b, OperandFormat.Mdq),
 
-            new OpCodeProperties(new byte[] { 0x0F, 0xA2 }, Instruction.Cpuid, OperandFormat.None),
+            new OpCodeProperties(new byte[] { 0x0F, 0xA2 }, Instruction.Cpuid),
 
             new OpCodeProperties(InstructionPrefixes.RepNZ, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd, OperandFormat.Eb),
             new OpCodeProperties(InstructionPrefixes.RepNZ, (RexPrefix)0, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gd, OperandFormat.Eb),
@@ -317,13 +317,13 @@
             new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Crc32, OperandFormat.Gq, OperandFormat.Eb),
             new OpCodeProperties(InstructionPrefixes.RepNZ, RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Crc32, OperandFormat.Gq, OperandFormat.Eq),
 
-            new OpCodeProperties(0x99, Instruction.Cwd, OperandSize.Size16, OperandFormat.None),
-            new OpCodeProperties(0x99, Instruction.Cdq, OperandSize.Size32, OperandFormat.None),
-            new OpCodeProperties(RexPrefix.W, 0x99, Instruction.Cqo, OperandFormat.None),
+            new OpCodeProperties(0x99, Instruction.Cwd, OperandSize.Size16),
+            new OpCodeProperties(0x99, Instruction.Cdq, OperandSize.Size32),
+            new OpCodeProperties(RexPrefix.W, 0x99, Instruction.Cqo),
 
-            new OpCodeProperties(0x27, Instruction.Daa, OperandFormat.None, Compatibility.Invalid64),
+            new OpCodeProperties(0x27, Instruction.Daa, Compatibility.Invalid64),
 
-            new OpCodeProperties(0x2F, Instruction.Das, OperandFormat.None, Compatibility.Invalid64),
+            new OpCodeProperties(0x2F, Instruction.Das, Compatibility.Invalid64),
 
             new OpCodeProperties(InstructionPrefixes.Lock, 0xFE, 1, Instruction.Dec, OperandFormat.Eb),
             new OpCodeProperties(InstructionPrefixes.Lock, (RexPrefix)0, 0xFE, 1, Instruction.Dec, OperandFormat.Eb),
@@ -331,22 +331,22 @@
             new OpCodeProperties(InstructionPrefixes.Lock, 0xFF, 1, Instruction.Dec, OperandSize.Size32, OperandFormat.Ed),
             new OpCodeProperties(InstructionPrefixes.Lock, RexPrefix.W, 0xFF, 1, Instruction.Dec, OperandFormat.Eq),
             // expanded from intel table
-            new OpCodeProperties(0x48, Instruction.Dec, OperandSize.Size16, Register.Ax, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x49, Instruction.Dec, OperandSize.Size16, Register.Cx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4A, Instruction.Dec, OperandSize.Size16, Register.Dx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4B, Instruction.Dec, OperandSize.Size16, Register.Bx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4C, Instruction.Dec, OperandSize.Size16, Register.Sp, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4D, Instruction.Dec, OperandSize.Size16, Register.Bp, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4E, Instruction.Dec, OperandSize.Size16, Register.Si, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4F, Instruction.Dec, OperandSize.Size16, Register.Di, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x48, Instruction.Dec, OperandSize.Size32, Register.Eax, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x49, Instruction.Dec, OperandSize.Size32, Register.Ecx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4A, Instruction.Dec, OperandSize.Size32, Register.Edx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4B, Instruction.Dec, OperandSize.Size32, Register.Ebx, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4C, Instruction.Dec, OperandSize.Size32, Register.Esp, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4D, Instruction.Dec, OperandSize.Size32, Register.Ebp, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4E, Instruction.Dec, OperandSize.Size32, Register.Esi, Compatibility.NotEncodable64),
-            new OpCodeProperties(0x4F, Instruction.Dec, OperandSize.Size32, Register.Edi, Compatibility.NotEncodable64),
+            new OpCodeProperties(0x48, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Ax),
+            new OpCodeProperties(0x49, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Cx),
+            new OpCodeProperties(0x4A, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Dx),
+            new OpCodeProperties(0x4B, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Bx),
+            new OpCodeProperties(0x4C, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Sp),
+            new OpCodeProperties(0x4D, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Bp),
+            new OpCodeProperties(0x4E, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Si),
+            new OpCodeProperties(0x4F, Instruction.Dec, OperandSize.Size16, Compatibility.NotEncodable64, Register.Di),
+            new OpCodeProperties(0x48, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Eax),
+            new OpCodeProperties(0x49, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ecx),
+            new OpCodeProperties(0x4A, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Edx),
+            new OpCodeProperties(0x4B, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ebx),
+            new OpCodeProperties(0x4C, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Esp),
+            new OpCodeProperties(0x4D, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ebp),
+            new OpCodeProperties(0x4E, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Esi),
+            new OpCodeProperties(0x4F, Instruction.Dec, OperandSize.Size32, Compatibility.NotEncodable64, Register.Edi),
 
             new OpCodeProperties(0xF6, 6, Instruction.Div, OperandFormat.Eb),
             new OpCodeProperties((RexPrefix)0, 0xF6, 6, Instruction.Div, OperandFormat.Eb),
@@ -354,12 +354,76 @@
             new OpCodeProperties(0xF7, 6, Instruction.Div, OperandSize.Size32, OperandFormat.Ed),
             new OpCodeProperties(RexPrefix.W, 0xF7, 6, Instruction.Div, OperandFormat.Eq),
 
-            new OpCodeProperties(new byte[] { 0x0f, 0x77 }, Instruction.Emms, OperandFormat.None),
+            new OpCodeProperties(new byte[] { 0x0f, 0x77 }, Instruction.Emms),
 
             new OpCodeProperties(0xC8, Instruction.Enter, OperandFormat.Iw, OperandFormat.Ib),
 
             new OpCodeProperties(0xF4, Instruction.Hlt),
 
+            new OpCodeProperties(0xF6, 7, Instruction.Idiv, OperandFormat.Eb),
+            new OpCodeProperties((RexPrefix)0, 0xF6, 7, Instruction.Idiv, OperandFormat.Eb),
+            new OpCodeProperties(0xF7, 7, Instruction.Idiv, OperandSize.Size16, OperandFormat.Ew),
+            new OpCodeProperties(0xF7, 7, Instruction.Idiv, OperandSize.Size32, OperandFormat.Ed),
+            new OpCodeProperties(RexPrefix.W, 0xF7, 7, Instruction.Idiv, OperandFormat.Eq),
+
+            new OpCodeProperties(0xF6, 5, Instruction.Imul, OperandFormat.Eb),
+            new OpCodeProperties(0xF7, 5, Instruction.Imul, OperandSize.Size16, OperandFormat.Ew),
+            new OpCodeProperties(0xF7, 5, Instruction.Imul, OperandSize.Size32, OperandFormat.Ed),
+            new OpCodeProperties(RexPrefix.W, 0xF7, 5, Instruction.Imul, OperandFormat.Eq),
+            new OpCodeProperties(new byte[] { 0x0F, 0xAF }, Instruction.Imul, OperandSize.Size16, OperandFormat.Gw, OperandFormat.Ew),
+            new OpCodeProperties(new byte[] { 0x0F, 0xAF }, Instruction.Imul, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed),
+            new OpCodeProperties(RexPrefix.W, new byte[] { 0x0F, 0xAF }, Instruction.Imul, OperandFormat.Gq, OperandFormat.Eq),
+            new OpCodeProperties(0x6B, Instruction.Imul, OperandSize.Size16, OperandFormat.Gw, OperandFormat.Ew, OperandFormat.Ib),
+            new OpCodeProperties(0x6B, Instruction.Imul, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed, OperandFormat.Ib),
+            new OpCodeProperties(RexPrefix.W, 0x6B, Instruction.Imul, OperandFormat.Gq, OperandFormat.Eq, OperandFormat.Ib),
+            new OpCodeProperties(0x69, Instruction.Imul, OperandSize.Size16, OperandFormat.Gw, OperandFormat.Ew, OperandFormat.Iw),
+            new OpCodeProperties(0x69, Instruction.Imul, OperandSize.Size32, OperandFormat.Gd, OperandFormat.Ed, OperandFormat.Id),
+            new OpCodeProperties(RexPrefix.W, 0x69, Instruction.Imul, OperandFormat.Gq, OperandFormat.Eq, OperandFormat.Id),
+
+            new OpCodeProperties(0xE4, Instruction.In, OperandFormat.AL, OperandFormat.Ib),
+            new OpCodeProperties(0xE5, Instruction.In, OperandSize.Size16, OperandFormat.AX, OperandFormat.Ib),
+            new OpCodeProperties(0xE5, Instruction.In, OperandSize.Size32, OperandFormat.EAX, OperandFormat.Ib),
+            new OpCodeProperties(0xEC, Instruction.In, OperandFormat.AL, OperandFormat.DX),
+            new OpCodeProperties(0xED, Instruction.In, OperandSize.Size16, OperandFormat.AX, OperandFormat.DX),
+            new OpCodeProperties(0xED, Instruction.In, OperandSize.Size32, OperandFormat.EAX, OperandFormat.DX),
+
+            new OpCodeProperties(InstructionPrefixes.Lock, 0xFE, 0, Instruction.Inc, OperandFormat.Eb),
+            new OpCodeProperties(InstructionPrefixes.Lock, (RexPrefix)0, 0xFE, 0, Instruction.Inc, OperandFormat.Eb),
+            new OpCodeProperties(InstructionPrefixes.Lock, 0xFF, 0, Instruction.Inc, OperandSize.Size16, OperandFormat.Ew),
+            new OpCodeProperties(InstructionPrefixes.Lock, 0xFF, 0, Instruction.Inc, OperandSize.Size32, OperandFormat.Ed),
+            new OpCodeProperties(InstructionPrefixes.Lock, RexPrefix.W, 0xFF, 0, Instruction.Inc, OperandFormat.Eq),
+            new OpCodeProperties(0x40, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Ax),
+            new OpCodeProperties(0x41, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Cx),
+            new OpCodeProperties(0x42, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Dx),
+            new OpCodeProperties(0x43, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Bx),
+            new OpCodeProperties(0x44, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Sp),
+            new OpCodeProperties(0x45, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Bp),
+            new OpCodeProperties(0x46, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Si),
+            new OpCodeProperties(0x47, Instruction.Inc, OperandSize.Size16, Compatibility.NotEncodable64, Register.Di),
+            new OpCodeProperties(0x40, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Eax),
+            new OpCodeProperties(0x41, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ecx),
+            new OpCodeProperties(0x42, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Edx),
+            new OpCodeProperties(0x43, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ebx),
+            new OpCodeProperties(0x44, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Esp),
+            new OpCodeProperties(0x45, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Ebp),
+            new OpCodeProperties(0x46, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Esi),
+            new OpCodeProperties(0x47, Instruction.Inc, OperandSize.Size32, Compatibility.NotEncodable64, Register.Edi),
+
+            new OpCodeProperties(0x6C, Instruction.Insb),
+            new OpCodeProperties(0x6D, Instruction.Insw, OperandSize.Size16),
+            new OpCodeProperties(0x6D, Instruction.Insd, OperandSize.Size32),
+
+            new OpCodeProperties(0xCC, Instruction.Int, OperandFormat.Three),
+            new OpCodeProperties(0xCD, Instruction.Int, OperandFormat.Ib),
+            new OpCodeProperties(0xCE, Instruction.Into),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0x08 }, Instruction.Invd),
+
+            new OpCodeProperties(new byte[] { 0x0F, 0x01 }, 7, Instruction.Invlpg, OperandFormat.Mb),
+
+            new OpCodeProperties(0xCF, Instruction.Iret, OperandSize.Size16),
+            new OpCodeProperties(0xCF, Instruction.Iretd, OperandSize.Size32),
+            new OpCodeProperties(RexPrefix.W, 0xCF, Instruction.Iretq),
         };
     }
 }

@@ -15,7 +15,8 @@ namespace Fantasm.Disassembler
         Immediate,
         ImmediateByte,
         FarPointer,
-        RelativeAddress
+        RelativeAddress,
+        RelativeAddressByte
     }
 
     [Flags]
@@ -26,7 +27,7 @@ namespace Fantasm.Disassembler
         OperandSizeDefault = 0x0,
         OperandSizeByte = 0x1,
         OperandSizeWord = 0x2,
-        OperandSizeForce64 = 0x4,
+        OperandSizeFixed64 = 0x4,
         OperandSizeMask = 0x7,
 
         ModRM = 0x8,
@@ -48,6 +49,7 @@ namespace Fantasm.Disassembler
         Operand1ImmediateByte = OperandEncoding.ImmediateByte << Operand1Shift,
         Operand1FarPointer = OperandEncoding.FarPointer << Operand1Shift,
         Operand1RelativeAddress = OperandEncoding.RelativeAddress << Operand1Shift,
+        Operand1RelativeAddressByte = OperandEncoding.RelativeAddressByte << Operand1Shift,
         Operand1Mask = 0xFF00,
         Operand1Shift = 8,
 
@@ -62,6 +64,7 @@ namespace Fantasm.Disassembler
         Operand2ImmediateByte = OperandEncoding.ImmediateByte << Operand2Shift,
         Operand2FarPointer = OperandEncoding.FarPointer << Operand2Shift,
         Operand2RelativeAddress = OperandEncoding.RelativeAddress << Operand2Shift,
+        Operand2RelativeAddressByte = OperandEncoding.RelativeAddressByte << Operand2Shift,
         Operand2Mask = 0xFF0000,
         Operand2Shift = 16,
 
@@ -76,6 +79,7 @@ namespace Fantasm.Disassembler
         Operand3ImmediateByte = OperandEncoding.ImmediateByte << Operand3Shift,
         Operand3FarPointer = OperandEncoding.FarPointer << Operand3Shift,
         Operand3RelativeAddress = OperandEncoding.RelativeAddress << Operand3Shift,
+        Operand3RelativeAddressByte = OperandEncoding.RelativeAddressByte << Operand3Shift,
         Operand3Mask = unchecked((int)0xFF000000),
         Operand3Shift = 24
     }
@@ -215,22 +219,22 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
 
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Jo, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte),
+            new OpCodeProperties(Instruction.Jno, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte),
+            new OpCodeProperties(Instruction.Jb, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNAE, JC
+            new OpCodeProperties(Instruction.Jae, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNB, JAE, JNC
+            new OpCodeProperties(Instruction.Je, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JZ
+            new OpCodeProperties(Instruction.Jne, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNZ
+            new OpCodeProperties(Instruction.Jbe, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNA
+            new OpCodeProperties(Instruction.Ja, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNBE
+            new OpCodeProperties(Instruction.Js, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte),
+            new OpCodeProperties(Instruction.Jns, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte),
+            new OpCodeProperties(Instruction.Jpe, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JP
+            new OpCodeProperties(Instruction.Jpo, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNP
+            new OpCodeProperties(Instruction.Jl, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNGE
+            new OpCodeProperties(Instruction.Jge, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNL
+            new OpCodeProperties(Instruction.Jle, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNG
+            new OpCodeProperties(Instruction.Jg, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // also JNLE
 
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2ImmediateByte), // Group 1
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Immediate), // Group 1
@@ -337,7 +341,7 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte), // JCXZ/JECXZ/JRCXZ
             new OpCodeProperties(Instruction.In, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2ImmediateByte),
             new OpCodeProperties(Instruction.In, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2ImmediateByte),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -507,22 +511,22 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
 
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Jo, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress),
+            new OpCodeProperties(Instruction.Jno, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress),
+            new OpCodeProperties(Instruction.Jb, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNAE, JC
+            new OpCodeProperties(Instruction.Jae, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNB, JAE, JNC
+            new OpCodeProperties(Instruction.Je, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JZ
+            new OpCodeProperties(Instruction.Jne, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNZ
+            new OpCodeProperties(Instruction.Jbe, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNA
+            new OpCodeProperties(Instruction.Ja, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNBE
+            new OpCodeProperties(Instruction.Js, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress),
+            new OpCodeProperties(Instruction.Jns, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress),
+            new OpCodeProperties(Instruction.Jpe, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JP
+            new OpCodeProperties(Instruction.Jpo, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNP
+            new OpCodeProperties(Instruction.Jl, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNGE
+            new OpCodeProperties(Instruction.Jge, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNL
+            new OpCodeProperties(Instruction.Jle, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNG
+            new OpCodeProperties(Instruction.Jg, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress), // also JNLE
 
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -684,8 +688,8 @@ namespace Fantasm.Disassembler
         {
             new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1RM),
-            new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeForce64 | OpCodeFlags.Operand1RM),
-            new OpCodeProperties(Instruction.CallFar, OpCodeFlags.OperandSizeForce64 | OpCodeFlags.Operand1M), // TODO: should have an extra 16 bits in the ptr
+            new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RM),
+            new OpCodeProperties(Instruction.CallFar, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1M), // TODO: should have an extra 16 bits in the ptr
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -718,4 +722,6 @@ namespace Fantasm.Disassembler
 
     }
 }
+
+
 

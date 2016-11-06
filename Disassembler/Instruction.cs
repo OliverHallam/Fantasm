@@ -141,6 +141,8 @@
         Jpo,
         Jpe,
         Jcxz,
+        Jecxz,
+        Jrcxz,
         Loop,
         Loopz,
         Loopnz,

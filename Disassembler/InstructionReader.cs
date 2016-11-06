@@ -41,7 +41,7 @@ namespace Fantasm.Disassembler
         {
             this.instructionByteStream = new InstructionByteStream(stream);
             this.executionMode = executionMode.ToExecutionModes();
-            this.defaultOperandSize = (default32BitOperands || executionMode == ExecutionMode.Long64Bit)
+            this.defaultOperandSize = default32BitOperands || executionMode == ExecutionMode.Long64Bit
                 ? Size.Dword
                 : Size.Word;
             this.defaultAddressSize = default32BitOperands ? Size.Dword : Size.Word;
@@ -240,7 +240,7 @@ namespace Fantasm.Disassembler
                     switch (nextByte)
                     {
                         case 0x6D:
-                            this.instruction = this.GetSizeExtendedAlias(
+                            this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Insw,
                                 Instruction.Insd,
                                 Instruction.Insd);
@@ -254,30 +254,37 @@ namespace Fantasm.Disassembler
                             break;
 
                         case 0x98:
-                            this.instruction = this.GetSizeExtendedAlias(
+                            this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Cbw,
                                 Instruction.Cwde,
                                 Instruction.Cdqe);
                             break;
                         case 0x99:
-                            this.instruction = this.GetSizeExtendedAlias(
+                            this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Cwd,
                                 Instruction.Cdq,
                                 Instruction.Cqo);
                             break;
 
                         case 0xA7:
-                            this.instruction = this.GetSizeExtendedAlias(
+                            this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Cmpsw,
                                 Instruction.Cmpsd,
                                 Instruction.Cmpsq);
                             break;
 
                         case 0xCF:
-                            this.instruction = this.GetSizeExtendedAlias(
+                            this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Iret,
                                 Instruction.Iretd,
                                 Instruction.Iretq);
+                            break;
+
+                        case 0xE3:
+                            this.instruction = this.GetAddressSizeExtendedAlias(
+                                Instruction.Jcxz,
+                                Instruction.Jecxz,
+                                Instruction.Jrcxz);
                             break;
 
                         case 0xF6:
@@ -314,12 +321,29 @@ namespace Fantasm.Disassembler
             }
         }
 
-        private Instruction GetSizeExtendedAlias(
+        private Instruction GetOperandSizeExtendedAlias(
             Instruction wordInstruction,
             Instruction dwordInstruction,
             Instruction qwordInstruction)
         {
             switch (this.GetOperandSize())
+            {
+                case Size.Qword:
+                    return qwordInstruction;
+
+                case Size.Dword:
+                    return dwordInstruction;
+
+                default:
+                    return wordInstruction;
+            }
+        }
+        private Instruction GetAddressSizeExtendedAlias(
+            Instruction wordInstruction,
+            Instruction dwordInstruction,
+            Instruction qwordInstruction)
+        {
+            switch (this.GetAddressSize())
             {
                 case Size.Qword:
                     return qwordInstruction;
@@ -449,7 +473,7 @@ namespace Fantasm.Disassembler
                 case OpCodeFlags.OperandSizeWord:
                     return Size.Word;
 
-                case OpCodeFlags.OperandSizeForce64:
+                case OpCodeFlags.OperandSizeFixed64:
                     if (this.executionMode == ExecutionModes.Long64Bit)
                     {
                         return Size.Qword;
@@ -524,8 +548,16 @@ namespace Fantasm.Disassembler
                     return this.ReadFarPointerOperand(operandSize);
 
                 case OperandEncoding.RelativeAddress:
+                {
                     var offset = this.ReadImmediateValue(operandSize);
                     return Operand.RelativeAddress(offset);
+                }
+
+                case OperandEncoding.RelativeAddressByte:
+                {
+                    var offset = this.instructionByteStream.ReadByte();
+                    return Operand.RelativeAddress(offset);
+                }
 
                 default:
                     throw new NotSupportedException();
@@ -629,14 +661,14 @@ namespace Fantasm.Disassembler
 
         private Size GetAddressSize()
         {
-            var addressSizeOverride = ((this.prefixes & InstructionPrefixes.AddressSizeOverride) != 0);
+            var addressSizeOverride = (this.prefixes & InstructionPrefixes.AddressSizeOverride) != 0;
 
             if ((this.executionMode & ExecutionModes.Long64Bit) != 0)
             {
                 return addressSizeOverride ? Size.Dword : Size.Qword;
             }
 
-            return ((this.defaultAddressSize == Size.Dword) ^ addressSizeOverride) ? Size.Dword : Size.Word;
+            return (this.defaultAddressSize == Size.Dword) ^ addressSizeOverride ? Size.Dword : Size.Word;
         }
 
         private Size GetOperandSize()
@@ -693,10 +725,11 @@ namespace Fantasm.Disassembler
                     return this.instructionByteStream.ReadWord();
 
                 case Size.Dword:
+                case Size.Qword: // "z" semantics
                     return this.instructionByteStream.ReadDword();
 
                 default:
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException();
             }
         }
 

@@ -23,6 +23,11 @@
         Id,
 
         /// <summary>
+        /// The operand is an 8-bit relative address.
+        /// </summary>
+        Jb,
+
+        /// <summary>
         /// The operand is a 16-bit relative address.
         /// </summary>
         Jw,

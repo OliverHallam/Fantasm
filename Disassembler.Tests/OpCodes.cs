@@ -424,6 +424,58 @@
             new InstructionRepresentation(OperandSize.Size16, 0xCF, Instruction.Iret),
             new InstructionRepresentation(OperandSize.Size32, 0xCF, Instruction.Iretd),
             new InstructionRepresentation(RexPrefix.W, 0xCF, Instruction.Iretq),
+
+            new InstructionRepresentation(0x77, Instruction.Ja, OperandFormat.Jb), // JNBE
+            new InstructionRepresentation(0x73, Instruction.Jae, OperandFormat.Jb), // JNB, JNC
+            new InstructionRepresentation(0x72, Instruction.Jb, OperandFormat.Jb), // JC, JNAE
+            new InstructionRepresentation(0x76, Instruction.Jbe, OperandFormat.Jb), // JNA
+            new InstructionRepresentation(OperandSize.Size16, 0xE3, Instruction.Jcxz, OperandFormat.Jb),
+            new InstructionRepresentation(OperandSize.Size32, 0xE3, Instruction.Jecxz, OperandFormat.Jb),
+            new InstructionRepresentation((RexPrefix)0, 0xE3, Instruction.Jrcxz, OperandFormat.Jb),
+            new InstructionRepresentation(0x74, Instruction.Je, OperandFormat.Jb), // JZ
+            new InstructionRepresentation(0x7F, Instruction.Jg, OperandFormat.Jb), // JNLE
+            new InstructionRepresentation(0x7D, Instruction.Jge, OperandFormat.Jb), // JNL
+            new InstructionRepresentation(0x7C, Instruction.Jl, OperandFormat.Jb), // JNGE
+            new InstructionRepresentation(0x7E, Instruction.Jle, OperandFormat.Jb), // JNG
+            new InstructionRepresentation(0x75, Instruction.Jne, OperandFormat.Jb), // JNZ
+            new InstructionRepresentation(0x71, Instruction.Jno, OperandFormat.Jb),
+            new InstructionRepresentation(0x79, Instruction.Jns, OperandFormat.Jb),
+            new InstructionRepresentation(0x70, Instruction.Jo, OperandFormat.Jb),
+            new InstructionRepresentation(0x7A, Instruction.Jpe, OperandFormat.Jb), // JP
+            new InstructionRepresentation(0x7B, Instruction.Jpo, OperandFormat.Jb), // JNP
+            new InstructionRepresentation(0x78, Instruction.Js, OperandFormat.Jb),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x87 }, Instruction.Ja, OperandFormat.Jw), // JNBE
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x87 }, Instruction.Ja, OperandFormat.Jd), // JNBE
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x83 }, Instruction.Jae, OperandFormat.Jw), // JNB, JNC
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x83 }, Instruction.Jae, OperandFormat.Jd), // JNB, JNC
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x82 }, Instruction.Jb, OperandFormat.Jw), // JC, JNAE
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x82 }, Instruction.Jb, OperandFormat.Jd), // JC, JNAE
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x86 }, Instruction.Jbe, OperandFormat.Jw), // JNA
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x86 }, Instruction.Jbe, OperandFormat.Jd), // JNA
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x84 }, Instruction.Je, OperandFormat.Jw), // JZ
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x84 }, Instruction.Je, OperandFormat.Jd), // JZ
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8F }, Instruction.Jg, OperandFormat.Jw), // JNLE
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8F }, Instruction.Jg, OperandFormat.Jd), // JNLE
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8D }, Instruction.Jge, OperandFormat.Jw), // JNL
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8D }, Instruction.Jge, OperandFormat.Jd), // JNL
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8C }, Instruction.Jl, OperandFormat.Jw), // JNGE
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8C }, Instruction.Jl, OperandFormat.Jd), // JNGE
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8E }, Instruction.Jle, OperandFormat.Jw), // JNG
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8E }, Instruction.Jle, OperandFormat.Jd), // JNG
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x85 }, Instruction.Jne, OperandFormat.Jw), // JNZ
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x85 }, Instruction.Jne, OperandFormat.Jd), // JNZ
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x81 }, Instruction.Jno, OperandFormat.Jw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x81}, Instruction.Jno, OperandFormat.Jd),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x89 }, Instruction.Jns, OperandFormat.Jw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x89 }, Instruction.Jns, OperandFormat.Jd),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x80 }, Instruction.Jo, OperandFormat.Jw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x80 }, Instruction.Jo, OperandFormat.Jd),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8A }, Instruction.Jpe, OperandFormat.Jw), // Jp
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8A }, Instruction.Jpe, OperandFormat.Jd), // Jp
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x8B }, Instruction.Jpo, OperandFormat.Jw), // Jnp
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8B }, Instruction.Jpo, OperandFormat.Jd), // Jnp
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x88 }, Instruction.Js, OperandFormat.Jw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x88 }, Instruction.Js, OperandFormat.Jd),
         };
     }
 }

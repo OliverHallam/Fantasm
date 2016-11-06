@@ -20,8 +20,8 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_WithCorrectOperands_SuccessfullyDecodesInstruction(InstructionRepresentation opCode)
         {
             var modrm = GetModrm(opCode);
-            var bytes = GetBytes(opCode, modrm);
             var mode = GetExecutionMode(opCode);
+            var bytes = GetBytes(mode, opCode, modrm);
             var reader = new InstructionReader(
                 new MemoryStream(bytes),
                 mode,
@@ -94,7 +94,7 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Mb:
                     Assert.AreEqual(OperandType.BytePointer, operand.Type);
-                    Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.Edi, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Mw:
@@ -109,12 +109,19 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Mq:
                     Assert.AreEqual(OperandType.QwordPointer, operand.Type);
-                    Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
+                    // if the instruction is valid in 32 bit we use the 32 bit register size.
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(valid32 ? Register.Edi : Register.Rdi, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Mdq:
                     Assert.AreEqual(OperandType.DqwordPointer, operand.Type);
                     Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Jb:
+                    Assert.AreEqual(OperandType.RelativeAddress, operand.Type);
+                    Assert.AreEqual(0x11, operand.GetDisplacement());
                     break;
 
                 case OperandFormat.Jw:
@@ -201,12 +208,12 @@ namespace Fantasm.Disassembler.Tests
         {
             var byteList = new List<byte> { 0xF0 };
             // use a memory address to smoke out false negatives
-            byteList.AddRange(GetBytes(opCode, Combine(GetOpcodeModrm(opCode), 3)));
-            var bytes = byteList.ToArray();
-            
             var mode = GetExecutionMode(opCode);
-            var reader = new InstructionReader(new MemoryStream(bytes), mode);
+            byteList.AddRange(GetBytes(mode, opCode, Combine(GetOpcodeModrm(opCode), 3)));
+            var bytes = byteList.ToArray();
 
+            var reader = new InstructionReader(new MemoryStream(bytes), mode);
+            
             reader.Read();
         }
 
@@ -221,10 +228,10 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_ForLockPrefixWithNoMemoryAccess_ThrowsFormatException(InstructionRepresentation opCode)
         {
             var byteList = new List<byte> { 0xF0 };
-            byteList.AddRange(GetBytes(opCode, Combine(GetOpcodeModrm(opCode), 0xC0))); // EAX
+            var mode = GetExecutionMode(opCode);
+            byteList.AddRange(GetBytes(mode, opCode, Combine(GetOpcodeModrm(opCode), 0xC0))); // EAX
             var bytes = byteList.ToArray();
 
-            var mode = GetExecutionMode(opCode);
             var reader = new InstructionReader(new MemoryStream(bytes), mode, opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
@@ -235,10 +242,10 @@ namespace Fantasm.Disassembler.Tests
         public void InstructionReader_ForLockPrefixWithMemoryAccess_DoesNotThrow(InstructionRepresentation opCode)
         {
             var byteList = new List<byte> { 0xF0 };
-            byteList.AddRange(GetBytes(opCode, GetOpcodeModrm(opCode) ?? 0)); // [EAX]
+            var mode = GetExecutionMode(opCode);
+            byteList.AddRange(GetBytes(mode, opCode, GetOpcodeModrm(opCode) ?? 0)); // [EAX]
             var bytes = byteList.ToArray();
 
-            var mode = GetExecutionMode(opCode);
             var reader = new InstructionReader(new MemoryStream(bytes), mode, opCode.OperandSize == OperandSize.Size32);
 
             reader.Read();
@@ -262,9 +269,9 @@ namespace Fantasm.Disassembler.Tests
         [ExpectedException(typeof(FormatException))]
         public void InstructionReader_For64BitMode_ThrowsFormatException(InstructionRepresentation opCode)
         {
-            var bytes = GetBytes(opCode, GetModrm(opCode));
+            var bytes = GetBytes(ExecutionMode.Long64Bit, opCode, GetModrm(opCode));
             var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
-
+            
             reader.Read();
         }
 
@@ -281,7 +288,7 @@ namespace Fantasm.Disassembler.Tests
         [ExpectedException(typeof(FormatException))]
         public void InstructionReader_ForRegister_ThrowsFormatException(InstructionRepresentation opCode)
         {
-            var bytes = GetBytes(opCode, Combine(GetOpcodeModrm(opCode), 0xC0)); // EAX
+            var bytes = GetBytes(ExecutionMode.Long64Bit, opCode, Combine(GetOpcodeModrm(opCode), 0xC0)); // EAX
             var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
 
             reader.Read();
@@ -313,13 +320,19 @@ namespace Fantasm.Disassembler.Tests
             Assert.AreEqual(OperandType.None, reader.Operand2.Type);
         }
 
-        private static byte[] GetBytes(InstructionRepresentation opCode, byte? modrm)
+        private static byte[] GetBytes(ExecutionMode mode, InstructionRepresentation opCode, byte? modrm)
         {
             var bytes = new List<byte>();
 
             if ((opCode.Prefixes & InstructionPrefixes.RepNZ) != 0)
             {
                 bytes.Add(0xF2);
+            }
+
+            if (mode == ExecutionMode.Long64Bit && opCode.OperandSize == OperandSize.Size32
+                && (opCode.Compatibility & Compatibility.Compatibility32) != Compatibility.NotEncodable32)
+            {
+                bytes.Add(0x67);
             }
 
             if (opCode.RexPrefix != 0)
@@ -416,6 +429,10 @@ namespace Fantasm.Disassembler.Tests
                     bytes.Add(0x33);
                     bytes.Add(0x33);
                     bytes.Add(0x33);
+                    break;
+
+                case OperandFormat.Jb:
+                    bytes.Add(0x11);
                     break;
 
                 case OperandFormat.Jw:

@@ -163,7 +163,6 @@
             new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0x9A, Instruction.Call, OperandFormat.Awd),
             new InstructionRepresentation(OperandSize.Size16, 0xFF, 3, Instruction.Call, OperandFormat.Md),
             new InstructionRepresentation(Compatibility.NotEncodable64, OperandSize.Size32, 0xFF, 3, Instruction.Call, OperandFormat.Mf),
-            new InstructionRepresentation(Compatibility.NotEncodable32, 0xFF, 3, Instruction.Call, OperandFormat.Mt),
             new InstructionRepresentation(RexPrefix.W, 0xFF, 3, Instruction.Call, OperandFormat.Mt),
 
             new InstructionRepresentation(OperandSize.Size16, 0x98, Instruction.Cbw),
@@ -476,6 +475,18 @@
             new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x8B }, Instruction.Jpo, OperandFormat.Jd), // Jnp
             new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, new byte[] { 0x0F, 0x88 }, Instruction.Js, OperandFormat.Jw),
             new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x88 }, Instruction.Js, OperandFormat.Jd),
+
+            new InstructionRepresentation(0xEB, Instruction.Jmp, OperandFormat.Jb),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, 0xE9, Instruction.Jmp, OperandFormat.Jw),
+            new InstructionRepresentation(OperandSize.Size32, 0xE9, Instruction.Jmp, OperandFormat.Jd),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size16, 0xFF, 4, Instruction.Jmp, OperandFormat.Ew),
+            new InstructionRepresentation(Compatibility.NotSupported64, OperandSize.Size32, 0xFF, 4, Instruction.Jmp, OperandFormat.Ed),
+            new InstructionRepresentation((RexPrefix)0, 0xFF, 4, Instruction.Jmp, OperandFormat.Eq),
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size16, 0xEA, Instruction.Jmp, OperandFormat.Aww),
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0xEA, Instruction.Jmp, OperandFormat.Awd),
+            new InstructionRepresentation(OperandSize.Size16, 0xFF, 5, Instruction.Jmp, OperandFormat.Md),
+            new InstructionRepresentation(OperandSize.Size32, 0xFF, 5, Instruction.Jmp, OperandFormat.Mf),
+            new InstructionRepresentation(RexPrefix.W, 0xFF, 5, Instruction.Jmp, OperandFormat.Mt),
         };
     }
 }

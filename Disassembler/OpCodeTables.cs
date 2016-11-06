@@ -348,9 +348,9 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Call, OpCodeFlags.Operand1RelativeAddress),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Jmp, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddress),
+            new OpCodeProperties(Instruction.Jmp, OpCodeFlags.CompatibilityMode | OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1FarPointer),
+            new OpCodeProperties(Instruction.Jmp, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RelativeAddressByte),
             new OpCodeProperties(Instruction.In, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Dx),
             new OpCodeProperties(Instruction.In, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Dx),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -690,15 +690,15 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RM),
-            new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.OperandSizeFar | OpCodeFlags.Operand1M),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFar | OpCodeFlags.Operand1M),
+            new OpCodeProperties(Instruction.Jmp, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RM),
+            new OpCodeProperties(Instruction.Jmp, OpCodeFlags.OperandSizeFar | OpCodeFlags.Operand1M),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None)
         };
 
         public static OpCodeProperties[] Group7OpCodes =
-{
+        {
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),

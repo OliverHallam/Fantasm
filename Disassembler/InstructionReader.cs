@@ -480,6 +480,16 @@ namespace Fantasm.Disassembler
                     }
                     goto default;
 
+                case OpCodeFlags.OperandSizeFar:
+                    return (Size)((int)this.GetOperandSize() + 2);
+
+                case OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.OperandSizeFar:
+                    if (this.executionMode == ExecutionModes.Long64Bit)
+                    {
+                        return Size.Tbyte;
+                    }
+                    goto case OpCodeFlags.OperandSizeFar;
+
                 default:
                     return this.GetOperandSize();
             }

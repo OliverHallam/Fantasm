@@ -225,7 +225,6 @@ namespace Fantasm.Disassembler
         /// </returns>
         public static Operand RelativeAddress(int offset)
         {
-            // TODO: do we need the operand size?
             return new Operand(OperandType.RelativeAddress, Register.None, Register.None, 0, offset);
         }
 
@@ -246,10 +245,14 @@ namespace Fantasm.Disassembler
                     return OperandType.WordPointer;
                 case 4:
                     return OperandType.DwordPointer;
+                case 6:
+                    return OperandType.FwordPointer;
                 case 8:
                     return OperandType.QwordPointer;
+                case 10:
+                    return OperandType.TbytePointer;
                 case 16:
-                    return OperandType.DqwordPointer;
+                    return OperandType.OwordPointer;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operandSize));
             }

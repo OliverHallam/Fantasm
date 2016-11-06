@@ -141,9 +141,5 @@ namespace Fantasm.Disassembler.Tests
 
             Assert.AreEqual(unchecked ((short)0x9ABC), reader.Operand1.GetSegmentSelector());
         }
-
-        // TODO: read clears all memory parameters
-
-        // TODO: Add method to get pointer format for memory arguments
     }
 }

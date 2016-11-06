@@ -6,7 +6,9 @@ namespace Fantasm.Disassembler
         Byte = 1,
         Word = 2,
         Dword = 4,
+        Fword = 6,
         Qword = 8,
+        Tbyte = 10,
         Dqword = 16
     }
 }

@@ -83,9 +83,19 @@
         Md,
 
         /// <summary>
+        /// The operand is a 48-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mf,
+
+        /// <summary>
         /// The operand is a 64-bit memory address specified by a ModRM byte
         /// </summary>
         Mq,
+
+        /// <summary>
+        /// The operand is a 80-bit memory address specified by a ModRM byte
+        /// </summary>
+        Mt,
 
         /// <summary>
         /// The operand is a 128-bit memory address specified by a ModRM byte

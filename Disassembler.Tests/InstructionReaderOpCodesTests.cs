@@ -22,6 +22,7 @@ namespace Fantasm.Disassembler.Tests
             var modrm = GetModrm(opCode);
             var mode = GetExecutionMode(opCode);
             var bytes = GetBytes(mode, opCode, modrm);
+
             var reader = new InstructionReader(
                 new MemoryStream(bytes),
                 mode,
@@ -104,6 +105,14 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Md:
                     Assert.AreEqual(OperandType.DwordPointer, operand.Type);
+                    // for 16-bit operands we parse in 16 bit mode.
+                    Assert.AreEqual(
+                        opCode.OperandSize == OperandSize.Size16 ? Register.Bx : Register.Edi,
+                        operand.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Mf:
+                    Assert.AreEqual(OperandType.FwordPointer, operand.Type);
                     Assert.AreEqual(Register.Edi, operand.GetBaseRegister());
                     break;
 
@@ -114,8 +123,13 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(valid32 ? Register.Edi : Register.Rdi, operand.GetBaseRegister());
                     break;
 
+                case OperandFormat.Mt:
+                    Assert.AreEqual(OperandType.TbytePointer, operand.Type);
+                    Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
+                    break;
+
                 case OperandFormat.Mdq:
-                    Assert.AreEqual(OperandType.DqwordPointer, operand.Type);
+                    Assert.AreEqual(OperandType.OwordPointer, operand.Type);
                     Assert.AreEqual(Register.Rdi, operand.GetBaseRegister());
                     break;
 
@@ -395,9 +409,11 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Mb:
                 case OperandFormat.Mw:
                 case OperandFormat.Md:
+                case OperandFormat.Mf:
                 case OperandFormat.Mq:
+                case OperandFormat.Mt:
                 case OperandFormat.Mdq:
-                    // [DI]/[EDI]/[RDI]
+                    // [BX]/[EDI]/[RDI]
                     return 0x07;
 
                 case OperandFormat.Gb:

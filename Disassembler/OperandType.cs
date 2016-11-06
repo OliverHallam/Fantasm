@@ -86,11 +86,19 @@
         QwordPointer,
 
         /// <summary>
+        /// The operand is a memory access referencing a 80-bit value.  In this case the memory address accessed is
+        /// <c>[Register + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
+        /// from the <see cref="Operand.GetBaseRegister"/>, <see cref="Operand.GetIndexRegister"/>,
+        /// <see cref="Operand.GetScale"/> and <see cref="Operand.GetDisplacement"/> methods.
+        /// </summary>
+        TbytePointer,
+
+        /// <summary>
         /// The operand is a memory access referencing a 128-bit value.  In this case the memory address accessed is
         /// <c>[Register + IndexRegister*Scale + Displacement]</c>.  The values in the formula can be retrieved
         /// from the <see cref="Operand.GetBaseRegister"/>, <see cref="Operand.GetIndexRegister"/>,
         /// <see cref="Operand.GetScale"/> and <see cref="Operand.GetDisplacement"/> methods.
         /// </summary>
-        DqwordPointer,
+        OwordPointer,
     }
 }

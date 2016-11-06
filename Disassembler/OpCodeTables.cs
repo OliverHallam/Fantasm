@@ -27,7 +27,8 @@ namespace Fantasm.Disassembler
         OperandSizeDefault = 0x0,
         OperandSizeByte = 0x1,
         OperandSizeWord = 0x2,
-        OperandSizeFixed64 = 0x4,
+        OperandSizeFixed64 = 0x3,
+        OperandSizeFar = 0x4,
         OperandSizeMask = 0x7,
 
         ModRM = 0x8,
@@ -263,7 +264,7 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // CBW, CWDE, CDQE
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // CWD, CDQ, CQO
-            new OpCodeProperties(Instruction.CallFar, OpCodeFlags.CompatibilityMode | OpCodeFlags.Operand1FarPointer),
+            new OpCodeProperties(Instruction.Call, OpCodeFlags.CompatibilityMode | OpCodeFlags.Operand1FarPointer),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -689,7 +690,7 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Inc, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Dec, OpCodeFlags.Operand1RM),
             new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1RM),
-            new OpCodeProperties(Instruction.CallFar, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.Operand1M), // TODO: should have an extra 16 bits in the ptr
+            new OpCodeProperties(Instruction.Call, OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.OperandSizeFar | OpCodeFlags.Operand1M),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),

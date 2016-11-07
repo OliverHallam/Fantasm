@@ -487,6 +487,61 @@
             new InstructionRepresentation(OperandSize.Size16, 0xFF, 5, Instruction.Jmp, OperandFormat.Md),
             new InstructionRepresentation(OperandSize.Size32, 0xFF, 5, Instruction.Jmp, OperandFormat.Mf),
             new InstructionRepresentation(RexPrefix.W, 0xFF, 5, Instruction.Jmp, OperandFormat.Mt),
+
+            new InstructionRepresentation(Compatibility.Invalid64, 0x9F, Instruction.Lahf),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0x02 }, Instruction.Lar, OperandFormat.Gw, OperandFormat.Ew),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x02 }, Instruction.Lar, OperandFormat.Gd, OperandFormat.Ew), // TODO: last param is r32/m16
+
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size16, 0xc5, Instruction.Lds, OperandFormat.Gw, OperandFormat.Md),
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0xc5, Instruction.Lds, OperandFormat.Gd, OperandFormat.Mf),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xB2 }, Instruction.Lss, OperandFormat.Gw, OperandFormat.Md),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xB2 }, Instruction.Lss, OperandFormat.Gd, OperandFormat.Mf),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xB2 }, Instruction.Lss, OperandFormat.Gq, OperandFormat.Mt),
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size16, 0xc4, Instruction.Les, OperandFormat.Gw, OperandFormat.Md),
+            new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0xc4, Instruction.Les, OperandFormat.Gd, OperandFormat.Mf),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xB4 }, Instruction.Lfs, OperandFormat.Gw, OperandFormat.Md),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xB4 }, Instruction.Lfs, OperandFormat.Gd, OperandFormat.Mf),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xB4 }, Instruction.Lfs, OperandFormat.Gq, OperandFormat.Mt),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xB5 }, Instruction.Lgs, OperandFormat.Gw, OperandFormat.Md),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xB5 }, Instruction.Lgs, OperandFormat.Gd, OperandFormat.Mf),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xB5 }, Instruction.Lgs, OperandFormat.Gq, OperandFormat.Mt),
+
+            new InstructionRepresentation(OperandSize.Size16, 0x8D, Instruction.Lea, OperandFormat.Gw, OperandFormat.M),
+            new InstructionRepresentation(OperandSize.Size32, 0x8D, Instruction.Lea, OperandFormat.Gd, OperandFormat.M),
+            new InstructionRepresentation(RexPrefix.W, 0x8D, Instruction.Lea, OperandFormat.Gq, OperandFormat.M),
+
+            // TODO: the 16-bit version should be prefixed with addr16 to distinguish.
+            new InstructionRepresentation(OperandSize.Size16, 0xC9, Instruction.Leave),
+            new InstructionRepresentation(Compatibility.NotEncodable64, OperandSize.Size32, 0xC9, Instruction.Leave),
+            new InstructionRepresentation(Compatibility.NotEncodable32, 0xC9, Instruction.Leave),
+
+            new InstructionRepresentation(new byte[] { 0x0F, 0xAE, 0xE8 }, Instruction.Lfence),
+
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0F, 0x01 }, 2, Instruction.Lgdt, OperandFormat.Mf),
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0F, 0x01 }, 3, Instruction.Lidt, OperandFormat.Mf),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0F, 0x01 }, 2, Instruction.Lgdt, OperandFormat.Mt),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0F, 0x01 }, 3, Instruction.Lidt, OperandFormat.Mt),
+
+            new InstructionRepresentation(new byte[] { 0x0F, 0x00 }, 2, Instruction.Lldt, OperandFormat.Ew),
+
+            new InstructionRepresentation(new byte[] { 0x0F, 0x01 }, 6, Instruction.Lmsw, OperandFormat.Ew),
+
+            new InstructionRepresentation(0xAC, Instruction.Lodsb),
+            new InstructionRepresentation(OperandSize.Size16, 0xAD, Instruction.Lodsw),
+            new InstructionRepresentation(OperandSize.Size32, 0xAD, Instruction.Lodsd),
+            new InstructionRepresentation(RexPrefix.W, 0xAD, Instruction.Lodsq),
+
+            new InstructionRepresentation(0xE2, Instruction.Loop, OperandFormat.Jb),
+            new InstructionRepresentation(0xE1, Instruction.Loope, OperandFormat.Jb),
+            new InstructionRepresentation(0xE0, Instruction.Loopne, OperandFormat.Jb),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0x03 }, Instruction.Lsl, OperandFormat.Gw, OperandFormat.Ew),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x03 }, Instruction.Lsl, OperandFormat.Gd, OperandFormat.Ew), // TODO: last param is r32/m16
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0x03 }, Instruction.Lsl, OperandFormat.Gq, OperandFormat.Ew), // TODO: last param is r32/m16
+
+            new InstructionRepresentation(new byte[] { 0x0F, 0x00 }, 3, Instruction.Ltr, OperandFormat.Ew),
+
         };
     }
 }

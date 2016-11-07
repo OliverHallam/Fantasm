@@ -273,6 +273,13 @@ namespace Fantasm.Disassembler
                                 Instruction.Cmpsq);
                             break;
 
+                        case 0xAD:
+                            this.instruction = this.GetOperandSizeExtendedAlias(
+                                Instruction.Lodsw,
+                                Instruction.Lodsd,
+                                Instruction.Lodsq);
+                            break;
+
                         case 0xCF:
                             this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Iret,
@@ -326,7 +333,7 @@ namespace Fantasm.Disassembler
             Instruction dwordInstruction,
             Instruction qwordInstruction)
         {
-            switch (this.GetOperandSize())
+            switch (this.GetOperandSize(this.defaultOperandSize))
             {
                 case Size.Qword:
                     return qwordInstruction;
@@ -367,6 +374,11 @@ namespace Fantasm.Disassembler
             {
                 switch (opCodeByte)
                 {
+                    case 0x00:
+                        opCode = OpCodeTables.Group6OpCodes[ModRMBits.GetReg(modrm)];
+                        this.instruction = opCode.Instruction;
+                        break;
+
                     case 0x01:
                         opCode = OpCodeTables.Group7OpCodes[ModRMBits.GetReg(modrm)];
                         this.instruction = opCode.Instruction;
@@ -375,6 +387,16 @@ namespace Fantasm.Disassembler
                     case 0x38:
                         this.ReadThreeByteInstructionA();
                         return;
+
+                    case 0xAE:
+                        if (ModRMBits.GetMod(modrm) == 3)
+                        {
+                            if (ModRMBits.GetReg(modrm) == 5)
+                            {
+                                this.instruction = Instruction.Lfence;
+                            }
+                        }
+                        break;
 
                     case 0xBA:
                     {
@@ -430,7 +452,7 @@ namespace Fantasm.Disassembler
                     {
                         this.instruction = Instruction.Crc32;
                         var operandSize = (this.rex & RexPrefix.W) != 0 ? Size.Qword : Size.Dword;
-                        var rmSize = opCodeByte == 0xF0 ? Size.Byte : this.GetOperandSize();
+                        var rmSize = opCodeByte == 0xF0 ? Size.Byte : this.GetOperandSize(this.defaultOperandSize);
                         var modrm = new ModRMBits(this.rex, this.instructionByteStream.ReadByte());
                         this.operand1 = this.ModRMRegister(ref modrm, GetBaseRegister(operandSize));
                         this.operand2 = this.RegisterOrMemoryOperand(ref modrm, rmSize);
@@ -480,24 +502,40 @@ namespace Fantasm.Disassembler
                     }
                     goto default;
 
-                case OpCodeFlags.OperandSizeFar:
-                    return (Size)((int)this.GetOperandSize() + 2);
-
-                case OpCodeFlags.OperandSizeFixed64 | OpCodeFlags.OperandSizeFar:
-                    if (this.executionMode == ExecutionModes.Long64Bit)
-                    {
-                        return Size.Tbyte;
-                    }
-                    goto case OpCodeFlags.OperandSizeFar;
+                case OpCodeFlags.OperandSizeDefault64:
+                    return this.GetOperandSize(Size.Qword);
 
                 default:
-                    return this.GetOperandSize();
+                    return this.GetOperandSize(this.defaultOperandSize);
             }
         }
 
         private Operand ReadOperand(OperandEncoding encoding, OpCodeFlags flags, Size operandSize, byte opCode, byte modrm)
         {
-            switch (encoding)
+            switch (encoding & OperandEncoding.SizeMask)
+            {
+                case OperandEncoding.SizeByte:
+                    operandSize = Size.Byte;
+                    break;
+
+                case OperandEncoding.SizeWord:
+                    operandSize = Size.Word;
+                    break;
+
+                case OperandEncoding.SizeFar:
+                    operandSize += 2;
+                    break;
+
+                case OperandEncoding.SizeNone:
+                    operandSize = Size.None;
+                    break;
+
+                case OperandEncoding.SizePseudoDescriptor:
+                    operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Tbyte : Size.Fword;
+                    break;
+            }
+
+            switch (encoding & OperandEncoding.TypeMask)
             {
                 case OperandEncoding.None:
                     return default(Operand);
@@ -539,18 +577,15 @@ namespace Fantasm.Disassembler
                 }
 
                 case OperandEncoding.Immediate:
-                    return this.ReadImmediateOperand(operandSize);
-
-                case OperandEncoding.ImmediateByte:
-                    var b = this.instructionByteStream.ReadByte();
-                    if ((flags & OpCodeFlags.Ignore10) != 0 && b == 10)
+                    var operand = this.ReadImmediateOperand(operandSize);
+                    if ((flags & OpCodeFlags.Ignore10) != 0 && operand.GetImmediateValue() == 10)
                     {
                         // Special case for AAM and AAD - the base is omitted if it is 10.
                         return default(Operand);
                     }
                     else
                     {
-                        return Operand.ImmediateByte(b);
+                        return operand;
                     }
 
 
@@ -560,12 +595,6 @@ namespace Fantasm.Disassembler
                 case OperandEncoding.RelativeAddress:
                 {
                     var offset = this.ReadImmediateValue(operandSize);
-                    return Operand.RelativeAddress(offset);
-                }
-
-                case OperandEncoding.RelativeAddressByte:
-                {
-                    var offset = this.instructionByteStream.ReadByte();
                     return Operand.RelativeAddress(offset);
                 }
 
@@ -681,7 +710,7 @@ namespace Fantasm.Disassembler
             return (this.defaultAddressSize == Size.Dword) ^ addressSizeOverride ? Size.Dword : Size.Word;
         }
 
-        private Size GetOperandSize()
+        private Size GetOperandSize(Size defaultOperandSize)
         {
             if ((this.rex & RexPrefix.W) != 0)
             {
@@ -689,9 +718,9 @@ namespace Fantasm.Disassembler
             }
 
             var operandSizeOverride = ((this.prefixes & InstructionPrefixes.OperandSizeOverride) != 0);
-            return this.defaultOperandSize == Size.Word
+            return defaultOperandSize == Size.Word
                 ? (operandSizeOverride ? Size.Dword : Size.Word)
-                : (operandSizeOverride ? Size.Word : this.defaultOperandSize);
+                : (operandSizeOverride ? Size.Word : defaultOperandSize);
         }
 
         private static Register GetBaseRegister(Size operandSize)

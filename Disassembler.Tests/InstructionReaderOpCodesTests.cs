@@ -93,6 +93,16 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(Register.Rsp, operand.GetBaseRegister());
                     break;
 
+                case OperandFormat.M:
+                {
+                    Assert.AreEqual(OperandType.Address, operand.Type);
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(
+                        valid32 ? (opCode.OperandSize == OperandSize.Size16 ? Register.Bx : Register.Edi) : Register.Rdi,
+                        operand.GetBaseRegister());
+                    break;
+                }
+
                 case OperandFormat.Mb:
                     Assert.AreEqual(OperandType.BytePointer, operand.Type);
                     Assert.AreEqual(Register.Edi, operand.GetBaseRegister());
@@ -117,11 +127,13 @@ namespace Fantasm.Disassembler.Tests
                     break;
 
                 case OperandFormat.Mq:
+                {
                     Assert.AreEqual(OperandType.QwordPointer, operand.Type);
                     // if the instruction is valid in 32 bit we use the 32 bit register size.
                     var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
                     Assert.AreEqual(valid32 ? Register.Edi : Register.Rdi, operand.GetBaseRegister());
                     break;
+                }
 
                 case OperandFormat.Mt:
                     Assert.AreEqual(OperandType.TbytePointer, operand.Type);
@@ -406,6 +418,7 @@ namespace Fantasm.Disassembler.Tests
                     // AH/SP/ESP/RSP
                     return 0xC4;
 
+                case OperandFormat.M:
                 case OperandFormat.Mb:
                 case OperandFormat.Mw:
                 case OperandFormat.Md:

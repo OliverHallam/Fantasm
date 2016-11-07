@@ -48,52 +48,57 @@
         Awd,
 
         /// <summary>
-        /// The operand is a memory address or 8-bit register specified by a ModRM byte,
+        /// The operand is a memory address of an 8-bit value or an 8-bit register specified by a ModRM byte,
         /// </summary>
         Eb,
 
         /// <summary>
-        /// The operand is a memory address or 16-bit register specified by a ModRM byte,
+        /// The operand is a memory address of a 16-bit value or a 16-bit register specified by a ModRM byte,
         /// </summary>
         Ew,
 
         /// <summary>
-        /// The operand is a memory address or 32-bit register specified by a ModRM byte,
+        /// The operand is a memory address of a 32-bit value or a 32-bit register specified by a ModRM byte,
         /// </summary>
         Ed,
 
         /// <summary>
-        /// The operand is a memory address or 64-bit register specified by a ModRM byte,
+        /// The operand is a memory address of a 64-bit value or a 64-bit register specified by a ModRM byte,
         /// </summary>
         Eq,
 
         /// <summary>
-        /// The operand is an 8-bit memory address specified by a ModRM byte
+        /// The operand is a memory address specified by a ModRM byte
+        /// </summary>
+        M,
+
+        /// <summary>
+        /// The operand is a memory address for an 8-bit value specified by a ModRM byte
         /// </summary>
         Mb,
 
         /// <summary>
-        /// The operand is a 16-bit memory address specified by a ModRM byte
+        /// The operand is a memory address for a 16-bit value specified by a ModRM byte
         /// </summary>
         Mw,
 
         /// <summary>
-        /// The operand is a 32-bit memory address specified by a ModRM byte
+        /// The operand is a memory address for a 32-bit value specified by a ModRM byte
         /// </summary>
         Md,
 
         /// <summary>
-        /// The operand is a 48-bit memory address specified by a ModRM byte
+        /// The operand is a memory address for a 48-bit value specified by a ModRM byte
         /// </summary>
         Mf,
 
         /// <summary>
-        /// The operand is a 64-bit memory address specified by a ModRM byte
+        /// The operand is a memory address for a 64-bit value specified by a ModRM byte
         /// </summary>
         Mq,
 
         /// <summary>
-        /// The operand is a 80-bit memory address specified by a ModRM byte
+        /// The operand is a memory address for an 80-bit value specified by a ModRM byte
         /// </summary>
         Mt,
 

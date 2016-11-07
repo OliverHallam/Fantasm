@@ -239,7 +239,9 @@ namespace Fantasm.Disassembler
         {
             switch (operandSize)
             {
-                case 1:
+                case 0:
+                    return OperandType.Address;
+  ;              case 1:
                     return OperandType.BytePointer;
                 case 2:
                     return OperandType.WordPointer;

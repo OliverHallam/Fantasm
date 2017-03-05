@@ -26,7 +26,7 @@ namespace Fantasm.Disassembler.Tests
             var reader = new InstructionReader(
                 new MemoryStream(bytes),
                 mode,
-                opCode.OperandSize == OperandSize.Size32);
+                true);
 
             reader.Read();
 
@@ -68,6 +68,11 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(0x33333333, operand.GetImmediateValue());
                     break;
 
+                case OperandFormat.Iq:
+                    Assert.AreEqual(OperandType.ImmediateQword, operand.Type);
+                    Assert.AreEqual(0x4444444444444444, operand.GetImmediateValue());
+                    break;
+
                 case OperandFormat.Register:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(opCode.Register, operand.GetRegister());
@@ -97,9 +102,7 @@ namespace Fantasm.Disassembler.Tests
                 {
                     Assert.AreEqual(OperandType.Address, operand.Type);
                     var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
-                    Assert.AreEqual(
-                        valid32 ? (opCode.OperandSize == OperandSize.Size16 ? Register.Bx : Register.Edi) : Register.Rdi,
-                        operand.GetBaseRegister());
+                    Assert.AreEqual(valid32 ? Register.Edi : Register.Rdi, operand.GetBaseRegister());
                     break;
                 }
 
@@ -110,15 +113,12 @@ namespace Fantasm.Disassembler.Tests
 
                 case OperandFormat.Mw:
                     Assert.AreEqual(OperandType.WordPointer, operand.Type);
-                    Assert.AreEqual(Register.Bx, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.Edi, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Md:
                     Assert.AreEqual(OperandType.DwordPointer, operand.Type);
-                    // for 16-bit operands we parse in 16 bit mode.
-                    Assert.AreEqual(
-                        opCode.OperandSize == OperandSize.Size16 ? Register.Bx : Register.Edi,
-                        operand.GetBaseRegister());
+                    Assert.AreEqual(Register.Edi, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Mf:
@@ -170,6 +170,55 @@ namespace Fantasm.Disassembler.Tests
                     Assert.AreEqual(OperandType.FarPointer, operand.Type);
                     Assert.AreEqual(0x1111, operand.GetSegmentSelector());
                     Assert.AreEqual(0x22222222, operand.GetDisplacement());
+                    break;
+
+                case OperandFormat.Ob:
+                {
+                    Assert.AreEqual(OperandType.BytePointer, operand.Type);
+                    Assert.AreEqual(Register.None, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.None, operand.GetIndexRegister());
+                    Assert.AreEqual(1, operand.GetScale());
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(valid32 ? 0x11111111 : 0x1111111111111111, operand.GetDisplacement());
+                    break;
+                }
+
+                case OperandFormat.Ow:
+                {
+                    Assert.AreEqual(OperandType.WordPointer, operand.Type);
+                    Assert.AreEqual(Register.None, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.None, operand.GetIndexRegister());
+                    Assert.AreEqual(1, operand.GetScale());
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(valid32 ? 0x11111111 : 0x1111111111111111, operand.GetDisplacement());
+                    break;
+                }
+
+                case OperandFormat.Od:
+                {
+                    Assert.AreEqual(OperandType.DwordPointer, operand.Type);
+                    Assert.AreEqual(Register.None, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.None, operand.GetIndexRegister());
+                    Assert.AreEqual(1, operand.GetScale());
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(valid32 ? 0x11111111 : 0x1111111111111111, operand.GetDisplacement());
+                    break;
+                }
+
+                case OperandFormat.Oq:
+                {
+                    Assert.AreEqual(OperandType.QwordPointer, operand.Type);
+                    Assert.AreEqual(Register.None, operand.GetBaseRegister());
+                    Assert.AreEqual(Register.None, operand.GetIndexRegister());
+                    Assert.AreEqual(1, operand.GetScale());
+                    var valid32 = (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid;
+                    Assert.AreEqual(valid32 ? 0x11111111 : 0x1111111111111111, operand.GetDisplacement());
+                    break;
+                }
+
+                case OperandFormat.Sw:
+                    Assert.AreEqual(OperandType.Register, operand.Type);
+                    Assert.AreEqual(Register.Cs, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.AL:
@@ -272,7 +321,7 @@ namespace Fantasm.Disassembler.Tests
             byteList.AddRange(GetBytes(mode, opCode, GetOpcodeModrm(opCode) ?? 0)); // [EAX]
             var bytes = byteList.ToArray();
 
-            var reader = new InstructionReader(new MemoryStream(bytes), mode, opCode.OperandSize == OperandSize.Size32);
+            var reader = new InstructionReader(new MemoryStream(bytes), mode, true);
 
             reader.Read();
         }
@@ -280,7 +329,7 @@ namespace Fantasm.Disassembler.Tests
         private static ExecutionMode GetExecutionMode(InstructionRepresentation opCode)
         {
             return (opCode.Compatibility & Compatibility.Compatibility64) != Compatibility.Valid
-                || opCode.OperandSize == OperandSize.Size16
+                || (opCode.OperandSize == OperandSize.Size16 && (opCode.Compatibility & Compatibility.Compatibility32) == Compatibility.Valid)
                 ? ExecutionMode.CompatibilityMode
                 : ExecutionMode.Long64Bit;
         }
@@ -355,9 +404,21 @@ namespace Fantasm.Disassembler.Tests
                 bytes.Add(0xF2);
             }
 
+            if (opCode.OperandSize == OperandSize.Size16)
+            {
+                bytes.Add(0x66);
+            }
+
             if (mode == ExecutionMode.Long64Bit && opCode.OperandSize == OperandSize.Size32
                 && (opCode.Compatibility & Compatibility.Compatibility32) != Compatibility.NotEncodable32)
             {
+                bytes.Add(0x67);
+            }
+
+            if ((opCode.Compatibility & Compatibility.Compatibility64) == Compatibility.NotEncodable64
+                && opCode.OperandSize == OperandSize.Size16)
+            {
+                // also set the address size for good measure!
                 bytes.Add(0x67);
             }
 
@@ -375,7 +436,7 @@ namespace Fantasm.Disassembler.Tests
 
             foreach (var operand in opCode.Operands)
             {
-                WriteImmediateBytes(operand, bytes);
+                WriteImmediateBytes(opCode.Compatibility, operand, bytes);
             }
 
             return bytes.ToArray();
@@ -435,12 +496,16 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Gq:
                     // CH/BPL/BP/EBP/RBP
                     return 0x28;
+
+                case OperandFormat.Sw:
+                    // CS
+                    return 0x08;
             }
 
             return null;
         }
 
-        private static void WriteImmediateBytes(OperandFormat operand, List<byte> bytes)
+        private static void WriteImmediateBytes(Compatibility compatibility, OperandFormat operand, List<byte> bytes)
         {
             switch (operand)
             {
@@ -458,6 +523,17 @@ namespace Fantasm.Disassembler.Tests
                     bytes.Add(0x33);
                     bytes.Add(0x33);
                     bytes.Add(0x33);
+                    break;
+
+                case OperandFormat.Iq:
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
+                    bytes.Add(0x44);
                     break;
 
                 case OperandFormat.Jb:
@@ -490,6 +566,23 @@ namespace Fantasm.Disassembler.Tests
                     bytes.Add(0x22);
                     bytes.Add(0x22);
                     bytes.Add(0x22);
+                    break;
+
+                case OperandFormat.Ob:
+                case OperandFormat.Ow:
+                case OperandFormat.Od:
+                case OperandFormat.Oq:
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    bytes.Add(0x11);
+                    if ((compatibility & Compatibility.Compatibility32) != Compatibility.Valid)
+                    {
+                        bytes.Add(0x11);
+                        bytes.Add(0x11);
+                        bytes.Add(0x11);
+                        bytes.Add(0x11);
+                    }
                     break;
             }
         }

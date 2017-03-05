@@ -15,7 +15,7 @@ namespace Fantasm.Disassembler
         private readonly Register baseRegister;
         private readonly Register indexRegister;
         private readonly int scale;
-        private readonly int displacement;
+        private readonly long displacement;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Operand"/> struct.
@@ -25,7 +25,7 @@ namespace Fantasm.Disassembler
         /// <param name="indexRegister">The index register for an address calculation.</param>
         /// <param name="scale">The scale value in an address calculation, or the code segment in a far pointer.</param>
         /// <param name="displacement">The immediate value, a pointer, or the displacement in an address calculation.</param>
-        private Operand(OperandType type, Register baseRegister, Register indexRegister, int scale, int displacement)
+        private Operand(OperandType type, Register baseRegister, Register indexRegister, int scale, long displacement)
         {
             this.type = type;
             this.baseRegister = baseRegister;
@@ -61,7 +61,7 @@ namespace Fantasm.Disassembler
         ///     This is the value of any operand with type <see cref="OperandType.ImmediateByte" />,
         ///     <see cref="OperandType.ImmediateWord" /> or <see cref="OperandType.ImmediateDword" />
         /// </remarks>
-        public int GetImmediateValue()
+        public long GetImmediateValue()
         {
             return this.displacement;
         }
@@ -129,7 +129,7 @@ namespace Fantasm.Disassembler
         /// <remarks>
         /// This is <c>Displacement</c> in the formula <c>[baseOperandSizeRegister + indexRegister*Scale + Displacement]</c>.
         /// </remarks>
-        public int GetDisplacement()
+        public long GetDisplacement()
         {
             return this.displacement;
         }
@@ -142,7 +142,7 @@ namespace Fantasm.Disassembler
         /// <returns>
         /// A far pointer operand.
         /// </returns>
-        public static Operand FarPointer(short segment, int address)
+        public static Operand FarPointer(short segment, long address)
         {
             return new Operand(OperandType.FarPointer, Register.None, Register.None, segment, address);
         }
@@ -164,7 +164,7 @@ namespace Fantasm.Disassembler
         /// </summary>
         /// <param name="value">The immediate value.</param>
         /// <returns>
-        /// An immediate byte operand.
+        /// An immediate word operand.
         /// </returns>
         public static Operand ImmediateWord(short value)
         {
@@ -176,11 +176,23 @@ namespace Fantasm.Disassembler
         /// </summary>
         /// <param name="value">The immediate value.</param>
         /// <returns>
-        /// An immediate byte operand.
+        /// An immediate dword operand.
         /// </returns>
         public static Operand ImmediateDword(int value)
         {
             return new Operand(OperandType.ImmediateDword, Register.None, Register.None, 0, value);
+        }
+
+        /// <summary>
+        /// Creates an immediate qword operand.
+        /// </summary>
+        /// <param name="value">The immediate value.</param>
+        /// <returns>
+        /// An immediate qword operand.
+        /// </returns>
+        public static Operand ImmediateQword(long value)
+        {
+            return new Operand(OperandType.ImmediateQword, Register.None, Register.None, 0, value);
         }
 
         /// <summary>
@@ -211,7 +223,7 @@ namespace Fantasm.Disassembler
             Register baseRegister,
             int scale,
             Register indexRegister,
-            int displacement)
+            long displacement)
         {
             return new Operand(GetPointerOperandType(size), baseRegister, indexRegister, scale, displacement);
         }
@@ -223,7 +235,7 @@ namespace Fantasm.Disassembler
         /// <returns>
         /// A new relative address operand.
         /// </returns>
-        public static Operand RelativeAddress(int offset)
+        public static Operand RelativeAddress(long offset)
         {
             return new Operand(OperandType.RelativeAddress, Register.None, Register.None, 0, offset);
         }

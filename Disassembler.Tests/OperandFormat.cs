@@ -23,6 +23,11 @@
         Id,
 
         /// <summary>
+        /// The operand is a 32-bit immediate value.
+        /// </summary>
+        Iq,
+
+        /// <summary>
         /// The operand is an 8-bit relative address.
         /// </summary>
         Jb,
@@ -106,6 +111,31 @@
         /// The operand is a 128-bit memory address specified by a ModRM byte
         /// </summary>
         Mdq,
+
+        /// <summary>
+        /// The operand is a offset to an 8-bit value in memory.
+        /// </summary>
+        Ob,
+
+        /// <summary>
+        /// The operand is a offset to a 16-bit value in memory.
+        /// </summary>
+        Ow,
+
+        /// <summary>
+        /// The operand is a offset to a 32-bit value in memory.
+        /// </summary>
+        Od,
+
+        /// <summary>
+        /// The operand is a offset to a 64-bit value in memory.
+        /// </summary>
+        Oq,
+
+        /// <summary>
+        /// The operand is the segment register
+        /// </summary>
+        Sw,
 
         /// <summary>
         /// The operand is a register encoded in the instruction.

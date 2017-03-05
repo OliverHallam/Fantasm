@@ -280,6 +280,11 @@ namespace Fantasm.Disassembler
                                 Instruction.Lodsq);
                             break;
 
+                        case 0xC6:
+                        case 0xC7:
+                            this.instruction = OpCodeTables.Group11Instructions[ModRMBits.GetReg(modrm)];
+                            break;
+
                         case 0xCF:
                             this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Iret,
@@ -533,6 +538,10 @@ namespace Fantasm.Disassembler
                 case OperandEncoding.SizePseudoDescriptor:
                     operandSize = this.executionMode == ExecutionModes.Long64Bit ? Size.Tbyte : Size.Fword;
                     break;
+
+                case OperandEncoding.SizeTruncate32:
+                    operandSize = operandSize >= Size.Qword ? Size.Dword : operandSize;
+                    break;
             }
 
             switch (encoding & OperandEncoding.TypeMask)
@@ -567,6 +576,12 @@ namespace Fantasm.Disassembler
                     return this.ModRMRegister(ref bits, GetBaseRegister(operandSize));
                 }
 
+                case OperandEncoding.Sreg:
+                {
+                    var bits = new ModRMBits(this.rex, modrm);
+                    return Operand.DirectRegister(ModRMDecoder.GetSegmentRegister(ref bits));
+                }
+
                 case OperandEncoding.OpCodeReg:
                 {
                     var register = RegDecoder.GetRegister(
@@ -588,6 +603,8 @@ namespace Fantasm.Disassembler
                         return operand;
                     }
 
+                case OperandEncoding.Offset:
+                    return this.ReadOffsetOperand(operandSize);
 
                 case OperandEncoding.FarPointer:
                     return this.ReadFarPointerOperand(operandSize);
@@ -667,9 +684,12 @@ namespace Fantasm.Disassembler
                     return this.ReadImmediateByteOperand();
                 case Size.Word:
                     return this.ReadImmediateWordOperand();
-                default:
-                    // even when our operands are QWords we still use dword immediate values.
+                case Size.Dword:
                     return this.ReadImmediateDwordOperand();
+                case Size.Qword:
+                    return this.ReadImmediateQwordOperand();
+                default:
+                    throw new InvalidOperationException();
             }
         }
 
@@ -689,6 +709,18 @@ namespace Fantasm.Disassembler
         {
             var value = this.instructionByteStream.ReadDword();
             return Operand.ImmediateDword(value);
+        }
+
+        private Operand ReadImmediateQwordOperand()
+        {
+            var value = this.instructionByteStream.ReadQword();
+            return Operand.ImmediateQword(value);
+        }
+
+        private Operand ReadOffsetOperand(Size operandSize)
+        {
+            var displacement = this.ReadImmediateValue(this.GetAddressSize());
+            return Operand.MemoryAccess((int)operandSize, Register.None, 1, Register.None, displacement);
         }
 
         private Operand ReadFarPointerOperand(Size size)
@@ -750,7 +782,7 @@ namespace Fantasm.Disassembler
             return reg;
         }
 
-        private int ReadImmediateValue(Size size)
+        private long ReadImmediateValue(Size size)
         {
             switch (size)
             {
@@ -764,8 +796,10 @@ namespace Fantasm.Disassembler
                     return this.instructionByteStream.ReadWord();
 
                 case Size.Dword:
-                case Size.Qword: // "z" semantics
                     return this.instructionByteStream.ReadDword();
+
+                case Size.Qword:
+                    return this.instructionByteStream.ReadQword();
 
                 default:
                     throw new InvalidOperationException();

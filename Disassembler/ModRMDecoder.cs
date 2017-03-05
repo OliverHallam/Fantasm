@@ -68,6 +68,11 @@ namespace Fantasm.Disassembler
             return RegDecoder.GetRegister(rex != 0, modrmBits.RM, operandSizeBaseRegister);
         }
 
+        public static Register GetSegmentRegister(ref ModRMBits modrmBits)
+        {
+            return RegDecoder.GetSegmentRegister(modrmBits.Reg);
+        }
+
         public static bool UseSib(Size addressSize, ref ModRMBits modrmBits)
         {
             return addressSize != Size.Word && (modrmBits.RM & 7) == 4;

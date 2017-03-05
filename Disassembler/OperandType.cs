@@ -25,6 +25,11 @@
         /// </summary>
         ImmediateDword,
 
+        /// <summary>
+        /// The operand is a 64-bit immediate value.
+        /// </summary>
+        ImmediateQword,
+
 
         /// <summary>
         /// The operand is an address, relative to the start of the next instruction.  The value of operand can be

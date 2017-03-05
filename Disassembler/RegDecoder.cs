@@ -1,3 +1,5 @@
+using System;
+
 namespace Fantasm.Disassembler
 {
     /// <summary>
@@ -66,6 +68,28 @@ namespace Fantasm.Disassembler
         {
             // [4,5,6,7] => [7,6,5,4] (SP, BP, SI, DI)
             return 11 - reg;
+        }
+
+        public static Register GetSegmentRegister(int reg)
+        {
+            switch (reg)
+            {
+                case 0:
+                    return Register.Es;
+                case 1:
+                    return Register.Cs;
+                case 2:
+                    return Register.Ss;
+                case 3:
+                    return Register.Ds;
+                case 4:
+                    return Register.Fs;
+                case 5:
+                    return Register.Gs;
+                default:
+                    // TODO: should also throw for 4 and 5 case with 2 bit encoding.
+                    throw new FormatException();
+            }
         }
 
         #endregion

@@ -7,7 +7,7 @@ namespace Fantasm.Disassembler
     {
         #region Fields
 
-        private readonly byte[] buffer = new byte[4];
+        private readonly byte[] buffer = new byte[8];
         private readonly Stream stream;
 
         #endregion
@@ -34,6 +34,17 @@ namespace Fantasm.Disassembler
             return (byte)nextByte;
         }
 
+        public short ReadWord()
+        {
+            var bytesRead = this.stream.Read(this.buffer, 0, 2);
+            if (bytesRead < 2)
+            {
+                throw InvalidInstructionBytes();
+            }
+
+            return BitConverter.ToInt16(this.buffer, 0);
+        }
+
         public int ReadDword()
         {
             var bytesRead = this.stream.Read(this.buffer, 0, 4);
@@ -45,15 +56,15 @@ namespace Fantasm.Disassembler
             return BitConverter.ToInt32(this.buffer, 0);
         }
 
-        public short ReadWord()
+        public long ReadQword()
         {
-            var bytesRead = this.stream.Read(this.buffer, 0, 2);
-            if (bytesRead < 2)
+            var bytesRead = this.stream.Read(this.buffer, 0, 8);
+            if (bytesRead < 8)
             {
                 throw InvalidInstructionBytes();
             }
 
-            return BitConverter.ToInt16(this.buffer, 0);
+            return BitConverter.ToInt64(this.buffer, 0);
         }
 
         public bool TryReadByte(out byte value)

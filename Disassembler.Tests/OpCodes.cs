@@ -1,9 +1,11 @@
-﻿namespace Fantasm.Disassembler.Tests
+﻿using System.Linq;
+
+namespace Fantasm.Disassembler.Tests
 {
+    // Each row here corresponds to a line in the Intel manual
     internal static class OpCodes
     {
-        // Each row here corresponds to a line in the Intel manual
-        public static InstructionRepresentation[] All =
+        public static InstructionRepresentation[] A =
         {
             new InstructionRepresentation(Compatibility.Invalid64, 0x37, Instruction.Aaa),
             new InstructionRepresentation(Compatibility.Invalid64, 0xD5, Instruction.Aad, OperandFormat.Ib),
@@ -79,8 +81,11 @@
             new InstructionRepresentation(OperandSize.Size32, 0x23, Instruction.And, OperandFormat.Gd, OperandFormat.Ed),
             new InstructionRepresentation(RexPrefix.W, 0x23, Instruction.And, OperandFormat.Gq, OperandFormat.Eq),
 
-            new InstructionRepresentation(Compatibility.NotEncodable64, 0x63, Instruction.Arpl, OperandFormat.Ew, OperandFormat.Gw),
+            new InstructionRepresentation(Compatibility.NotEncodable64, 0x63, Instruction.Arpl, OperandFormat.Ew, OperandFormat.Gw)
+        };
 
+        public static InstructionRepresentation[] B =
+        {
             new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size16, 0x62, Instruction.Bound, OperandFormat.Gw, OperandFormat.Ew),
             new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0x62, Instruction.Bound, OperandFormat.Gd, OperandFormat.Ed),
 
@@ -152,8 +157,11 @@
             new InstructionRepresentation(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xAB }, Instruction.Bts, OperandFormat.Eq, OperandFormat.Gq),
             new InstructionRepresentation(InstructionPrefixes.Lock, OperandSize.Size16, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Ew, OperandFormat.Ib),
             new InstructionRepresentation(InstructionPrefixes.Lock, OperandSize.Size32, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Ed, OperandFormat.Ib),
-            new InstructionRepresentation(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq, OperandFormat.Ib),
+            new InstructionRepresentation(InstructionPrefixes.Lock, RexPrefix.W, new byte[] { 0x0F, 0xBA }, 5, Instruction.Bts, OperandFormat.Eq, OperandFormat.Ib)
+        };
 
+        public static InstructionRepresentation[] C =
+        {
             new InstructionRepresentation(Compatibility.NotEncodable64, OperandSize.Size16, 0xE8, Instruction.Call, OperandFormat.Jw),
             new InstructionRepresentation(OperandSize.Size32, 0xE8, Instruction.Call, OperandFormat.Jd),
             new InstructionRepresentation(Compatibility.NotEncodable64, OperandSize.Size16, 0xFF, 2, Instruction.Call, OperandFormat.Ew),
@@ -318,8 +326,11 @@
 
             new InstructionRepresentation(OperandSize.Size16, 0x99, Instruction.Cwd),
             new InstructionRepresentation(OperandSize.Size32, 0x99, Instruction.Cdq),
-            new InstructionRepresentation(RexPrefix.W, 0x99, Instruction.Cqo),
+            new InstructionRepresentation(RexPrefix.W, 0x99, Instruction.Cqo)
+        };
 
+        public static InstructionRepresentation[] D =
+        {
             new InstructionRepresentation(Compatibility.Invalid64, 0x27, Instruction.Daa),
 
             new InstructionRepresentation(Compatibility.Invalid64, 0x2F, Instruction.Das),
@@ -351,14 +362,23 @@
             new InstructionRepresentation((RexPrefix)0, 0xF6, 6, Instruction.Div, OperandFormat.Eb),
             new InstructionRepresentation(OperandSize.Size16, 0xF7, 6, Instruction.Div, OperandFormat.Ew),
             new InstructionRepresentation(OperandSize.Size32, 0xF7, 6, Instruction.Div, OperandFormat.Ed),
-            new InstructionRepresentation(RexPrefix.W, 0xF7, 6, Instruction.Div, OperandFormat.Eq),
+            new InstructionRepresentation(RexPrefix.W, 0xF7, 6, Instruction.Div, OperandFormat.Eq)
+        };
 
+        public static InstructionRepresentation[] E =
+        {
             new InstructionRepresentation(new byte[] { 0x0f, 0x77 }, Instruction.Emms),
 
-            new InstructionRepresentation(0xC8, Instruction.Enter, OperandFormat.Iw, OperandFormat.Ib),
+            new InstructionRepresentation(0xC8, Instruction.Enter, OperandFormat.Iw, OperandFormat.Ib)
+        };
 
-            new InstructionRepresentation(0xF4, Instruction.Hlt),
+        public static InstructionRepresentation[] H =
+        {
+            new InstructionRepresentation(0xF4, Instruction.Hlt)
+        };
 
+        public static InstructionRepresentation[] I =
+        {
             new InstructionRepresentation(0xF6, 7, Instruction.Idiv, OperandFormat.Eb),
             new InstructionRepresentation((RexPrefix)0, 0xF6, 7, Instruction.Idiv, OperandFormat.Eb),
             new InstructionRepresentation(OperandSize.Size16, 0xF7, 7, Instruction.Idiv, OperandFormat.Ew),
@@ -422,8 +442,11 @@
 
             new InstructionRepresentation(OperandSize.Size16, 0xCF, Instruction.Iret),
             new InstructionRepresentation(OperandSize.Size32, 0xCF, Instruction.Iretd),
-            new InstructionRepresentation(RexPrefix.W, 0xCF, Instruction.Iretq),
+            new InstructionRepresentation(RexPrefix.W, 0xCF, Instruction.Iretq)
+        };
 
+        public static InstructionRepresentation[] J =
+        {
             new InstructionRepresentation(0x77, Instruction.Ja, OperandFormat.Jb), // JNBE
             new InstructionRepresentation(0x73, Instruction.Jae, OperandFormat.Jb), // JNB, JNC
             new InstructionRepresentation(0x72, Instruction.Jb, OperandFormat.Jb), // JC, JNAE
@@ -486,8 +509,11 @@
             new InstructionRepresentation(Compatibility.Invalid64, OperandSize.Size32, 0xEA, Instruction.Jmp, OperandFormat.Awd),
             new InstructionRepresentation(OperandSize.Size16, 0xFF, 5, Instruction.Jmp, OperandFormat.Md),
             new InstructionRepresentation(OperandSize.Size32, 0xFF, 5, Instruction.Jmp, OperandFormat.Mf),
-            new InstructionRepresentation(RexPrefix.W, 0xFF, 5, Instruction.Jmp, OperandFormat.Mt),
+            new InstructionRepresentation(RexPrefix.W, 0xFF, 5, Instruction.Jmp, OperandFormat.Mt)
+        };
 
+        public static InstructionRepresentation[] L =
+        {
             new InstructionRepresentation(Compatibility.Invalid64, 0x9F, Instruction.Lahf),
 
             new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0x02 }, Instruction.Lar, OperandFormat.Gw, OperandFormat.Ew),
@@ -540,8 +566,10 @@
             new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x03 }, Instruction.Lsl, OperandFormat.Gd, OperandFormat.Ew), // TODO: last param is r32/m16
             new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0x03 }, Instruction.Lsl, OperandFormat.Gq, OperandFormat.Ew), // TODO: last param is r32/m16
 
-            new InstructionRepresentation(new byte[] { 0x0F, 0x00 }, 3, Instruction.Ltr, OperandFormat.Ew),
-
+            new InstructionRepresentation(new byte[] { 0x0F, 0x00 }, 3, Instruction.Ltr, OperandFormat.Ew)
         };
+
+        public static InstructionRepresentation[] All =
+            A.Concat(B).Concat(C).Concat(D).Concat(E).Concat(H).Concat(I).Concat(J).Concat(L).ToArray();
     }
 }

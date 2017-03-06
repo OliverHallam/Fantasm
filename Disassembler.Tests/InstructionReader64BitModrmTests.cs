@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System;
+
+using NUnit.Framework;
 
 namespace Fantasm.Disassembler.Tests
 {
@@ -586,6 +588,33 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
 
             Assert.AreEqual(register, reader.Operand1.GetIndexRegister());
+        }
+
+        [Test]
+        [TestCase(0, Register.Cr8)]
+        public void ModRM_ForExtendedControlRegister_DecodesCorrectRegister(byte modrmReg, Register register)
+        {
+            var reader = ReadBytes64(0x44, 0x0F, 0x20, (byte)(0xc0 | (modrmReg << 3)));
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+            Assert.AreEqual(register, reader.Operand2.GetBaseRegister());
+        }
+
+
+        [Test]
+        [ExpectedException(typeof(FormatException))]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(7)]
+        public void ModRM_ForInvalidControlRegister_Fails(byte modrmReg)
+        {
+            var reader = ReadBytes64(0x44, 0x0F, 0x20, (byte)(0xc0 | (modrmReg << 3)));
+            reader.Read();
         }
     }
 }

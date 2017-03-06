@@ -133,9 +133,29 @@
         Oq,
 
         /// <summary>
-        /// The operand is the segment register
+        /// The operand is a 32-bit register specified by the R/M field in the ModR/M byte.
+        /// </summary>
+        Rd,
+
+        /// <summary>
+        /// The operand is a 64-bit register specified by the R/M field in the ModR/M byte.
+        /// </summary>
+        Rq,
+
+        /// <summary>
+        /// The operand is a segment register specified by the reg field in the ModR/M byte.
         /// </summary>
         Sw,
+
+        /// <summary>
+        /// The operand is a control register specified by the reg field in the ModR/M byte.
+        /// </summary>
+        Cd,
+
+        /// <summary>
+        /// The operand is a debug register specified by the reg field in the ModR/M byte.
+        /// </summary>
+        Dd,
 
         /// <summary>
         /// The operand is a register encoded in the instruction.

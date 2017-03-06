@@ -685,6 +685,18 @@ namespace Fantasm.Disassembler.Tests
             new InstructionRepresentation(OperandSize.Size16, 0xC7, 0, Instruction.Mov, OperandFormat.Ew, OperandFormat.Iw),
             new InstructionRepresentation(OperandSize.Size32, 0xC7, 0, Instruction.Mov, OperandFormat.Ed, OperandFormat.Id),
             new InstructionRepresentation(RexPrefix.W, 0xC7, 0, Instruction.Mov, OperandFormat.Eq, OperandFormat.Id),
+
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0f, 0x20 }, Instruction.Mov, OperandFormat.Rd, OperandFormat.Cd),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x20 }, Instruction.Mov, OperandFormat.Rq, OperandFormat.Cd),
+            new InstructionRepresentation(RexPrefix.R, new byte[] { 0x0f, 0x20 }, Instruction.Mov, Register.Cr8, OperandFormat.Rq, OperandFormat.Register),
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0f, 0x22 }, Instruction.Mov, OperandFormat.Cd, OperandFormat.Rd),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x22 }, Instruction.Mov, OperandFormat.Cd, OperandFormat.Rq),
+            new InstructionRepresentation(RexPrefix.R, new byte[] { 0x0f, 0x22 }, Instruction.Mov, Register.Cr8, OperandFormat.Register, OperandFormat.Rq),
+
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0f, 0x21 }, Instruction.Mov, OperandFormat.Rd, OperandFormat.Dd),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x21 }, Instruction.Mov, OperandFormat.Rq, OperandFormat.Dd),
+            new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0f, 0x23 }, Instruction.Mov, OperandFormat.Dd, OperandFormat.Rd),
+            new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x23 }, Instruction.Mov, OperandFormat.Dd, OperandFormat.Rq),
         };
 
         public static InstructionRepresentation[] All =

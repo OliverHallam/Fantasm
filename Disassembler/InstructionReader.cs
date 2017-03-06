@@ -500,6 +500,9 @@ namespace Fantasm.Disassembler
                 case OpCodeFlags.OperandSizeWord:
                     return Size.Word;
 
+                case OpCodeFlags.OperandSizeFixed:
+                    return this.executionMode == ExecutionModes.Long64Bit ? Size.Qword : Size.Dword;
+
                 case OpCodeFlags.OperandSizeFixed64:
                     if (this.executionMode == ExecutionModes.Long64Bit)
                     {
@@ -558,6 +561,12 @@ namespace Fantasm.Disassembler
                 case OperandEncoding.Rax:
                     return Operand.DirectRegister(GetBaseRegister(operandSize));
 
+                case OperandEncoding.R:
+                {
+                    var bits = new ModRMBits(this.rex, modrm);
+                    return this.RegisterOperand(ref bits, operandSize);
+                }
+
                 case OperandEncoding.M:
                 {
                     var bits = new ModRMBits(this.rex, modrm);
@@ -580,6 +589,18 @@ namespace Fantasm.Disassembler
                 {
                     var bits = new ModRMBits(this.rex, modrm);
                     return Operand.DirectRegister(ModRMDecoder.GetSegmentRegister(ref bits));
+                }
+
+                case OperandEncoding.Creg:
+                {
+                    var bits = new ModRMBits(this.rex, modrm);
+                    return Operand.DirectRegister(ModRMDecoder.GetControlRegister(ref bits));
+                }
+
+                case OperandEncoding.Dreg:
+                {
+                    var bits = new ModRMBits(this.rex, modrm);
+                    return Operand.DirectRegister(ModRMDecoder.GetDebugRegister(ref bits));
                 }
 
                 case OperandEncoding.OpCodeReg:
@@ -618,6 +639,17 @@ namespace Fantasm.Disassembler
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+        private Operand RegisterOperand(ref ModRMBits modrmBits, Size operandSize)
+        {
+            if (!ModRMDecoder.DirectRegister(modrmBits.Mod))
+            {
+                throw this.InvalidInstruction();
+            }
+
+            var register = ModRMDecoder.GetRegister(this.rex, GetBaseRegister(operandSize), ref modrmBits);
+            return Operand.DirectRegister(register);
         }
 
         private Operand MemoryOperand(ref ModRMBits modrmBits, Size operandSize)

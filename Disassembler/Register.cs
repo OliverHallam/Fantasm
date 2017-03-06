@@ -89,6 +89,21 @@
         Fs,
         Gs,
 
+        Cr0,
+        Cr2,
+        Cr3,
+        Cr4,
+        Cr8,
+
+        Dr0,
+        Dr1,
+        Dr2,
+        Dr3,
+        Dr4,
+        Dr5,
+        Dr6,
+        Dr7,
+
         Eflags,
     }
 }

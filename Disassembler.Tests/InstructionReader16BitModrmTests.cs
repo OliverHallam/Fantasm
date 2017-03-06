@@ -127,22 +127,5 @@ namespace Fantasm.Disassembler.Tests
             Assert.AreEqual(OperandType.Register, reader.Operand1.Type);
             Assert.AreEqual(register, reader.Operand1.GetBaseRegister());
         }
-
-        [Test]
-        [TestCase(0, Register.Es)]
-        [TestCase(1, Register.Cs)]
-        [TestCase(2, Register.Ss)]
-        [TestCase(3, Register.Ds)]
-        [TestCase(4, Register.Fs)]
-        [TestCase(5, Register.Gs)]
-        public void ModRM_ForSegmentRegister_DecodesCorrectRegister(byte modrmReg, Register register)
-        {
-            // ADD [REG] 0
-            var reader = ReadBytes16(0x8C, (byte)(0xc0 | (modrmReg << 3)), 0x00);
-            reader.Read();
-
-            Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
-            Assert.AreEqual(register, reader.Operand2.GetBaseRegister());
-        }
     }
 }

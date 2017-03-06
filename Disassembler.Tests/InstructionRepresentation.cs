@@ -304,6 +304,20 @@ namespace Fantasm.Disassembler.Tests
         {
         }
 
+        internal InstructionRepresentation(Compatibility compatibility, byte[] opCode, Instruction mnemonic, params OperandFormat[] operands)
+            : this(
+                InstructionPrefixes.None,
+                0,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                compatibility,
+                Register.None)
+        {
+        }
+
         internal InstructionRepresentation(
             InstructionPrefixes prefixes,
             byte[] opCode,
@@ -612,6 +626,25 @@ namespace Fantasm.Disassembler.Tests
                 operands,
                 Compatibility.NotEncodable32,
                 Register.None)
+        {
+        }
+
+        internal InstructionRepresentation(
+            RexPrefix rex,
+            byte[] opCode,
+            Instruction mnemonic,
+            Register register,
+            params OperandFormat[] operands)
+            : this(
+                InstructionPrefixes.None,
+                RexPrefix.Magic | rex,
+                opCode,
+                255,
+                mnemonic,
+                OperandSize.Size32,
+                operands,
+                Compatibility.NotEncodable32,
+                register)
         {
         }
 

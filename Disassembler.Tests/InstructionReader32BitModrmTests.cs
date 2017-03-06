@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System;
+
+using NUnit.Framework;
 
 namespace Fantasm.Disassembler.Tests
 {
@@ -287,6 +289,68 @@ namespace Fantasm.Disassembler.Tests
 
             Assert.AreEqual(Register.None, reader.Operand1.GetIndexRegister());
             Assert.AreEqual(1, reader.Operand1.GetScale());
+        }
+
+
+        [Test]
+        [TestCase(0, Register.Es)]
+        [TestCase(1, Register.Cs)]
+        [TestCase(2, Register.Ss)]
+        [TestCase(3, Register.Ds)]
+        [TestCase(4, Register.Fs)]
+        [TestCase(5, Register.Gs)]
+        public void ModRM_ForSegmentRegister_DecodesCorrectRegister(byte modrmReg, Register register)
+        {
+            var reader = ReadBytes32(0x8C, (byte)(0xc0 | (modrmReg << 3)), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+            Assert.AreEqual(register, reader.Operand2.GetBaseRegister());
+        }
+
+        [Test]
+        [TestCase(0, Register.Cr0)]
+        [TestCase(2, Register.Cr2)]
+        [TestCase(3, Register.Cr3)]
+        [TestCase(4, Register.Cr4)]
+        public void ModRM_ForControlRegister_DecodesCorrectRegister(byte modrmReg, Register register)
+        {
+            var reader = ReadBytes32(0x0F, 0x20, (byte)(0xc0 | (modrmReg << 3)), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+            Assert.AreEqual(register, reader.Operand2.GetBaseRegister());
+        }
+
+
+        [Test]
+        [ExpectedException(typeof(FormatException))]
+        [TestCase(1)]
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(7)]
+        public void ModRM_ForInvalidControlRegister_Fails(byte modrmReg)
+        {
+            var reader = ReadBytes32(0x0F, 0x20, (byte)(0xc0 | (modrmReg << 3)), 0x00);
+            reader.Read();
+        }
+
+        [Test]
+        [TestCase(0, Register.Dr0)]
+        [TestCase(1, Register.Dr1)]
+        [TestCase(2, Register.Dr2)]
+        [TestCase(3, Register.Dr3)]
+        [TestCase(4, Register.Dr4)]
+        [TestCase(5, Register.Dr5)]
+        [TestCase(6, Register.Dr6)]
+        [TestCase(7, Register.Dr7)]
+        public void ModRM_ForDebugRegister_DecodesCorrectRegister(byte modrmReg, Register register)
+        {
+            var reader = ReadBytes32(0x0F, 0x21, (byte)(0xc0 | (modrmReg << 3)), 0x00);
+            reader.Read();
+
+            Assert.AreEqual(OperandType.Register, reader.Operand2.Type);
+            Assert.AreEqual(register, reader.Operand2.GetBaseRegister());
         }
     }
 }

@@ -92,6 +92,52 @@ namespace Fantasm.Disassembler
             }
         }
 
+        public static Register GetControlRegister(int reg)
+        {
+            switch (reg)
+            {
+                case 0:
+                    return Register.Cr0;
+                case 2:
+                    return Register.Cr2;
+                case 3:
+                    return Register.Cr3;
+                case 4:
+                    return Register.Cr4;
+                case 8:
+                    return Register.Cr8;
+                default:
+                    // TODO: should also throw for 4 and 5 case with 2 bit encoding.
+                    throw new FormatException();
+            }
+        }
+
+        public static Register GetDebugRegister(int reg)
+        {
+            switch (reg)
+            {
+                case 0:
+                    return Register.Dr0;
+                case 1:
+                    return Register.Dr1;
+                case 2:
+                    return Register.Dr2;
+                case 3:
+                    return Register.Dr3;
+                case 4:
+                    return Register.Dr4;
+                case 5:
+                    return Register.Dr5;
+                case 6:
+                    return Register.Dr6;
+                case 7:
+                    return Register.Dr7;
+                default:
+                    // TODO: should also throw for 4 and 5 case with 2 bit encoding.
+                    throw new FormatException();
+            }
+        }
+
         #endregion
     }
 }

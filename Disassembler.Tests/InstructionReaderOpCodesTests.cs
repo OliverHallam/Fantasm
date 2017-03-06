@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 
@@ -89,11 +90,13 @@ namespace Fantasm.Disassembler.Tests
                     break;
 
                 case OperandFormat.Ed:
+                case OperandFormat.Rd:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(Register.Esp, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.Eq:
+                case OperandFormat.Rq:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(Register.Rsp, operand.GetBaseRegister());
                     break;
@@ -219,6 +222,16 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Sw:
                     Assert.AreEqual(OperandType.Register, operand.Type);
                     Assert.AreEqual(Register.Cs, operand.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Cd:
+                    Assert.AreEqual(OperandType.Register, operand.Type);
+                    Assert.AreEqual(Register.Cr3, operand.GetBaseRegister());
+                    break;
+
+                case OperandFormat.Dd:
+                    Assert.AreEqual(OperandType.Register, operand.Type);
+                    Assert.AreEqual(Register.Dr3, operand.GetBaseRegister());
                     break;
 
                 case OperandFormat.AL:
@@ -369,6 +382,24 @@ namespace Fantasm.Disassembler.Tests
             reader.Read();
         }
 
+        public IEnumerable<InstructionRepresentation> InstructionsWithRegisterParameters()
+        {
+            return OpCodes.All.Where(
+                    opCode => opCode.Operands.Any(
+                        operand => operand == OperandFormat.Rd || operand == OperandFormat.Rq));
+        }
+
+        [Test]
+        [TestCaseSource(nameof(InstructionsWithRegisterParameters))]
+        [ExpectedException(typeof(FormatException))]
+        public void InstructionReader_ForMemory_ThrowsFormatException(InstructionRepresentation opCode)
+        {
+            var bytes = GetBytes(ExecutionMode.Long64Bit, opCode, Combine(GetOpcodeModrm(opCode), 0x07)); // [BX]/[EDI]/[RDI]
+            var reader = new InstructionReader(new MemoryStream(bytes), ExecutionMode.Long64Bit);
+
+            reader.Read();
+        }
+
         [Test]
         public void InstructionReader_ForAadWithBase10_HidesOperand()
         {
@@ -476,6 +507,8 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Ew:
                 case OperandFormat.Ed:
                 case OperandFormat.Eq:
+                case OperandFormat.Rd:
+                case OperandFormat.Rq:
                     // AH/SP/ESP/RSP
                     return 0xC4;
 
@@ -500,6 +533,11 @@ namespace Fantasm.Disassembler.Tests
                 case OperandFormat.Sw:
                     // CS
                     return 0x08;
+
+                case OperandFormat.Cd:
+                case OperandFormat.Dd:
+                    // CR3/DR3
+                    return 0x18;
             }
 
             return null;

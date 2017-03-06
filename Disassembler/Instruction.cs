@@ -54,6 +54,7 @@
         Cbw,
         Cwde,
         Movsx,
+        Movsxd,
         Movzx,
 
         // Binary arithmetic instructions
@@ -159,6 +160,8 @@
 
         // String instructions
         Movs,
+        Movsb,
+        Movsw,
         Cmps,
         Cmpsb,
         Cmpsw,

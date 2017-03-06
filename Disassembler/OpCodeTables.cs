@@ -44,7 +44,7 @@ namespace Fantasm.Disassembler
         OperandSizeFixed = 0x3,
         OperandSizeFixed64 = 0x4,
         OperandSizeDefault64 = 0x5,
-        OperandSizeDword64 = 0x6,
+        OperandSizeExtendableDword = 0x6,
         OperandSizeMask = 0x7,
 
         ModRM = 0x8,
@@ -254,7 +254,7 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Bound, OpCodeFlags.CompatibilityMode | OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.Arpl, OpCodeFlags.CompatibilityMode | OpCodeFlags.OperandSizeWord | OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.Operand1Reg| OpCodeFlags.Operand2RM | OpCodeFlags.Operand2Truncate32), // ARPL or MOVSXD
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // FS Segment
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // GS Segment
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // Operand size override
@@ -323,8 +323,8 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Mov, OpCodeFlags.Operand1Rax | OpCodeFlags.Operand2Offset),
             new OpCodeProperties(Instruction.Mov, OpCodeFlags.OperandSizeByte | OpCodeFlags.Operand1Offset | OpCodeFlags.Operand2Rax),
             new OpCodeProperties(Instruction.Mov, OpCodeFlags.Operand1Offset | OpCodeFlags.Operand2Rax),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Movsb, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // MOVSW, MOVSD, MOVSQ
             new OpCodeProperties(Instruction.Cmpsb, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None), // CMPSW, CMPSD, CMPSQ
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
@@ -617,21 +617,21 @@ namespace Fantasm.Disassembler
             new OpCodeProperties(Instruction.Btr, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Lfs, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2M | OpCodeFlags.Operand2Far),
             new OpCodeProperties(Instruction.Lgs, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2M | OpCodeFlags.Operand2Far),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Movzx, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand2Byte),
+            new OpCodeProperties(Instruction.Movzx, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand2Word),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Ud1, OpCodeFlags.None), // Group 10
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Immediate | OpCodeFlags.Operand2Byte), // Group 8
             new OpCodeProperties(Instruction.Btc, OpCodeFlags.Operand1RM | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Bsf, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
             new OpCodeProperties(Instruction.Bsr, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Movsx, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand2Byte),
+            new OpCodeProperties(Instruction.Movsx, OpCodeFlags.Operand1Reg | OpCodeFlags.Operand2RM | OpCodeFlags.Operand2Word),
 
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
-            new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
+            new OpCodeProperties(Instruction.Movnti, OpCodeFlags.OperandSizeExtendableDword | OpCodeFlags.Operand1M | OpCodeFlags.Operand2Reg),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),
             new OpCodeProperties(Instruction.Unknown, OpCodeFlags.None),

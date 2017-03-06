@@ -697,6 +697,37 @@ namespace Fantasm.Disassembler.Tests
             new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x21 }, Instruction.Mov, OperandFormat.Rq, OperandFormat.Dd),
             new InstructionRepresentation(Compatibility.NotEncodable64, new byte[] { 0x0f, 0x23 }, Instruction.Mov, OperandFormat.Dd, OperandFormat.Rd),
             new InstructionRepresentation(Compatibility.NotEncodable32, new byte[] { 0x0f, 0x23 }, Instruction.Mov, OperandFormat.Dd, OperandFormat.Rq),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Movbe, OperandFormat.Gw, OperandFormat.Mw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Movbe, OperandFormat.Gd, OperandFormat.Md),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF0 }, Instruction.Movbe, OperandFormat.Gq, OperandFormat.Mq),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Movbe, OperandFormat.Mw, OperandFormat.Gw),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Movbe, OperandFormat.Md, OperandFormat.Gd),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0x38, 0xF1 }, Instruction.Movbe, OperandFormat.Mq, OperandFormat.Gq),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xC3 }, Instruction.Movnti, OperandFormat.Md, OperandFormat.Gd),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xC3 }, Instruction.Movnti, OperandFormat.Md, OperandFormat.Gd),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xC3 }, Instruction.Movnti, OperandFormat.Mq, OperandFormat.Gq),
+
+            new InstructionRepresentation(0xA4, Instruction.Movsb),
+            new InstructionRepresentation(OperandSize.Size16, 0xA5, Instruction.Movsw),
+            new InstructionRepresentation(OperandSize.Size32, 0xA5, Instruction.Movsd),
+            new InstructionRepresentation(RexPrefix.W, 0xA5, Instruction.Movsq),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xBE }, Instruction.Movsx, OperandFormat.Gw, OperandFormat.Eb),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xBE }, Instruction.Movsx, OperandFormat.Gd, OperandFormat.Eb),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xBE }, Instruction.Movsx, OperandFormat.Gq, OperandFormat.Eb),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xBF }, Instruction.Movsx, OperandFormat.Gw, OperandFormat.Ew),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xBF }, Instruction.Movsx, OperandFormat.Gd, OperandFormat.Ew),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xBF }, Instruction.Movsx, OperandFormat.Gq, OperandFormat.Ew),
+            new InstructionRepresentation(RexPrefix.W, 0x63, Instruction.Movsxd, OperandFormat.Gq, OperandFormat.Ed),
+
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xB6 }, Instruction.Movzx, OperandFormat.Gw, OperandFormat.Eb),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xB6 }, Instruction.Movzx, OperandFormat.Gd, OperandFormat.Eb),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xB6 }, Instruction.Movzx, OperandFormat.Gq, OperandFormat.Eb),
+            new InstructionRepresentation(OperandSize.Size16, new byte[] { 0x0F, 0xB7 }, Instruction.Movzx, OperandFormat.Gw, OperandFormat.Ew),
+            new InstructionRepresentation(OperandSize.Size32, new byte[] { 0x0F, 0xB7 }, Instruction.Movzx, OperandFormat.Gd, OperandFormat.Ew),
+            new InstructionRepresentation(RexPrefix.W, new byte[] { 0x0F, 0xB7 }, Instruction.Movzx, OperandFormat.Gq, OperandFormat.Ew),
         };
 
         public static InstructionRepresentation[] All =

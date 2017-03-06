@@ -239,6 +239,19 @@ namespace Fantasm.Disassembler
                 {
                     switch (nextByte)
                     {
+
+                        case 0x63:
+                            if ((this.executionMode & ExecutionModes.CompatibilityMode) != 0)
+                            {
+                                this.instruction = Instruction.Arpl;
+                                var modrmBits = new ModRMBits(this.rex, modrm);
+                                this.operand1 = this.RegisterOrMemoryOperand(ref modrmBits, Size.Word);
+                                this.operand2 = this.ModRMRegister(ref modrmBits, Register.Ax);
+                                return true;
+                            }
+                            this.instruction = Instruction.Movsxd;
+                            break;
+
                         case 0x6D:
                             this.instruction = this.GetOperandSizeExtendedAlias(
                                 Instruction.Insw,
@@ -264,6 +277,13 @@ namespace Fantasm.Disassembler
                                 Instruction.Cwd,
                                 Instruction.Cdq,
                                 Instruction.Cqo);
+                            break;
+
+                        case 0xA5:
+                            this.instruction = this.GetOperandSizeExtendedAlias(
+                                Instruction.Movsw,
+                                Instruction.Movsd,
+                                Instruction.Movsq);
                             break;
 
                         case 0xA7:
@@ -453,17 +473,32 @@ namespace Fantasm.Disassembler
             {
                 case 0xF0:
                 case 0xF1:
+                    var modrm = new ModRMBits(this.rex, this.instructionByteStream.ReadByte());
                     if ((this.prefixes & InstructionPrefixes.RepNZ) != 0)
                     {
                         this.instruction = Instruction.Crc32;
                         var operandSize = (this.rex & RexPrefix.W) != 0 ? Size.Qword : Size.Dword;
                         var rmSize = opCodeByte == 0xF0 ? Size.Byte : this.GetOperandSize(this.defaultOperandSize);
-                        var modrm = new ModRMBits(this.rex, this.instructionByteStream.ReadByte());
                         this.operand1 = this.ModRMRegister(ref modrm, GetBaseRegister(operandSize));
                         this.operand2 = this.RegisterOrMemoryOperand(ref modrm, rmSize);
                         break;
                     }
-                    goto default;
+                    else
+                    {
+                        this.instruction = Instruction.Movbe;
+                        var operandSize = this.GetOperandSize(this.defaultOperandSize);
+                        if (opCodeByte == 0xF0)
+                        {
+                            this.operand1 = this.ModRMRegister(ref modrm, GetBaseRegister(operandSize));
+                            this.operand2 = this.MemoryOperand(ref modrm, operandSize);
+                        }
+                        else
+                        {
+                            this.operand1 = this.MemoryOperand(ref modrm, operandSize);
+                            this.operand2 = this.ModRMRegister(ref modrm, GetBaseRegister(operandSize));
+                        }
+                        break;
+                    }
 
                 default:
                     throw new NotImplementedException();
@@ -512,6 +547,9 @@ namespace Fantasm.Disassembler
 
                 case OpCodeFlags.OperandSizeDefault64:
                     return this.GetOperandSize(Size.Qword);
+
+                case OpCodeFlags.OperandSizeExtendableDword:
+                    return (this.rex & RexPrefix.W) != 0 ? Size.Qword : Size.Dword;
 
                 default:
                     return this.GetOperandSize(this.defaultOperandSize);
